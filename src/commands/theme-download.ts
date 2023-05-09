@@ -48,7 +48,7 @@ export const themeDownload = new Command('theme:download')
                 await writeFile(`${output}/localizedMessages.json`, JSON.stringify(localizedMessages) ?? '');
             }
 
-            if (!types.includes('templates')) {
+            if (types.includes('templates')) {
                 for await (const [name, template] of Object.entries(templates ?? {})) {
                     await writeFile(`${output}/${name}.ftl`, template);
                 }

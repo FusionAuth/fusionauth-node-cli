@@ -46,7 +46,7 @@ export const themeUpload = new Command('theme:upload')
                 theme.localizedMessages = JSON.parse(await readFile(`${input}/localizedMessages.json`, 'utf-8'));
             }
 
-            if (!types.includes('templates')) {
+            if (types.includes('templates')) {
                 theme.templates = Object.fromEntries(await Promise.all(Object.entries(theme.templates ?? {}).map(async ([name]) => {
                     return readFile(`${input}/${name}.ftl`, 'utf8')
                         .then((template) => ([name, template])).catch(() => ([]));
