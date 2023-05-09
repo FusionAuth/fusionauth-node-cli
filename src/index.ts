@@ -5,11 +5,11 @@ import {Command} from 'commander';
 import chalk from 'chalk';
 import {themeDownload, themeUpload, themeWatch} from './commands/index.js';
 
-const f = figlet.textSync('Fusion').split('\n');
-const a = figlet.textSync('Auth').split('\n');
+const fusionString = figlet.textSync('Fusion').split('\n');
+const authString = figlet.textSync('Auth').split('\n');
 
-f.forEach((line, i) => {
-    console.log(chalk.white(line) + chalk.hex('#F58320')(a[i]));
+fusionString.forEach((line, i) => {
+    console.log(chalk.white(line) + chalk.hex('#F58320')(authString[i]));
 });
 
 const program = new Command();
