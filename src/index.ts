@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import figlet from 'figlet';
 import {Command} from 'commander';
 import chalk from 'chalk';
