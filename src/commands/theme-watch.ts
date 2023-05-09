@@ -55,7 +55,12 @@ export const themeWatch = new Command('theme:watch')
                     }
 
                     if (path.endsWith('localizedMessages.json')) {
-                        theme.localizedMessages = JSON.parse(content);
+                        try {
+                            theme.localizedMessages = JSON.parse(content);
+                        } catch (e) {
+                            reportError(`Error parsing localizedMessages.json: `, e);
+                            return false;
+                        }
                     }
 
                     if (path.endsWith('.ftl')) {

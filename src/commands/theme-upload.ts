@@ -1,7 +1,7 @@
 import {Command, Option} from 'commander';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {TemplateType, templateTypes} from '../template-types.js';
+import {templateTypes} from '../template-types.js';
 import {readFile} from 'fs/promises';
 import {reportError, validateOptions} from '../utils.js';
 
@@ -24,7 +24,7 @@ export const themeUpload = new Command('theme:upload')
                 .retrieveTheme(themeId);
 
             if (!clientResponse.wasSuccessful()) {
-                reportError(`Error downloading theme ${themeId}: `, clientResponse);
+                reportError(`Error uploading theme ${themeId}: `, clientResponse);
                 process.exit(1);
             }
 
@@ -43,7 +43,12 @@ export const themeUpload = new Command('theme:upload')
 
             if (types.includes('messages')) {
                 theme.defaultMessages = await readFile(`${input}/defaultMessages.txt`, 'utf-8');
-                theme.localizedMessages = JSON.parse(await readFile(`${input}/localizedMessages.json`, 'utf-8'));
+                try {
+                    theme.localizedMessages = JSON.parse(await readFile(`${input}/localizedMessages.json`, 'utf-8'));
+                } catch (e) {
+                    reportError(`Error parsing localizedMessages.json: `, e);
+                    process.exit(1);
+                }
             }
 
             if (types.includes('templates')) {
@@ -62,7 +67,7 @@ export const themeUpload = new Command('theme:upload')
                 console.log(chalk.green(`Theme ${themeId} was created successfully`));
             }
         } catch (e: any) {
-            reportError(`Error downloading theme ${themeId}:`, e);
+            reportError(`Error uploading theme ${themeId}:`, e);
             process.exit(1);
         }
     });

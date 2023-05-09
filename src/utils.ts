@@ -58,6 +58,13 @@ export const reportError = (msg: string, error?: any): void => {
         console.error(chalk.red(error));
         return;
     }
+
+    if ('message' in error) {
+        console.error(chalk.red(error.message));
+        return;
+    }
+
+    console.error(chalk.red(JSON.stringify(error)));
 }
 
 /**
