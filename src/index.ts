@@ -13,7 +13,6 @@ f.forEach((line, i) => {
 });
 
 const program = new Command();
-// #F58320
 program
     .name('@fusionauth/cli')
     .description('CLI for FusionAuth')
