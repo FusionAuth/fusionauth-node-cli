@@ -8,9 +8,14 @@
     "start": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["fusionauth","oidc","oauth","themes"],
+  "repository": "git+https://github.com/FusionAuth/fusionauth-node-cli.git",
   "author": "FusionAuth",
   "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/FusionAuth/fusionauth-node-cli/issues"
+  },
+  "homepage": "https://github.com/FusionAuth/fusionauth-node-cli#readme",
   "dependencies": {
     "@fusionauth/typescript-client": "1.45.0",
     "chalk": "5.2.0",
