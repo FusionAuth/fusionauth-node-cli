@@ -1,8 +1,8 @@
 import {Command, Option} from 'commander';
-import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
+import {FusionAuthClient, Templates, Theme} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 import {templateTypes} from '../template-types.js';
-import {readFile} from 'fs/promises';
+import {readdir, readFile} from 'fs/promises';
 import {reportError, validateOptions} from '../utils.js';
 
 export const themeUpload = new Command('theme:upload')
@@ -11,10 +11,9 @@ export const themeUpload = new Command('theme:upload')
     .option('-i, --input <input>', 'The input directory')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use')
-    .option('-c, --create', 'Create the theme if it does not exist')
     .addOption(new Option('-t, --types <...types>', 'The types of templates to download').choices(templateTypes))
     .action(async (themeId, options) => {
-        const {input, apiKey, host, types, create} = validateOptions(options);
+        const {input, apiKey, host, types} = validateOptions(options);
 
         console.log(`Uploading theme ${themeId} from ${input}`);
 
@@ -28,12 +27,7 @@ export const themeUpload = new Command('theme:upload')
                 process.exit(1);
             }
 
-            const themeExists = !!clientResponse.response.theme;
-            if (!themeExists && !create) {
-                reportError(`Error uploading theme ${themeId}:`, 'Theme does not exist')
-                console.log('Use the --create flag to create the theme');
-                process.exit(1);
-            }
+            const templates = Object.keys(clientResponse.response.theme?.templates ?? {});
 
             const theme: Partial<Theme> = {};
 
@@ -52,20 +46,24 @@ export const themeUpload = new Command('theme:upload')
             }
 
             if (types.includes('templates')) {
-                theme.templates = Object.fromEntries(await Promise.all(Object.entries(theme.templates ?? {}).map(async ([name]) => {
-                    return readFile(`${input}/${name}.ftl`, 'utf8')
-                        .then((template) => ([name, template])).catch(() => ([]));
-                })));
+                const templateFiles = await readdir(input);
+
+                for await (const templateFile of templateFiles) {
+                    if (!templateFile.endsWith('.ftl')) continue;
+
+                    const templateName = templateFile.slice(0, -4);
+                    const templateContent = await readFile(`${input}/${templateFile}`, 'utf8');
+
+                    if (templates.includes(templateName)) {
+                        theme.templates = theme.templates ?? {};
+                        theme.templates[templateName as keyof Templates] = templateContent;
+                    }
+                }
             }
 
             const fusionAuthClient = new FusionAuthClient(apiKey, host);
-            if (themeExists) {
-                await fusionAuthClient.patchTheme(themeId, {theme});
-                console.log(chalk.green(`Theme ${themeId} was uploaded successfully`));
-            } else {
-                await fusionAuthClient.createTheme(themeId, {theme});
-                console.log(chalk.green(`Theme ${themeId} was created successfully`));
-            }
+            await fusionAuthClient.patchTheme(themeId, {theme});
+            console.log(chalk.green(`Theme ${themeId} was uploaded successfully`));
         } catch (e: any) {
             reportError(`Error uploading theme ${themeId}:`, e);
             process.exit(1);

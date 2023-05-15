@@ -76,7 +76,6 @@ export type Options = {
     apiKey: string,
     host: string,
     types: TemplateType[]
-    create?: boolean
 }
 
 /**
@@ -89,7 +88,6 @@ export const validateOptions = (options: any): Options => {
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST ?? 'http://localhost:9011';
     const types: TemplateType[] = options.types ?? templateTypes;
-    const create = options.create ?? false;
 
     if (!apiKey) {
         reportError('No API key provided');
@@ -111,7 +109,6 @@ export const validateOptions = (options: any): Options => {
         output,
         apiKey,
         host,
-        types,
-        create
+        types
     }
 }
