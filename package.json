@@ -1,6 +1,6 @@
 {
   "name": "@fusionauth/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "FusionAuth CLI",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,12 @@
     "start": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["fusionauth","oidc","oauth","themes"],
+  "keywords": [
+    "fusionauth",
+    "oidc",
+    "oauth",
+    "themes"
+  ],
   "repository": "git+https://github.com/FusionAuth/fusionauth-node-cli.git",
   "author": "FusionAuth",
   "license": "Apache-2.0",
