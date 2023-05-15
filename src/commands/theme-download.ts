@@ -9,10 +9,10 @@ import {reportError, validateOptions} from '../utils.js';
 export const themeDownload = new Command('theme:download')
     .description('Download a theme from FusionAuth')
     .argument('<themeId>', 'The theme id to download')
-    .option('-o, --output <output>', 'The output directory')
+    .option('-o, --output <output>', 'The output directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use')
-    .addOption(new Option('-t, --types <...types>', 'The types of templates to download').choices(templateTypes))
+    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(templateTypes).default(templateTypes))
     .action(async (themeId, options) => {
         const {output, apiKey, host, types} = validateOptions(options);
 

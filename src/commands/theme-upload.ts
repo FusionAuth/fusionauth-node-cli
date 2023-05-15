@@ -8,10 +8,10 @@ import {reportError, validateOptions} from '../utils.js';
 export const themeUpload = new Command('theme:upload')
     .description('Upload a theme to FusionAuth')
     .argument('<themeId>', 'The theme id to upload')
-    .option('-i, --input <input>', 'The input directory')
+    .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use')
-    .addOption(new Option('-t, --types <...types>', 'The types of templates to download').choices(templateTypes))
+    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(templateTypes).default(templateTypes))
     .action(async (themeId, options) => {
         const {input, apiKey, host, types} = validateOptions(options);
 

@@ -1,7 +1,7 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {TemplateType, templateTypes} from './template-types.js';
+import {TemplateType} from './template-types.js';
 
 /**
  * Checks if the response is a client response
@@ -83,11 +83,16 @@ export type Options = {
  * @param options The options to validate
  */
 export const validateOptions = (options: any): Options => {
-    const input = options.input ?? './tpl/';
-    const output = options.output ?? './tpl/';
+    const input = options.input;
+    const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
-    const host = options.host ?? process.env.FUSIONAUTH_HOST ?? 'http://localhost:9011';
-    const types: TemplateType[] = options.types ?? templateTypes;
+    const host = options.host ?? process.env.FUSIONAUTH_HOST;
+    const types: TemplateType[] = options.types;
+
+    if (!input && !output) {
+        reportError('No input or output directory provided');
+        process.exit(1);
+    }
 
     if (!apiKey) {
         reportError('No API key provided');

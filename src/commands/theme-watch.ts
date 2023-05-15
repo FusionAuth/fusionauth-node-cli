@@ -12,10 +12,10 @@ const q = new Queue({autostart: true, concurrency: 1});
 export const themeWatch = new Command('theme:watch')
     .description('Watch a theme for changes and upload to FusionAuth')
     .argument('<themeId>', 'The theme id to watch')
-    .option('-i, --input <input>', 'The input directory')
+    .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use')
-    .addOption(new Option('-t, --types <...types>', 'The types of templates to watch').choices(templateTypes))
+    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(templateTypes).default(templateTypes))
     .action((themeId, options) => {
         const {input, apiKey, host, types} = validateOptions(options);
 
