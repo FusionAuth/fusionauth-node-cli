@@ -30,7 +30,7 @@ export const reportError = (msg: string, error?: any): void => {
         return;
     }
 
-    if (isClientResponse(error)) {
+    if (isClientResponse(error) && error.exception) {
         error = error.exception;
     }
     if (isErrors(error)) {
