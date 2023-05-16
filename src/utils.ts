@@ -117,3 +117,13 @@ export const validateOptions = (options: any): Options => {
         types
     }
 }
+
+/**
+ * Gets the locale from a path
+ * @param path
+ */
+export const getLocaleFromLocalizedMessageFileName = (path: string): string | undefined => {
+    const matches = path.match(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/);
+    if (!matches) return;
+    return matches[1];
+}

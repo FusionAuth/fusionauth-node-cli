@@ -1,7 +1,7 @@
 import {Command, Option} from 'commander';
 import {templateTypes} from '../template-types.js';
 import {watch} from 'chokidar';
-import {reportError, validateOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
@@ -33,7 +33,7 @@ export const themeWatch = new Command('theme:watch')
 
         if (types.includes('messages')) {
             watchedFiles.push(input + '/defaultMessages.txt');
-            watchedFiles.push(input + '/localizedMessages.json');
+            watchedFiles.push(input + '/localizedMessages.*.txt');
         }
 
         watch(watchedFiles, {
@@ -54,13 +54,10 @@ export const themeWatch = new Command('theme:watch')
                         theme.defaultMessages = content;
                     }
 
-                    if (path.endsWith('localizedMessages.json')) {
-                        try {
-                            theme.localizedMessages = JSON.parse(content);
-                        } catch (e) {
-                            reportError(`Error parsing localizedMessages.json: `, e);
-                            return false;
-                        }
+                    if (path.includes('localizedMessages.') && path.endsWith('.txt')) {
+                        const locale = getLocaleFromLocalizedMessageFileName(path);
+                        if (!locale) return;
+                        theme.localizedMessages = {[locale]: content};
                     }
 
                     if (path.endsWith('.ftl')) {

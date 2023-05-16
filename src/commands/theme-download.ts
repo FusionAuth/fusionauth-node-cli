@@ -32,7 +32,7 @@ export const themeDownload = new Command('theme:download')
                 process.exit(1);
             }
 
-            const {templates, stylesheet, defaultMessages, localizedMessages} = theme.response.theme!;
+            const {templates, stylesheet, defaultMessages, localizedMessages} = theme.response.theme;
 
             if (!fs.existsSync(output)) {
                 await mkdir(output);
@@ -45,7 +45,9 @@ export const themeDownload = new Command('theme:download')
             if (types.includes('messages')) {
                 await writeFile(`${output}/defaultMessages.txt`, defaultMessages ?? '');
 
-                await writeFile(`${output}/localizedMessages.json`, JSON.stringify(localizedMessages) ?? '');
+                for await (const [locale, messages] of Object.entries(localizedMessages ?? {})) {
+                    await writeFile(`${output}/localizedMessages.${locale}.txt`, messages ?? '');
+                }
             }
 
             if (types.includes('templates')) {

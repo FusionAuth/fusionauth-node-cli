@@ -3,7 +3,7 @@ import {FusionAuthClient, Templates, Theme} from '@fusionauth/typescript-client'
 import chalk from 'chalk';
 import {templateTypes} from '../template-types.js';
 import {readdir, readFile} from 'fs/promises';
-import {reportError, validateOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
 
 export const themeUpload = new Command('theme:upload')
     .description('Upload a theme to FusionAuth')
@@ -31,32 +31,37 @@ export const themeUpload = new Command('theme:upload')
 
             const theme: Partial<Theme> = {};
 
+            const files = await readdir(input);
+
             if (types.includes('stylesheet')) {
                 theme.stylesheet = await readFile(`${input}/stylesheet.css`, 'utf-8');
             }
 
             if (types.includes('messages')) {
                 theme.defaultMessages = await readFile(`${input}/defaultMessages.txt`, 'utf-8');
-                try {
-                    theme.localizedMessages = JSON.parse(await readFile(`${input}/localizedMessages.json`, 'utf-8'));
-                } catch (e) {
-                    reportError(`Error parsing localizedMessages.json: `, e);
-                    process.exit(1);
+
+                for await (const file of files) {
+                    if (!file.startsWith('localizedMessages.')) continue;
+                    const locale = getLocaleFromLocalizedMessageFileName(file);
+                    if (!locale) continue;
+                    theme.localizedMessages = {
+                        ...theme.localizedMessages,
+                        [locale]: await readFile(`${input}/${file}`, 'utf-8')
+                    };
                 }
             }
 
             if (types.includes('templates')) {
-                const templateFiles = await readdir(input);
+                for await (const file of files) {
+                    if (!file.endsWith('.ftl')) continue;
 
-                for await (const templateFile of templateFiles) {
-                    if (!templateFile.endsWith('.ftl')) continue;
-
-                    const templateName = templateFile.slice(0, -4);
-                    const templateContent = await readFile(`${input}/${templateFile}`, 'utf8');
+                    const templateName = file.slice(0, -4);
 
                     if (templates.includes(templateName)) {
-                        theme.templates = theme.templates ?? {};
-                        theme.templates[templateName as keyof Templates] = templateContent;
+                        theme.templates = {
+                            ...theme.templates,
+                            [templateName as keyof Templates]: await readFile(`${input}/${file}`, 'utf8')
+                        };
                     }
                 }
             }
