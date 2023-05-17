@@ -34,6 +34,10 @@ If you have a paid edition with support included, please [open a ticket in your 
 
 Otherwise, please [post your question in the community forum](https://fusionauth.io/community/forum/).
 
+## Releasing
+
+`npm run build && npm publish`
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub.
