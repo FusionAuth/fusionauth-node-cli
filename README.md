@@ -36,7 +36,13 @@ Otherwise, please [post your question in the community forum](https://fusionauth
 
 ## Releasing
 
-`npm run build && npm publish`
+To bump the version and create a git commit and tag, run:
+
+`npm version <major|minor|patch>`
+
+To build and publish the package to the npm registry, run:
+
+`npm publish`
 
 ## Contributing
 
