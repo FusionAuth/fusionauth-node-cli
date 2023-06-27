@@ -5,6 +5,9 @@ import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} fro
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
+import logUpdate     from "log-update";
+import logSymbols from "log-symbols";
+import chalk from "chalk";
 
 // To prevent multiple uploads from happening at once, we use a queue
 const q = new Queue({autostart: true, concurrency: 1});
@@ -41,7 +44,7 @@ export const themeWatch = new Command('theme:watch')
         })
             .on('all', (event, path) => {
                 q.push(async () => {
-                    console.log(`Uploading ${path}`);
+                    logUpdate(`Uploading ${path}`);
 
                     const theme: Partial<Theme> = {};
                     const content = await readFile(path, 'utf-8');
@@ -68,7 +71,12 @@ export const themeWatch = new Command('theme:watch')
                     try {
                         const fusionAuthClient = new FusionAuthClient(apiKey, host);
                         await fusionAuthClient.patchTheme(themeId, {theme});
+
+                        logUpdate(`Uploading ${path} - ` + chalk.green(`${logSymbols.success} Success`));
+                        logUpdate.done();
                     } catch (e) {
+                        logUpdate(`Uploading ${path} - ` + chalk.red(`${logSymbols.error} Failed`));
+                        logUpdate.done();
                         reportError(`Error uploading theme ${themeId}: `, e);
                     }
 

@@ -28,6 +28,8 @@
     "chokidar": "3.5.3",
     "commander": "10.0.1",
     "figlet": "1.6.0",
+    "log-symbols": "5.1.0",
+    "log-update": "5.0.1",
     "queue": "7.0.0"
   },
   "devDependencies": {
