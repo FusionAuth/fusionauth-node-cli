@@ -74,7 +74,10 @@ export type Options = {
     input: string,
     output: string,
     apiKey: string,
-    host: string,
+    host: string
+}
+
+export type ThemeOptions = Options & {
     types: TemplateType[]
 }
 
@@ -87,7 +90,6 @@ export const validateOptions = (options: any): Options => {
     const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    const types: TemplateType[] = options.types;
 
     if (!input && !output) {
         reportError('No input or output directory provided');
@@ -104,16 +106,29 @@ export const validateOptions = (options: any): Options => {
         process.exit(1);
     }
 
+    return {
+        input,
+        output,
+        apiKey,
+        host
+    }
+}
+
+/**
+ * Validates the theme options provided to the CLI and returns a valid options object
+ * @param options
+ */
+export const validateThemeOptions = (options: any): ThemeOptions => {
+    const base = validateOptions(options);
+    const types: TemplateType[] = options.types;
+
     if (!types.length) {
         reportError('No types provided');
         process.exit(1);
     }
 
     return {
-        input,
-        output,
-        apiKey,
-        host,
+        ...base,
         types
     }
 }

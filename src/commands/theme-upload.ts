@@ -3,7 +3,7 @@ import {FusionAuthClient, Templates, Theme} from '@fusionauth/typescript-client'
 import chalk from 'chalk';
 import {templateTypes} from '../template-types.js';
 import {readdir, readFile} from 'fs/promises';
-import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError, validateThemeOptions} from '../utils.js';
 
 export const themeUpload = new Command('theme:upload')
     .description('Upload a theme to FusionAuth')
@@ -13,7 +13,7 @@ export const themeUpload = new Command('theme:upload')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
     .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(templateTypes).default(templateTypes))
     .action(async (themeId, options) => {
-        const {input, apiKey, host, types} = validateOptions(options);
+        const {input, apiKey, host, types} = validateThemeOptions(options);
 
         console.log(`Uploading theme ${themeId} from ${input}`);
 
