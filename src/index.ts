@@ -16,7 +16,7 @@ const program = new Command();
 program
     .name('@fusionauth/cli')
     .description('CLI for FusionAuth')
-    .version('1.0.0');
+    .version("versionfrompackagejson");
 
 program.addCommand(themeDownload);
 program.addCommand(themeUpload);

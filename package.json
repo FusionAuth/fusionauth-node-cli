@@ -4,8 +4,9 @@
   "description": "FusionAuth CLI",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npx tsc",
+    "build": "npx tsc && npm run setVersionNumber",
     "start": "npx ts-node --esm src/index.ts",
+    "setVersionNumber": "sed -i \"s/versionfrompackagejson/$(jq -r .version package.json)/g\" ./dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run build"
   },
