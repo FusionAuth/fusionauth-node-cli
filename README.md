@@ -17,8 +17,8 @@ npx fusionauth --help;  # use
 
 You can install it globally for ease of use from anywhere, but global npm installations can potentially lead to conflicts:
 ```bash
-npm i -g @fusionauth/cli;
-fusionauth --help;
+npm i -g @fusionauth/cli; # install
+fusionauth --help;        # use
 ```
 
 Currently, the CLI supports the following commands:
@@ -53,7 +53,10 @@ To build this library locally:
 git clone https://github.com/FusionAuth/fusionauth-node-cli &&
 cd fusionauth-node-cli;
 npm install &&
-??
+npm run build;
+
+# now you can use it
+npx fusionauth --version;
 ```
 
 ## License
