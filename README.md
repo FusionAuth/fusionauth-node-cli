@@ -7,18 +7,18 @@ The FusionAuth CLI is a command line tool for interacting with FusionAuth. It is
 * A modern version of node (tested on 19)
 * A FusionAuth instance (download it here: https://fusionauth.io/download )
 
-## Installation
+## Installation & usage
 
-To install @fusionauth/cli, run the following command:
-
+To install and use @fusionauth/cli, run the following commands:
 ```bash
-npm i -g @fusionauth/cli
+npm i @fusionauth/cli;  # install
+npx fusionauth --help;  # use
 ```
 
-## Usage
-
+You can install it globally for ease of use from anywhere, but global npm installations can potentially lead to conflicts:
 ```bash
-fusionauth --help
+npm i -g @fusionauth/cli;
+fusionauth --help;
 ```
 
 Currently, the CLI supports the following commands:
@@ -47,6 +47,14 @@ To build and publish the package to the npm registry, run:
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub.
+
+To build this library locally:
+```bash
+git clone https://github.com/FusionAuth/fusionauth-node-cli &&
+cd fusionauth-node-cli;
+npm install &&
+??
+```
 
 ## License
 
