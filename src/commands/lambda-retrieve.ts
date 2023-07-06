@@ -68,7 +68,7 @@ const action = async function (themeId: string, options: any) {
     }
 }
 
-export const lambdaUpload = new Command('lambda:upload')
+export const lambdaRetrieve = new Command('lambda:retrieve')
     .description('Upload a lambda to FusionAuth')
     .argument('<themeId>', 'The theme id to upload')
     .option('-i, --input <input>', 'The input directory', './tpl/')

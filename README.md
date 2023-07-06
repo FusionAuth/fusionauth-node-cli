@@ -5,7 +5,7 @@ The FusionAuth CLI is a command line tool for interacting with FusionAuth. It is
 ## Requirements
 
 * A modern version of node (tested on 19)
-* A FusionAuth instance (download it here: https://fusionauth.io/download )
+* A FusionAuth instance (download it here: https://fusionauth.io/download)
 
 ## Installation & usage
 
@@ -15,16 +15,21 @@ npm i @fusionauth/cli;  # install
 npx fusionauth --help;  # use
 ```
 
-You can install it globally for ease of use from anywhere, but global npm installations can potentially lead to conflicts:
+You can install it globally for ease of use from anywhere, but global installations can potentially lead to conflicts and is not recommended:
 ```bash
 npm i -g @fusionauth/cli; # install
 fusionauth --help;        # use
 ```
 
 Currently, the CLI supports the following commands:
-- `fusionauth theme:download` - Download a theme from a FusionAuth server.
-- `fusionauth theme:upload` - Upload a theme to a FusionAuth server.
-- `fusionauth theme:watch` - Watch a theme directory and upload changes to a FusionAuth server.
+- Lambdas
+  - `fusionauth lambda:create` - Upload a lambda to a FusionAuth server.
+  - `fusionauth lambda:delete` - Delete a lambda from a FusionAuth server.
+  - `fusionauth lambda:retrieve` - Download a lambda from a FusionAuth server.
+- Themes
+  - `fusionauth theme:download` - Download a theme from a FusionAuth server.
+  - `fusionauth theme:upload` - Upload a theme to a FusionAuth server.
+  - `fusionauth theme:watch` - Watch a theme directory and upload changes to a FusionAuth server.
 
 ## Questions and support
 
