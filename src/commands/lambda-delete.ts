@@ -14,11 +14,11 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
         const fusionAuthClient = new FusionAuthClient(options.apiKey, options.host);
         const clientResponse = await fusionAuthClient.deleteLambda(lambdaId);
         if (!clientResponse.wasSuccessful())
-            util.errorAndExit(`Error deleting lamba ${lambdaId}: `, clientResponse);
-        console.log(chalk.green(`Lambda ${lambdaId} deleted`));
+            util.errorAndExit(`Error deleting lamba: `, clientResponse);
+        console.log(chalk.green(`Lambda deleted`));
     }
     catch (e: unknown) {
-        util.reportError(`Error deleting lamba ${lambdaId}:`, e);
+        util.reportError(`Error deleting lamba: `, e);
         process.exit(1);
     }
 }

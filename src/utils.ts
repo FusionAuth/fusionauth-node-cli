@@ -81,6 +81,16 @@ export const validateLambdaOptions = (options: types.CLILambdaOptions): types.La
 }
 
 /**
+ * Validates the options provided to the lambda CLI and returns a valid options object
+ * @param options The options to validate
+ */
+export const validateLambdaUpdateOptions = (options: types.CLILambdaUpdateOptions): types.LambdaUpdateOptions => {
+    const partial = validateLambdaOptions(options);
+    errorIfFalse(options.input, 'No input directory provided');
+    return { ...partial, input: options.input  };
+}
+
+/**
  * Validates the options provided to the theme CLI and returns a valid options object
  * @param options The options to validate
  */

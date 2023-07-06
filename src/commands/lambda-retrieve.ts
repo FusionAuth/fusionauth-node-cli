@@ -14,7 +14,7 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
         const fusionAuthClient = new FusionAuthClient(options.apiKey, options.host);
         const clientResponse = await fusionAuthClient.retrieveLambda(lambdaId);
         if (!clientResponse.wasSuccessful())
-            util.errorAndExit(`Error retrieving lamba ${lambdaId}: `, clientResponse);
+            util.errorAndExit(`Error retrieving lamba: `, clientResponse);
         if (!fs.existsSync(options.output))
             await mkdir(options.output);
         const filename = path.join(options.output, clientResponse.response.lambda?.id + ".json");
@@ -22,7 +22,7 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }
     catch (e: unknown) {
-        util.reportError(`Error retrieving lamba ${lambdaId}:`, e);
+        util.reportError(`Error retrieving lamba:`, e);
         process.exit(1);
     }
 }

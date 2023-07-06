@@ -1,7 +1,11 @@
 export type CLILambdaOptions = {
     key: string,
     host: string,
-    output: string,
+    output: string
+}
+
+export type CLILambdaUpdateOptions = CLILambdaOptions & {
+    input: string
 }
 
 export type CLIThemeOptions = CLILambdaOptions & {
@@ -12,7 +16,11 @@ export type CLIThemeOptions = CLILambdaOptions & {
 export type LambdaOptions = {
     apiKey: string,
     host: string,
-    output: string,
+    output: string
+}
+
+export type LambdaUpdateOptions = LambdaOptions & {
+    input: string
 }
 
 export type ThemeOptions = LambdaOptions & {
