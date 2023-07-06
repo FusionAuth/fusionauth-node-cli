@@ -1,7 +1,3 @@
-// Deleting a lambda cannot be done yet because the REST API provides no way of removing a lambda in use by an application.
-// When that is implemented you can enable the code below:
-
-/*
 import {Command} from 'commander';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
@@ -16,7 +12,6 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
     console.log(`Deleting lambda ${lambdaId} from ${options.host}`);
     try {
         const fusionAuthClient = new FusionAuthClient(options.apiKey, options.host);
-        // const clientResponse = await fusionAuthClient.removeLambdaFromApplication(lambdaId, applicationId);
         const clientResponse = await fusionAuthClient.deleteLambda(lambdaId);
         if (!clientResponse.wasSuccessful())
             util.errorAndExit(`Error deleting lamba ${lambdaId}: `, clientResponse);
@@ -34,4 +29,3 @@ export const lambdaDelete = new Command('lambda:delete')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
     .action(action);
-*/
