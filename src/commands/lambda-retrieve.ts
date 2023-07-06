@@ -17,8 +17,6 @@ const action = async function (lambdaId: string, options: types.CLILambdaOptions
         }
         console.log(chalk.green(`Lambda ${lambdaId} was retrieved. It is:`));
         console.log("");
-        console.dir(clientResponse.response);
-        console.log("");
         console.dir(clientResponse.response.lambda);
         console.log("");
     }

@@ -64,6 +64,8 @@ npm run build;
 npx fusionauth --version;
 ```
 
+To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.
+
 ## License
 
 This code is available as open source under the terms of the [Apache v2.0 License](https://opensource.org/licenses/Apache-2.0).
