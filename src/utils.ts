@@ -68,43 +68,32 @@ export const reportError = (msg: string, error?: any): void => {
 }
 
 /**
- * Validates the options provided to the CLI and returns a valid options object
+ * Validates the options provided to the lambda CLI and returns a valid options object
  * @param options The options to validate
  */
-export const validateOptions = (options: types.CLIOptions): types.Options => {
+export const validateLambdaOptions = (options: types.CLILambdaOptions): types.LambdaOptions => {
+    const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
+    const host = options.host ?? process.env.FUSIONAUTH_HOST;
+    errorIfFalse(host, 'No host provided');
+    errorIfFalse(apiKey, 'No API key provided');
+    return { apiKey: (apiKey as string), host: (host as string) };
+}
+
+/**
+ * Validates the options provided to the theme CLI and returns a valid options object
+ * @param options The options to validate
+ */
+export const validateThemeOptions = (options: types.CLIThemeOptions): types.ThemeOptions => {
     const input = options.input;
     const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
     const types: types.TemplateType[] = options.types;
-
-    if (!input && !output) {
-        reportError('No input or output directory provided');
-        process.exit(1);
-    }
-
-    if (!apiKey) {
-        reportError('No API key provided');
-        process.exit(1);
-    }
-
-    if (!host) {
-        reportError('No host provided');
-        process.exit(1);
-    }
-
-    if (!types.length) {
-        reportError('No types provided');
-        process.exit(1);
-    }
-
-    return {
-        input,
-        output,
-        apiKey,
-        host,
-        types
-    }
+    if (!input && !output) errorAndExit('No input or output directory provided')
+    errorIfFalse(apiKey, 'No API key provided');
+    errorIfFalse(host, 'No host provided');
+    errorIfFalse(types.length, 'No types provided');
+    return { input, output, apiKey: (apiKey as string), host: (host as string), types };
 }
 
 /**
@@ -115,4 +104,15 @@ export const getLocaleFromLocalizedMessageFileName = (path: string): string | un
     const matches = path.match(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/);
     if (!matches) return;
     return matches[1];
+}
+
+function errorIfFalse(value: unknown, message: string)
+{
+    if (!value) errorAndExit(message);
+}
+
+function errorAndExit(message: string)
+{
+    reportError(message);
+    process.exit(1);
 }

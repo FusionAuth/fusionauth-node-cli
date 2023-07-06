@@ -3,10 +3,10 @@ import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 import {readdir, readFile} from 'fs/promises';
 import * as types from '../types.js';
-import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError, validateLambdaOptions} from '../utils.js';
 
-const action = async function (lambdaId: string, options: types.CLIOptions) {
-    const {apiKey, host} = validateOptions(options);
+const action = async function (lambdaId: string, options: types.CLILambdaOptions) {
+    const {apiKey, host} = validateLambdaOptions(options);
     console.log(`Retrieving lambda ${lambdaId} from ${host}`);
     try {
         const fusionAuthClient = new FusionAuthClient(apiKey, host);

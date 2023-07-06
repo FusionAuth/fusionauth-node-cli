@@ -1,16 +1,22 @@
-export type CLIOptions = {
-    input: string,
-    output: string,
+export type CLILambdaOptions = {
     key?: string,
     host?: string,
+}
+
+export type CLIThemeOptions = CLILambdaOptions & {
+    input: string,
+    output: string,
     types: TemplateType[]
 }
 
-export type Options = {
-    input: string,
-    output: string,
+export type LambdaOptions = {
     apiKey: string,
     host: string,
+}
+
+export type ThemeOptions = LambdaOptions & {
+    input: string,
+    output: string,
     types: TemplateType[]
 }
 

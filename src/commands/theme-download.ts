@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import {mkdir, writeFile} from 'fs/promises';
 import * as types from '../types.js';
-import {reportError, validateOptions} from '../utils.js';
+import {reportError, validateThemeOptions} from '../utils.js';
 
 export const themeDownload = new Command('theme:download')
     .description('Download a theme from FusionAuth')
@@ -13,8 +13,8 @@ export const themeDownload = new Command('theme:download')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
     .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(types.templateTypes).default(types.templateTypes))
-    .action(async (themeId: string, options: types.CLIOptions) => {
-        const {output, apiKey, host, types} = validateOptions(options);
+    .action(async (themeId: string, options: types.CLIThemeOptions) => {
+        const {output, apiKey, host, types} = validateThemeOptions(options);
 
         console.log(`Downloading theme ${themeId} to ${output}`);
 

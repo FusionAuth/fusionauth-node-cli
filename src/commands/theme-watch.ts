@@ -1,7 +1,7 @@
 import {Command, Option} from 'commander';
 import * as types from '../types.js';
 import {watch} from 'chokidar';
-import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError, validateThemeOptions} from '../utils.js';
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
@@ -19,8 +19,8 @@ export const themeWatch = new Command('theme:watch')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
     .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(types.templateTypes).default(types.templateTypes))
-    .action((themeId: string, options: types.CLIOptions) => {
-        const {input, apiKey, host, types} = validateOptions(options);
+    .action((themeId: string, options: types.CLIThemeOptions) => {
+        const {input, apiKey, host, types} = validateThemeOptions(options);
 
         console.log(`Watching theme directory ${input} for changes and uploading to ${themeId}`);
 
