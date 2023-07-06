@@ -1,4 +1,4 @@
-import {Command, Option} from 'commander';
+import {Command} from 'commander';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 import * as fs from 'fs';
