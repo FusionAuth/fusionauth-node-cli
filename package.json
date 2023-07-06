@@ -5,11 +5,11 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "npx tsc && npm run setVersionNumber && npm run makeIndexJsExecutable",
+    "prepublishOnly": "npm run build",
     "start": "npx ts-node --esm src/index.ts",
-    "makeIndexJsExecutable": "chmod +x ./dist/index.js",
-    "setVersionNumber": "sed -i \"s/versionfrompackagejson/$(jq -r .version package.json)/g\" ./dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublishOnly": "npm run build"
+    "makeIndexJsExecutable": "chmod +x ./dist/index.js",
+    "setVersionNumber": "sed -i \"s/versionfrompackagejson/$(jq -r .version package.json)/g\" ./dist/index.js"
   },
   "keywords": [
     "fusionauth",
