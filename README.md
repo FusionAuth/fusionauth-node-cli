@@ -11,14 +11,14 @@ The FusionAuth CLI is a command line tool for interacting with FusionAuth. It is
 
 To install and use @fusionauth/cli, run the following commands:
 ```bash
-npm i @fusionauth/cli;  # install
-npx fusionauth --help;  # use
+npm i @fusionauth/cli;
+npx fusionauth --help;
 ```
 
-You can install it globally for ease of use from anywhere, but global installations can potentially lead to conflicts and is not recommended:
+You can install it globally for ease of use from anywhere, but global installations can potentially lead to conflicts and are not recommended:
 ```bash
-npm i -g @fusionauth/cli; # install
-fusionauth --help;        # use
+npm i -g @fusionauth/cli;
+fusionauth --help;
 ```
 
 Currently, the CLI supports the following commands:
