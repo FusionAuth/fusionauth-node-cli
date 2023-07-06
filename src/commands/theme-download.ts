@@ -3,7 +3,7 @@ import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import {mkdir, writeFile} from 'fs/promises';
-import {templateTypes} from '../template-types.js';
+import * as types from '../types.js';
 import {reportError, validateOptions} from '../utils.js';
 
 export const themeDownload = new Command('theme:download')
@@ -12,8 +12,8 @@ export const themeDownload = new Command('theme:download')
     .option('-o, --output <output>', 'The output directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(templateTypes).default(templateTypes))
-    .action(async (themeId, options) => {
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(types.templateTypes).default(types.templateTypes))
+    .action(async (themeId: string, options: types.CLIOptions) => {
         const {output, apiKey, host, types} = validateOptions(options);
 
         console.log(`Downloading theme ${themeId} to ${output}`);

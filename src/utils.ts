@@ -1,7 +1,7 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {TemplateType} from './template-types.js';
+import * as types from './types.js';
 
 /**
  * Checks if the response is a client response
@@ -68,26 +68,15 @@ export const reportError = (msg: string, error?: any): void => {
 }
 
 /**
- * Options for the CLI
- */
-export type Options = {
-    input: string,
-    output: string,
-    apiKey: string,
-    host: string,
-    types: TemplateType[]
-}
-
-/**
  * Validates the options provided to the CLI and returns a valid options object
  * @param options The options to validate
  */
-export const validateOptions = (options: any): Options => {
+export const validateOptions = (options: types.CLIOptions): types.Options => {
     const input = options.input;
     const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    const types: TemplateType[] = options.types;
+    const types: types.TemplateType[] = options.types;
 
     if (!input && !output) {
         reportError('No input or output directory provided');

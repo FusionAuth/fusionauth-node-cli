@@ -1,5 +1,5 @@
 import {Command, Option} from 'commander';
-import {templateTypes} from '../template-types.js';
+import * as types from '../types.js';
 import {watch} from 'chokidar';
 import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
 import Queue from 'queue';
@@ -18,8 +18,8 @@ export const themeWatch = new Command('theme:watch')
     .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(templateTypes).default(templateTypes))
-    .action((themeId, options) => {
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(types.templateTypes).default(types.templateTypes))
+    .action((themeId: string, options: types.CLIOptions) => {
         const {input, apiKey, host, types} = validateOptions(options);
 
         console.log(`Watching theme directory ${input} for changes and uploading to ${themeId}`);

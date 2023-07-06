@@ -1,11 +1,11 @@
 import {Command, Option} from 'commander';
 import {FusionAuthClient, Templates, Theme} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {templateTypes} from '../template-types.js';
+import * as types from '../types.js';
 import {readdir, readFile} from 'fs/promises';
 import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
 
-const action = async function (themeId: string, options: any) {
+const action = async function (themeId: string, options: types.CLIOptions) {
     const {input, apiKey, host, types} = validateOptions(options);
 
     console.log(`Uploading theme ${themeId} from ${input}`);
@@ -74,5 +74,5 @@ export const lambdaDelete = new Command('lambda:delete')
     .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(templateTypes).default(templateTypes))
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(types.templateTypes).default(types.templateTypes))
     .action(action);
