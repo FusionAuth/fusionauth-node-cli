@@ -1,24 +1,24 @@
 export type CLILambdaOptions = {
-    key?: string,
-    host?: string,
+    key: string,
+    host: string,
+    output: string,
 }
 
 export type CLIThemeOptions = CLILambdaOptions & {
     input: string,
-    output: string,
-    types: TemplateType[]
+    types: ThemeTemplateType[]
 }
 
 export type LambdaOptions = {
     apiKey: string,
     host: string,
+    output: string,
 }
 
 export type ThemeOptions = LambdaOptions & {
     input: string,
-    output: string,
-    types: TemplateType[]
+    types: ThemeTemplateType[]
 }
 
-export const templateTypes = ['templates', 'messages', 'stylesheet'] as const;
-export type TemplateType = typeof templateTypes[number];
+export const themeTemplateTypes = ['templates', 'messages', 'stylesheet'] as const;
+export type ThemeTemplateType = typeof themeTemplateTypes[number];

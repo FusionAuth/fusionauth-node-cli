@@ -72,11 +72,12 @@ export const reportError = (msg: string, error?: any): void => {
  * @param options The options to validate
  */
 export const validateLambdaOptions = (options: types.CLILambdaOptions): types.LambdaOptions => {
+    const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
     errorIfFalse(host, 'No host provided');
     errorIfFalse(apiKey, 'No API key provided');
-    return { apiKey: (apiKey as string), host: (host as string) };
+    return { apiKey, host, output };
 }
 
 /**
@@ -88,12 +89,12 @@ export const validateThemeOptions = (options: types.CLIThemeOptions): types.Them
     const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    const types: types.TemplateType[] = options.types;
+    const types: types.ThemeTemplateType[] = options.types;
     if (!input && !output) errorAndExit('No input or output directory provided')
     errorIfFalse(apiKey, 'No API key provided');
     errorIfFalse(host, 'No host provided');
     errorIfFalse(types.length, 'No types provided');
-    return { input, output, apiKey: (apiKey as string), host: (host as string), types };
+    return { input, output, apiKey, host, types };
 }
 
 /**
@@ -106,13 +107,19 @@ export const getLocaleFromLocalizedMessageFileName = (path: string): string | un
     return matches[1];
 }
 
-function errorIfFalse(value: unknown, message: string)
-{
+export function toString(item:  String | undefined): string {
+    return (item ?? "").toString();
+}
+
+export function toJson(item: Object | undefined): string {
+    return JSON.stringify(item ?? "", null, 4)
+}
+
+function errorIfFalse(value:  Object | undefined, message: string) {
     if (!value) errorAndExit(message);
 }
 
-function errorAndExit(message: string)
-{
-    reportError(message);
+export function errorAndExit(message: string, error?: any) {
+    reportError(message, error);
     process.exit(1);
 }

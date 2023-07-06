@@ -18,7 +18,7 @@ export const themeWatch = new Command('theme:watch')
     .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(types.templateTypes).default(types.templateTypes))
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(types.themeTemplateTypes).default(types.themeTemplateTypes))
     .action((themeId: string, options: types.CLIThemeOptions) => {
         const {input, apiKey, host, types} = validateThemeOptions(options);
 

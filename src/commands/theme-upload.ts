@@ -11,7 +11,7 @@ export const themeUpload = new Command('theme:upload')
     .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(types.templateTypes).default(types.templateTypes))
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(types.themeTemplateTypes).default(types.themeTemplateTypes))
     .action(async (themeId: string, options: types.CLIThemeOptions) => {
         const {input, apiKey, host, types} = validateThemeOptions(options);
 

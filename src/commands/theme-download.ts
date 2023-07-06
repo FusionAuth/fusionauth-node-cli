@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import {mkdir, writeFile} from 'fs/promises';
 import * as types from '../types.js';
-import {reportError, validateThemeOptions} from '../utils.js';
+import {reportError, validateThemeOptions, toString} from '../utils.js';
 
 export const themeDownload = new Command('theme:download')
     .description('Download a theme from FusionAuth')
@@ -12,7 +12,7 @@ export const themeDownload = new Command('theme:download')
     .option('-o, --output <output>', 'The output directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(types.templateTypes).default(types.templateTypes))
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(types.themeTemplateTypes).default(types.themeTemplateTypes))
     .action(async (themeId: string, options: types.CLIThemeOptions) => {
         const {output, apiKey, host, types} = validateThemeOptions(options);
 
@@ -39,11 +39,11 @@ export const themeDownload = new Command('theme:download')
             }
 
             if (types.includes('stylesheet')) {
-                await writeFile(`${output}/stylesheet.css`, stylesheet ?? '');
+                await writeFile(`${output}/stylesheet.css`, toString(stylesheet));
             }
 
             if (types.includes('messages')) {
-                await writeFile(`${output}/defaultMessages.txt`, defaultMessages ?? '');
+                await writeFile(`${output}/defaultMessages.txt`, toString(defaultMessages));
 
                 for await (const [locale, messages] of Object.entries(localizedMessages ?? {})) {
                     await writeFile(`${output}/localizedMessages.${locale}.txt`, messages ?? '');
