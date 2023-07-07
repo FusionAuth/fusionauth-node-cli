@@ -22,8 +22,7 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }
     catch (e: unknown) {
-        util.reportError(`Error retrieving lamba:`, e);
-        process.exit(1);
+        util.errorAndExit(`Error retrieving lamba:`, e);
     }
 }
 

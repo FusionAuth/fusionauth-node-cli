@@ -18,12 +18,11 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaUpda
         const fusionAuthClient = new FusionAuthClient(options.apiKey, options.host);
         const clientResponse = await fusionAuthClient.updateLambda(lambdaId, request);
         if (!clientResponse.wasSuccessful())
-            util.errorAndExit(`Error updating lamba ${lambdaId}: `, clientResponse);
+            util.errorAndExit(`Error updating lamba: `, clientResponse);
         console.log(chalk.green(`Lambda updated`));
     }
     catch (e: unknown) {
-        util.reportError(`Error updating lamba: `, e);
-        process.exit(1);
+        util.errorAndExit(`Error updating lamba: `, e);
     }
 }
 

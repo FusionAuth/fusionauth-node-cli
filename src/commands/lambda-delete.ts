@@ -18,8 +18,7 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
         console.log(chalk.green(`Lambda deleted`));
     }
     catch (e: unknown) {
-        util.reportError(`Error deleting lamba: `, e);
-        process.exit(1);
+        util.errorAndExit(`Error deleting lamba: `, e);
     }
 }
 
