@@ -209,5 +209,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Test directory for templates
+# FusionAuth data folders
 /tpl/
+lambdas/

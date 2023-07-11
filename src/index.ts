@@ -3,7 +3,7 @@
 import figlet from 'figlet';
 import {Command} from 'commander';
 import chalk from 'chalk';
-import {themeDownload, themeUpload, themeWatch} from './commands/index.js';
+import * as commands from './commands/index.js';
 
 const fusionString = figlet.textSync('Fusion').split('\n');
 const authString = figlet.textSync('Auth').split('\n');
@@ -16,10 +16,6 @@ const program = new Command();
 program
     .name('@fusionauth/cli')
     .description('CLI for FusionAuth')
-    .version('1.0.0');
-
-program.addCommand(themeDownload);
-program.addCommand(themeUpload);
-program.addCommand(themeWatch);
-
+    .version("versionfrompackagejson");
+Object.values(commands).forEach(command => program.addCommand(command));
 program.parse();
