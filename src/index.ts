@@ -3,7 +3,17 @@
 import figlet from 'figlet';
 import {Command} from 'commander';
 import chalk from 'chalk';
-import {themeDownload, themeUpload, themeWatch} from './commands/index.js';
+import {
+    emailCreate,
+    emailDownload,
+    emailDuplicate,
+    emailHtmlToText,
+    emailUpload,
+    emailWatch,
+    themeDownload,
+    themeUpload,
+    themeWatch
+} from './commands/index.js';
 
 const fusionString = figlet.textSync('Fusion').split('\n');
 const authString = figlet.textSync('Auth').split('\n');
@@ -18,6 +28,15 @@ program
     .description('CLI for FusionAuth')
     .version('1.0.0');
 
+// Add email commands
+program.addCommand(emailCreate);
+program.addCommand(emailDownload);
+program.addCommand(emailDuplicate);
+program.addCommand(emailHtmlToText);
+program.addCommand(emailUpload);
+program.addCommand(emailWatch);
+
+// Add theme commands
 program.addCommand(themeDownload);
 program.addCommand(themeUpload);
 program.addCommand(themeWatch);

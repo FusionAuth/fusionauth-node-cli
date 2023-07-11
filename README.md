@@ -5,7 +5,7 @@ The FusionAuth CLI is a command line tool for interacting with FusionAuth. It is
 ## Requirements
 
 * A modern version of node (tested on 19)
-* A FusionAuth instance (download it here: https://fusionauth.io/download )
+* A FusionAuth instance (download it here: https://fusionauth.io/download)
 
 ## Installation
 
@@ -22,9 +22,18 @@ fusionauth --help
 ```
 
 Currently, the CLI supports the following commands:
+- `fusionauth email:create` - Create a new email template locally.
+- `fusionauth email:download` - Download a specific template or all email templates from a FusionAuth server.
+- `fusionauth email:duplicate` - Duplicate an email template locally.
+- `fusionauth email:html-to-text` - Convert HTML email templates to text, where the text template is missing.
+- `fusionauth email:upload` - Upload a specific template or all email templates to a FusionAuth server.
+- `fusionauth email:watch` - Watch the email template directory and upload changes to a FusionAuth server.
 - `fusionauth theme:download` - Download a theme from a FusionAuth server.
 - `fusionauth theme:upload` - Upload a theme to a FusionAuth server.
 - `fusionauth theme:watch` - Watch a theme directory and upload changes to a FusionAuth server.
+
+Instead of supplying the API key with the `-k` option on every command, you can set the `FUSIONAUTH_API_KEY` environment variable.
+The same goes for the host URL option `-h`, which can be set with the `FUSIONAUTH_HOST` environment variable.
 
 ## Questions and support
 

@@ -77,24 +77,29 @@ export type Options = {
     host: string
 }
 
+/**
+ * Options for theme commands
+ */
 export type ThemeOptions = Options & {
     types: TemplateType[]
 }
 
 /**
- * Validates the options provided to the CLI and returns a valid options object
- * @param options The options to validate
+ * Options for email commands
  */
-export const validateOptions = (options: any): Options => {
-    const input = options.input;
-    const output = options.output;
+export type EmailOptions = Options & {
+    clean: boolean,
+    overwrite: boolean,
+    create: boolean
+};
+
+/**
+ * Validates the host and API key options provided to the CLI and returns a valid options object
+ * @param options
+ */
+export const validateHostKeyOptions = (options: any): Pick<Options, 'apiKey' | 'host'> => {
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
-
-    if (!input && !output) {
-        reportError('No input or output directory provided');
-        process.exit(1);
-    }
 
     if (!apiKey) {
         reportError('No API key provided');
@@ -107,10 +112,28 @@ export const validateOptions = (options: any): Options => {
     }
 
     return {
-        input,
-        output,
         apiKey,
         host
+    }
+}
+
+/**
+ * Validates the options provided to the CLI and returns a valid options object
+ * @param options The options to validate
+ */
+export const validateOptions = (options: any): Options => {
+    const input = options.input;
+    const output = options.output;
+
+    if (!input && !output) {
+        reportError('No input or output directory provided');
+        process.exit(1);
+    }
+
+    return {
+        ...validateHostKeyOptions(options),
+        input,
+        output
     }
 }
 
@@ -134,11 +157,54 @@ export const validateThemeOptions = (options: any): ThemeOptions => {
 }
 
 /**
+ * Validates the email options provided to the CLI and returns a valid options object
+ * @param options
+ */
+export const validateEmailOptions = (options: any): EmailOptions => {
+    const base = validateOptions(options);
+    const clean: boolean = options.clean;
+    const overwrite: boolean = options.overwrite;
+    const create: boolean = options.create;
+
+    return {
+        ...base,
+        clean,
+        overwrite,
+        create
+    }
+}
+
+/**
+ * Returns the error message for a given email template id
+ * @param action
+ * @param emailTemplateId
+ */
+export const getEmailErrorMessage = (action: string, emailTemplateId: string | undefined) => {
+    let templateIdMessage = 'templates';
+    if (emailTemplateId) {
+        templateIdMessage = `template ${emailTemplateId}`
+    }
+    return `Error ${action} email ${templateIdMessage}`
+}
+
+/**
+ * Returns the success message for a given email template id
+ * @param emailTemplateId
+ * @param output
+ */
+export const getEmailSuccessMessage = (emailTemplateId: string | undefined, output: string) => {
+    let templateIdMessage = 'templates';
+    if (emailTemplateId) {
+        templateIdMessage = `template ${emailTemplateId}`
+    }
+    return `Successfully downloaded email ${templateIdMessage} to ${output}`;
+}
+
+/**
  * Gets the locale from a path
  * @param path
  */
-export const getLocaleFromLocalizedMessageFileName = (path: string): string | undefined => {
-    const matches = path.match(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/);
-    if (!matches) return;
-    return matches[1];
+export const getLocaleFromLocalizedMessageFileName = function getLocaleFromPath(path: string): string | undefined {
+    const matches = RegExp(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/).exec(path);
+    return matches ? matches[1] : undefined;
 }
