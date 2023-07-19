@@ -1,5 +1,5 @@
 import {Command} from 'commander';
-import {FusionAuthClient, LambdaRequest} from '@fusionauth/typescript-client';
+import {FusionAuthClient} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
 import chalk from 'chalk';
 import {join} from 'path';
