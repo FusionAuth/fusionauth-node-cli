@@ -1,8 +1,8 @@
 import {Command} from 'commander';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import * as fs from 'fs';
-import * as path from 'path';
+import {existsSync} from 'fs';
+import {join} from 'path';
 import {mkdir, writeFile} from 'fs/promises';
 import * as types from '../types.js';
 import * as util from '../utils.js';
@@ -15,9 +15,9 @@ const action = async function (lambdaId: string, clioptions: types.CLILambdaOpti
         const clientResponse = await fusionAuthClient.retrieveLambda(lambdaId);
         if (!clientResponse.wasSuccessful())
             util.errorAndExit(`Error retrieving lamba: `, clientResponse);
-        if (!fs.existsSync(options.output))
+        if (!existsSync(options.output))
             await mkdir(options.output);
-        const filename = path.join(options.output, clientResponse.response.lambda?.id + ".json");
+        const filename = join(options.output, clientResponse.response.lambda?.id + ".json");
         await writeFile(filename, util.toJson(clientResponse.response.lambda));
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }

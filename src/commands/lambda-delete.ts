@@ -1,9 +1,6 @@
 import {Command} from 'commander';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import * as fs from 'fs';
-import * as path from 'path';
-import {mkdir, writeFile} from 'fs/promises';
 import * as types from '../types.js';
 import * as util from '../utils.js';
 

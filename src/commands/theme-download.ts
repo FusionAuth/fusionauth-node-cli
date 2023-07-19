@@ -1,7 +1,7 @@
 import {Command, Option} from 'commander';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import * as fs from 'fs';
+import {existsSync} from 'fs';
 import {mkdir, writeFile} from 'fs/promises';
 import * as types from '../types.js';
 import {reportError, validateThemeOptions, toString} from '../utils.js';
@@ -34,7 +34,7 @@ export const themeDownload = new Command('theme:download')
 
             const {templates, stylesheet, defaultMessages, localizedMessages} = theme.response.theme;
 
-            if (!fs.existsSync(output)) {
+            if (!existsSync(output)) {
                 await mkdir(output);
             }
 

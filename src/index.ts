@@ -16,6 +16,6 @@ const program = new Command();
 program
     .name('@fusionauth/cli')
     .description('CLI for FusionAuth')
-    .version("versionfrompackagejson");
+    .version('1.1.1');
 Object.values(commands).forEach(command => program.addCommand(command));
 program.parse();

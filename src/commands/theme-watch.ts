@@ -5,7 +5,7 @@ import {getLocaleFromLocalizedMessageFileName, reportError, validateThemeOptions
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
-import logUpdate     from "log-update";
+import logUpdate from "log-update";
 import logSymbols from "log-symbols";
 import chalk from "chalk";
 

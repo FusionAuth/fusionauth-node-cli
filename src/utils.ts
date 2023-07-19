@@ -75,8 +75,8 @@ export const validateLambdaOptions = (options: types.CLILambdaOptions): types.La
     const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    errorIfFalse(host, 'No host provided');
-    errorIfFalse(apiKey, 'No API key provided');
+    errorIfFalsy(host, 'No host provided');
+    errorIfFalsy(apiKey, 'No API key provided');
     return { apiKey, host, output };
 }
 
@@ -86,7 +86,7 @@ export const validateLambdaOptions = (options: types.CLILambdaOptions): types.La
  */
 export const validateLambdaUpdateOptions = (options: types.CLILambdaUpdateOptions): types.LambdaUpdateOptions => {
     const partial = validateLambdaOptions(options);
-    errorIfFalse(options.input, 'No input directory provided');
+    errorIfFalsy(options.input, 'No input directory provided');
     return { ...partial, input: options.input  };
 }
 
@@ -101,9 +101,9 @@ export const validateThemeOptions = (options: types.CLIThemeOptions): types.Them
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
     const types: types.ThemeTemplateType[] = options.types;
     if (!input && !output) errorAndExit('No input or output directory provided')
-    errorIfFalse(apiKey, 'No API key provided');
-    errorIfFalse(host, 'No host provided');
-    errorIfFalse(types.length, 'No types provided');
+    errorIfFalsy(apiKey, 'No API key provided');
+    errorIfFalsy(host, 'No host provided');
+    errorIfFalsy(types.length, 'No types provided');
     return { input, output, apiKey, host, types };
 }
 
@@ -125,7 +125,7 @@ export function toJson(item: Object | undefined): string {
     return JSON.stringify(item ?? "", null, 4)
 }
 
-function errorIfFalse(value:  Object | undefined, message: string) {
+function errorIfFalsy(value:  Object | undefined, message: string) {
     if (!value) errorAndExit(message);
 }
 

@@ -4,12 +4,10 @@
   "description": "FusionAuth CLI",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npx tsc && npm run setVersionNumber && npm run makeIndexJsExecutable",
+    "build": "tsc",
     "prepublishOnly": "npm run build",
-    "start": "npx ts-node --esm src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "makeIndexJsExecutable": "chmod +x ./dist/index.js",
-    "setVersionNumber": "sed -i \"s/versionfrompackagejson/$(jq -r .version package.json)/g\" ./dist/index.js"
+    "start": "ts-node --esm  src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "fusionauth",
