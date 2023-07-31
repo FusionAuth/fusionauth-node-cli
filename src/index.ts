@@ -1,19 +1,11 @@
-#! /usr/bin/env node
+#! /usr/bin/env -S node --no-warnings=ExperimentalWarning
 
 import figlet from 'figlet';
-import {Command} from 'commander';
+import {Command} from '@commander-js/extra-typings';
 import chalk from 'chalk';
-import {
-    emailCreate,
-    emailDownload,
-    emailDuplicate,
-    emailHtmlToText,
-    emailUpload,
-    emailWatch,
-    themeDownload,
-    themeUpload,
-    themeWatch
-} from './commands/index.js';
+import * as commands from './commands/index.js';
+// @ts-ignore
+import pkg from '../package.json' assert { type: 'json' };
 
 const fusionString = figlet.textSync('Fusion').split('\n');
 const authString = figlet.textSync('Auth').split('\n');
@@ -26,19 +18,8 @@ const program = new Command();
 program
     .name('@fusionauth/cli')
     .description('CLI for FusionAuth')
-    .version('1.0.0');
+    .version(pkg.version);
 
-// Add email commands
-program.addCommand(emailCreate);
-program.addCommand(emailDownload);
-program.addCommand(emailDuplicate);
-program.addCommand(emailHtmlToText);
-program.addCommand(emailUpload);
-program.addCommand(emailWatch);
-
-// Add theme commands
-program.addCommand(themeDownload);
-program.addCommand(themeUpload);
-program.addCommand(themeWatch);
+Object.values(commands).forEach(command => program.addCommand(command));
 
 program.parse();

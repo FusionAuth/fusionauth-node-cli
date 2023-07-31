@@ -1,7 +1,6 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {TemplateType} from './template-types.js';
 
 /**
  * Checks if the response is a client response
@@ -64,147 +63,40 @@ export const reportError = (msg: string, error?: any): void => {
         return;
     }
 
-    console.error(chalk.red(JSON.stringify(error)));
-}
-
-/**
- * Options for the CLI
- */
-export type Options = {
-    input: string,
-    output: string,
-    apiKey: string,
-    host: string
-}
-
-/**
- * Options for theme commands
- */
-export type ThemeOptions = Options & {
-    types: TemplateType[]
-}
-
-/**
- * Options for email commands
- */
-export type EmailOptions = Options & {
-    clean: boolean,
-    overwrite: boolean,
-    create: boolean
-};
-
-/**
- * Validates the host and API key options provided to the CLI and returns a valid options object
- * @param options
- */
-export const validateHostKeyOptions = (options: any): Pick<Options, 'apiKey' | 'host'> => {
-    const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
-    const host = options.host ?? process.env.FUSIONAUTH_HOST;
-
-    if (!apiKey) {
-        reportError('No API key provided');
-        process.exit(1);
-    }
-
-    if (!host) {
-        reportError('No host provided');
-        process.exit(1);
-    }
-
-    return {
-        apiKey,
-        host
-    }
-}
-
-/**
- * Validates the options provided to the CLI and returns a valid options object
- * @param options The options to validate
- */
-export const validateOptions = (options: any): Options => {
-    const input = options.input;
-    const output = options.output;
-
-    if (!input && !output) {
-        reportError('No input or output directory provided');
-        process.exit(1);
-    }
-
-    return {
-        ...validateHostKeyOptions(options),
-        input,
-        output
-    }
-}
-
-/**
- * Validates the theme options provided to the CLI and returns a valid options object
- * @param options
- */
-export const validateThemeOptions = (options: any): ThemeOptions => {
-    const base = validateOptions(options);
-    const types: TemplateType[] = options.types;
-
-    if (!types.length) {
-        reportError('No types provided');
-        process.exit(1);
-    }
-
-    return {
-        ...base,
-        types
-    }
-}
-
-/**
- * Validates the email options provided to the CLI and returns a valid options object
- * @param options
- */
-export const validateEmailOptions = (options: any): EmailOptions => {
-    const base = validateOptions(options);
-    const clean: boolean = options.clean;
-    const overwrite: boolean = options.overwrite;
-    const create: boolean = options.create;
-
-    return {
-        ...base,
-        clean,
-        overwrite,
-        create
-    }
-}
-
-/**
- * Returns the error message for a given email template id
- * @param action
- * @param emailTemplateId
- */
-export const getEmailErrorMessage = (action: string, emailTemplateId: string | undefined) => {
-    let templateIdMessage = 'templates';
-    if (emailTemplateId) {
-        templateIdMessage = `template ${emailTemplateId}`
-    }
-    return `Error ${action} email ${templateIdMessage}`
-}
-
-/**
- * Returns the success message for a given email template id
- * @param emailTemplateId
- * @param output
- */
-export const getEmailSuccessMessage = (emailTemplateId: string | undefined, output: string) => {
-    let templateIdMessage = 'templates';
-    if (emailTemplateId) {
-        templateIdMessage = `template ${emailTemplateId}`
-    }
-    return `Successfully downloaded email ${templateIdMessage} to ${output}`;
+    console.error(chalk.red(toJson(error)));
 }
 
 /**
  * Gets the locale from a path
  * @param path
  */
-export const getLocaleFromLocalizedMessageFileName = function getLocaleFromPath(path: string): string | undefined {
-    const matches = RegExp(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/).exec(path);
-    return matches ? matches[1] : undefined;
+export const getLocaleFromLocalizedMessageFileName = (path: string): string | undefined => {
+    const matches = path.match(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/);
+    if (!matches) return;
+    return matches[1];
+}
+
+/**
+ * Returns the given item if it is not undefined, otherwise returns an empty string
+ */
+export function toString(item: string | undefined): string {
+    return item ?? '';
+}
+
+/**
+ * Returns the given object as a JSON string
+ * @param item The item to convert to JSON
+ */
+export function toJson(item: unknown): string {
+    return JSON.stringify(item ?? {}, null, 4)
+}
+
+/**
+ * Reports an error and exits the process
+ * @param message
+ * @param error
+ */
+export function errorAndExit(message: string, error?: any) {
+    reportError(message, error);
+    process.exit(1);
 }

@@ -1,20 +1,19 @@
-import {Command, Option} from 'commander';
+import {Command} from '@commander-js/extra-typings';
 import {FusionAuthClient, Templates, Theme} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {templateTypes} from '../template-types.js';
 import {readdir, readFile} from 'fs/promises';
-import {getLocaleFromLocalizedMessageFileName, reportError, validateThemeOptions} from '../utils.js';
+import {errorAndExit, getLocaleFromLocalizedMessageFileName} from '../utils.js';
+import {apiKeyOption, hostOption, themeTypeOption} from "../options.js";
 
+// noinspection JSUnusedGlobalSymbols
 export const themeUpload = new Command('theme:upload')
     .description('Upload a theme to FusionAuth')
     .argument('<themeId>', 'The theme id to upload')
     .option('-i, --input <input>', 'The input directory', './tpl/')
-    .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to upload').choices(templateTypes).default(templateTypes))
-    .action(async (themeId, options) => {
-        const {input, apiKey, host, types} = validateThemeOptions(options);
-
+    .addOption(apiKeyOption)
+    .addOption(hostOption)
+    .addOption(themeTypeOption)
+    .action(async (themeId: string, {input, key: apiKey, host, types}) => {
         console.log(`Uploading theme ${themeId} from ${input}`);
 
         try {
@@ -23,8 +22,7 @@ export const themeUpload = new Command('theme:upload')
                 .retrieveTheme(themeId);
 
             if (!clientResponse.wasSuccessful()) {
-                reportError(`Error uploading theme ${themeId}: `, clientResponse);
-                process.exit(1);
+                return errorAndExit(`Error uploading theme ${themeId}: `, clientResponse);
             }
 
             const templates = Object.keys(clientResponse.response.theme?.templates ?? {});
@@ -70,7 +68,6 @@ export const themeUpload = new Command('theme:upload')
             await fusionAuthClient.patchTheme(themeId, {theme});
             console.log(chalk.green(`Theme ${themeId} was uploaded successfully`));
         } catch (e: any) {
-            reportError(`Error uploading theme ${themeId}:`, e);
-            process.exit(1);
+            errorAndExit(`Error uploading theme ${themeId}: `, e);
         }
     });
