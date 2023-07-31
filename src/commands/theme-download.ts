@@ -1,10 +1,10 @@
 import {Command, Option} from 'commander';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import * as fs from 'fs';
+import {existsSync} from 'fs';
 import {mkdir, writeFile} from 'fs/promises';
-import {templateTypes} from '../template-types.js';
-import {reportError, validateOptions} from '../utils.js';
+import * as types from '../types.js';
+import {reportError, validateThemeOptions, toString} from '../utils.js';
 
 export const themeDownload = new Command('theme:download')
     .description('Download a theme from FusionAuth')
@@ -12,9 +12,9 @@ export const themeDownload = new Command('theme:download')
     .option('-o, --output <output>', 'The output directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(templateTypes).default(templateTypes))
-    .action(async (themeId, options) => {
-        const {output, apiKey, host, types} = validateOptions(options);
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to download').choices(types.themeTemplateTypes).default(types.themeTemplateTypes))
+    .action(async (themeId: string, options: types.CLIThemeOptions) => {
+        const {output, apiKey, host, types} = validateThemeOptions(options);
 
         console.log(`Downloading theme ${themeId} to ${output}`);
 
@@ -34,16 +34,16 @@ export const themeDownload = new Command('theme:download')
 
             const {templates, stylesheet, defaultMessages, localizedMessages} = theme.response.theme;
 
-            if (!fs.existsSync(output)) {
+            if (!existsSync(output)) {
                 await mkdir(output);
             }
 
             if (types.includes('stylesheet')) {
-                await writeFile(`${output}/stylesheet.css`, stylesheet ?? '');
+                await writeFile(`${output}/stylesheet.css`, toString(stylesheet));
             }
 
             if (types.includes('messages')) {
-                await writeFile(`${output}/defaultMessages.txt`, defaultMessages ?? '');
+                await writeFile(`${output}/defaultMessages.txt`, toString(defaultMessages));
 
                 for await (const [locale, messages] of Object.entries(localizedMessages ?? {})) {
                     await writeFile(`${output}/localizedMessages.${locale}.txt`, messages ?? '');

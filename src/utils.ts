@@ -1,7 +1,7 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {TemplateType} from './template-types.js';
+import * as types from './types.js';
 
 /**
  * Checks if the response is a client response
@@ -68,54 +68,43 @@ export const reportError = (msg: string, error?: any): void => {
 }
 
 /**
- * Options for the CLI
+ * Validates the options provided to the lambda CLI and returns a valid options object
+ * @param options The options to validate
  */
-export type Options = {
-    input: string,
-    output: string,
-    apiKey: string,
-    host: string,
-    types: TemplateType[]
+export const validateLambdaOptions = (options: types.CLILambdaOptions): types.LambdaOptions => {
+    const output = options.output;
+    const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
+    const host = options.host ?? process.env.FUSIONAUTH_HOST;
+    errorIfFalsy(host, 'No host provided');
+    errorIfFalsy(apiKey, 'No API key provided');
+    return { apiKey, host, output };
 }
 
 /**
- * Validates the options provided to the CLI and returns a valid options object
+ * Validates the options provided to the lambda CLI and returns a valid options object
  * @param options The options to validate
  */
-export const validateOptions = (options: any): Options => {
+export const validateLambdaUpdateOptions = (options: types.CLILambdaUpdateOptions): types.LambdaUpdateOptions => {
+    const partial = validateLambdaOptions(options);
+    errorIfFalsy(options.input, 'No input directory provided');
+    return { ...partial, input: options.input  };
+}
+
+/**
+ * Validates the options provided to the theme CLI and returns a valid options object
+ * @param options The options to validate
+ */
+export const validateThemeOptions = (options: types.CLIThemeOptions): types.ThemeOptions => {
     const input = options.input;
     const output = options.output;
     const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
     const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    const types: TemplateType[] = options.types;
-
-    if (!input && !output) {
-        reportError('No input or output directory provided');
-        process.exit(1);
-    }
-
-    if (!apiKey) {
-        reportError('No API key provided');
-        process.exit(1);
-    }
-
-    if (!host) {
-        reportError('No host provided');
-        process.exit(1);
-    }
-
-    if (!types.length) {
-        reportError('No types provided');
-        process.exit(1);
-    }
-
-    return {
-        input,
-        output,
-        apiKey,
-        host,
-        types
-    }
+    const types: types.ThemeTemplateType[] = options.types;
+    if (!input && !output) errorAndExit('No input or output directory provided')
+    errorIfFalsy(apiKey, 'No API key provided');
+    errorIfFalsy(host, 'No host provided');
+    errorIfFalsy(types.length, 'No types provided');
+    return { input, output, apiKey, host, types };
 }
 
 /**
@@ -126,4 +115,21 @@ export const getLocaleFromLocalizedMessageFileName = (path: string): string | un
     const matches = path.match(/localizedMessages\.([a-z]{2}(?:_[A-Z]{2})?)\.txt/);
     if (!matches) return;
     return matches[1];
+}
+
+export function toString(item:  String | undefined): string {
+    return (item ?? "").toString();
+}
+
+export function toJson(item: Object | undefined): string {
+    return JSON.stringify(item ?? "", null, 4)
+}
+
+function errorIfFalsy(value:  Object | undefined, message: string) {
+    if (!value) errorAndExit(message);
+}
+
+export function errorAndExit(message: string, error?: any) {
+    reportError(message, error);
+    process.exit(1);
 }

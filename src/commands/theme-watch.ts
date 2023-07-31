@@ -1,11 +1,11 @@
 import {Command, Option} from 'commander';
-import {templateTypes} from '../template-types.js';
+import * as types from '../types.js';
 import {watch} from 'chokidar';
-import {getLocaleFromLocalizedMessageFileName, reportError, validateOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError, validateThemeOptions} from '../utils.js';
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
-import logUpdate     from "log-update";
+import logUpdate from "log-update";
 import logSymbols from "log-symbols";
 import chalk from "chalk";
 
@@ -18,9 +18,9 @@ export const themeWatch = new Command('theme:watch')
     .option('-i, --input <input>', 'The input directory', './tpl/')
     .option('-k, --key <key>', 'The API key to use')
     .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(templateTypes).default(templateTypes))
-    .action((themeId, options) => {
-        const {input, apiKey, host, types} = validateOptions(options);
+    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(types.themeTemplateTypes).default(types.themeTemplateTypes))
+    .action((themeId: string, options: types.CLIThemeOptions) => {
+        const {input, apiKey, host, types} = validateThemeOptions(options);
 
         console.log(`Watching theme directory ${input} for changes and uploading to ${themeId}`);
 
