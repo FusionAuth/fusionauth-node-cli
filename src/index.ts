@@ -1,7 +1,7 @@
 #! /usr/bin/env -S node --no-warnings=ExperimentalWarning
 
 import figlet from 'figlet';
-import {Command} from 'commander';
+import {Command} from '@commander-js/extra-typings';
 import chalk from 'chalk';
 import * as commands from './commands/index.js';
 // @ts-ignore

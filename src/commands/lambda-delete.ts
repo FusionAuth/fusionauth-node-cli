@@ -1,27 +1,30 @@
-import {Command} from 'commander';
+import {Command} from '@commander-js/extra-typings';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import * as types from '../types.js';
-import * as util from '../utils.js';
+import {errorAndExit} from '../utils.js';
+import {apiKeyOption, hostOption} from "../options.js";
 
-const action = async function (lambdaId: string, clioptions: types.CLILambdaOptions) {
-    const options = util.validateLambdaOptions(clioptions);
-    console.log(`Deleting lambda ${lambdaId} from ${options.host}`);
+const action = async function (lambdaId: string, {key: apiKey, host}: {
+    key: string;
+    host: string
+}) {
+    console.log(`Deleting lambda ${lambdaId} from ${host}`);
     try {
-        const fusionAuthClient = new FusionAuthClient(options.apiKey, options.host);
+        const fusionAuthClient = new FusionAuthClient(apiKey, host);
         const clientResponse = await fusionAuthClient.deleteLambda(lambdaId);
         if (!clientResponse.wasSuccessful())
-            util.errorAndExit(`Error deleting lamba: `, clientResponse);
+            errorAndExit(`Error deleting lambda: `, clientResponse);
         console.log(chalk.green(`Lambda deleted`));
     }
     catch (e: unknown) {
-        util.errorAndExit(`Error deleting lamba: `, e);
+        errorAndExit(`Error deleting lambda: `, e);
     }
 }
 
+// noinspection JSUnusedGlobalSymbols
 export const lambdaDelete = new Command('lambda:delete')
     .description('Delete a lambda from FusionAuth')
     .argument('<lambdaId>', 'The lambda id to delete')
-    .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
+    .addOption(apiKeyOption)
+    .addOption(hostOption)
     .action(action);

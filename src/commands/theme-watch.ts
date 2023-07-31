@@ -1,27 +1,26 @@
-import {Command, Option} from 'commander';
-import * as types from '../types.js';
+import {Command} from '@commander-js/extra-typings';
 import {watch} from 'chokidar';
-import {getLocaleFromLocalizedMessageFileName, reportError, validateThemeOptions} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, reportError} from '../utils.js';
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
 import logUpdate from "log-update";
 import logSymbols from "log-symbols";
 import chalk from "chalk";
+import {apiKeyOption, hostOption, themeTypeOption} from "../options.js";
 
 // To prevent multiple uploads from happening at once, we use a queue
 const q = new Queue({autostart: true, concurrency: 1});
 
+// noinspection JSUnusedGlobalSymbols
 export const themeWatch = new Command('theme:watch')
     .description('Watch a theme for changes and upload to FusionAuth')
     .argument('<themeId>', 'The theme id to watch')
     .option('-i, --input <input>', 'The input directory', './tpl/')
-    .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .addOption(new Option('-t, --types <types...>', 'The types of templates to watch').choices(types.themeTemplateTypes).default(types.themeTemplateTypes))
-    .action((themeId: string, options: types.CLIThemeOptions) => {
-        const {input, apiKey, host, types} = validateThemeOptions(options);
-
+    .addOption(apiKeyOption)
+    .addOption(hostOption)
+    .addOption(themeTypeOption)
+    .action((themeId: string, {input, key: apiKey, host, types}) => {
         console.log(`Watching theme directory ${input} for changes and uploading to ${themeId}`);
 
         const watchedFiles: string[] = [];
@@ -42,7 +41,7 @@ export const themeWatch = new Command('theme:watch')
         watch(watchedFiles, {
             ignoreInitial: true,
         })
-            .on('all', (event, path) => {
+            .on('all', (_, path) => {
                 q.push(async () => {
                     logUpdate(`Uploading ${path}`);
 
