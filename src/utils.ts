@@ -1,7 +1,6 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import * as types from './types.js';
 
 /**
  * Checks if the response is a client response
@@ -64,47 +63,7 @@ export const reportError = (msg: string, error?: any): void => {
         return;
     }
 
-    console.error(chalk.red(JSON.stringify(error)));
-}
-
-/**
- * Validates the options provided to the lambda CLI and returns a valid options object
- * @param options The options to validate
- */
-export const validateLambdaOptions = (options: types.CLILambdaOptions): types.LambdaOptions => {
-    const output = options.output;
-    const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
-    const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    errorIfFalsy(host, 'No host provided');
-    errorIfFalsy(apiKey, 'No API key provided');
-    return { apiKey, host, output };
-}
-
-/**
- * Validates the options provided to the lambda CLI and returns a valid options object
- * @param options The options to validate
- */
-export const validateLambdaUpdateOptions = (options: types.CLILambdaUpdateOptions): types.LambdaUpdateOptions => {
-    const partial = validateLambdaOptions(options);
-    errorIfFalsy(options.input, 'No input directory provided');
-    return { ...partial, input: options.input  };
-}
-
-/**
- * Validates the options provided to the theme CLI and returns a valid options object
- * @param options The options to validate
- */
-export const validateThemeOptions = (options: types.CLIThemeOptions): types.ThemeOptions => {
-    const input = options.input;
-    const output = options.output;
-    const apiKey = options.key ?? process.env.FUSIONAUTH_API_KEY;
-    const host = options.host ?? process.env.FUSIONAUTH_HOST;
-    const types: types.ThemeTemplateType[] = options.types;
-    if (!input && !output) errorAndExit('No input or output directory provided')
-    errorIfFalsy(apiKey, 'No API key provided');
-    errorIfFalsy(host, 'No host provided');
-    errorIfFalsy(types.length, 'No types provided');
-    return { input, output, apiKey, host, types };
+    console.error(chalk.red(toJson(error)));
 }
 
 /**
@@ -117,18 +76,26 @@ export const getLocaleFromLocalizedMessageFileName = (path: string): string | un
     return matches[1];
 }
 
-export function toString(item:  String | undefined): string {
-    return (item ?? "").toString();
+/**
+ * Returns the given item if it is not undefined, otherwise returns an empty string
+ */
+export function toString(item: string | undefined): string {
+    return item ?? '';
 }
 
-export function toJson(item: Object | undefined): string {
-    return JSON.stringify(item ?? "", null, 4)
+/**
+ * Returns the given object as a JSON string
+ * @param item The item to convert to JSON
+ */
+export function toJson(item: unknown): string {
+    return JSON.stringify(item ?? {}, null, 4)
 }
 
-function errorIfFalsy(value:  Object | undefined, message: string) {
-    if (!value) errorAndExit(message);
-}
-
+/**
+ * Reports an error and exits the process
+ * @param message
+ * @param error
+ */
 export function errorAndExit(message: string, error?: any) {
     reportError(message, error);
     process.exit(1);
