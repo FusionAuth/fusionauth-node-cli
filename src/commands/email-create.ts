@@ -1,15 +1,14 @@
-import {Command} from "commander";
+import {Command} from "@commander-js/extra-typings";
 import {ensureDir, ensureFile} from "fs-extra";
 import {v4} from "uuid";
 import chalk from "chalk";
 
+// noinspection JSUnusedGlobalSymbols
 export const emailCreate = new Command('email:create')
     .description('Create an email template in FusionAuth')
     .option('-o, --output <output>', 'The output directory', './emails/')
     .option('-l, --locales <locales...>', 'The locales to create.',  [])
-    .action(async (options) => {
-        const {output, locales} = options;
-
+    .action(async ({output, locales}) => {
         console.log(`Creating email template in ${output}`);
 
         const emailTemplateId = v4();

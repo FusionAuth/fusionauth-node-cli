@@ -1,5 +1,5 @@
-import {Command} from "commander";
-import {getEmailErrorMessage, reportError, validateEmailOptions} from "../utils.js";
+import {Command} from "@commander-js/extra-typings";
+import {getEmailErrorMessage, reportError} from "../utils.js";
 import {EmailTemplate, EmailTemplateRequest, FusionAuthClient} from "@fusionauth/typescript-client";
 import {pathExists} from "fs-extra";
 import {lstat, readdir, readFile} from "fs/promises";
@@ -9,21 +9,21 @@ import chalk from "chalk";
 import logSymbols from "log-symbols";
 import {merge} from "merge";
 import removeUndefinedObjects from "remove-undefined-objects";
+import {apiKeyOption, hostOption} from "../options.js";
 
 const fileNames = ['body.html', 'body.txt', 'subject.txt', 'from_name.txt'];
 const properties: (keyof EmailTemplate)[] = ['localizedHtmlTemplates', 'localizedTextTemplates', 'localizedSubjects', 'localizedFromNames'];
 
+// noinspection JSUnusedGlobalSymbols
 export const emailUpload = new Command('email:upload')
     .description('Download email templates from FusionAuth')
     .argument('[emailTemplateId]', 'The email template id to upload. If not provided, all email templates will be uploaded')
     .option('-i, --input <input>', 'The input directory', './emails/')
-    .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
+    .addOption(apiKeyOption)
+    .addOption(hostOption)
     .option('-o, --overwrite', 'Overwrite the existing email template with the new one. F.e. locales that are not defined in the directory, but on the FusionAuth server will be removed.', false)
     .option('--no-create', 'Create the email template if it does not exist')
-    .action(async (emailTemplateId, options) => {
-        const {input, apiKey, host, overwrite, create} = validateEmailOptions(options);
-
+    .action(async (emailTemplateId, {input, key: apiKey, host, overwrite, create}) => {
         const errorMessage = getEmailErrorMessage('uploading', emailTemplateId);
 
         if (emailTemplateId) {

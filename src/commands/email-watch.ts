@@ -1,5 +1,5 @@
-import {Command} from "commander";
-import {reportError, validateEmailOptions} from "../utils.js";
+import {Command} from "@commander-js/extra-typings";
+import {reportError} from "../utils.js";
 import {watch} from "chokidar";
 import Queue from "queue";
 import logUpdate from "log-update";
@@ -8,6 +8,7 @@ import {readFile, realpath} from "fs/promises";
 import chalk from "chalk";
 import logSymbols from "log-symbols";
 import {ConditionalKeys} from "type-fest";
+import {apiKeyOption, hostOption} from "../options.js";
 
 /**
  * Get all fields of a type that start with a given string
@@ -31,14 +32,13 @@ type otherFields = Exclude<ConditionalKeys<EmailTemplate, string | undefined>, l
 // To prevent multiple uploads from happening at once, we use a queue
 const q = new Queue({autostart: true, concurrency: 1});
 
+// noinspection JSUnusedGlobalSymbols
 export const emailWatch = new Command('email:watch')
     .description('Watch email templates for changes and upload to FusionAuth')
     .option('-i, --input <input>', 'The input directory', './emails/')
-    .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
-    .action(async (options) => {
-        const {input, apiKey, host} = validateEmailOptions(options);
-
+    .addOption(apiKeyOption)
+    .addOption(hostOption)
+    .action(async ({input, key: apiKey, host}) => {
         console.log(`Watching email templates in ${input}`);
 
         const watchedFiles = [

@@ -77,6 +77,32 @@ export const getLocaleFromLocalizedMessageFileName = (path: string): string | un
 }
 
 /**
+ * Returns the error message for a given email template id
+ * @param action
+ * @param emailTemplateId
+ */
+export const getEmailErrorMessage = (action: string, emailTemplateId: string | undefined) => {
+    let templateIdMessage = 'templates';
+    if (emailTemplateId) {
+        templateIdMessage = `template ${emailTemplateId}`
+    }
+    return `Error ${action} email ${templateIdMessage}`
+}
+
+/**
+ * Returns the success message for a given email template id
+ * @param emailTemplateId
+ * @param output
+ */
+export const getEmailSuccessMessage = (emailTemplateId: string | undefined, output: string) => {
+    let templateIdMessage = 'templates';
+    if (emailTemplateId) {
+        templateIdMessage = `template ${emailTemplateId}`
+    }
+    return `Successfully downloaded email ${templateIdMessage} to ${output}`;
+}
+
+/**
  * Returns the given item if it is not undefined, otherwise returns an empty string
  */
 export function toString(item: string | undefined): string {

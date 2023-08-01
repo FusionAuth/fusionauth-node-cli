@@ -1,4 +1,4 @@
-import {Command} from "commander";
+import {Command} from "@commander-js/extra-typings";
 import {validate as isUUID} from "uuid";
 import chalk from "chalk";
 import {lstat, readdir, readFile, writeFile} from "fs/promises";
@@ -11,13 +11,12 @@ const htmlToText = compile({
     ]
 })
 
+// noinspection JSUnusedGlobalSymbols
 export const emailHtmlToText = new Command('email:html-to-text')
     .description('Find missing text templates and create them from the html templates')
     .argument('[emailTemplateId]', 'The email template id to convert. If not provided, all email templates will be converted')
     .option('-o, --output <output>', 'The output directory', './emails/')
-    .action(async (emailTemplateId: string | undefined, options) => {
-        const {output} = options;
-
+    .action(async (emailTemplateId: string | undefined, {output}) => {
         if (!emailTemplateId) {
             console.log(`Converting all email templates in ${output}`);
         } else {

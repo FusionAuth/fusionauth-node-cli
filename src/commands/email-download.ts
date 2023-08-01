@@ -1,20 +1,21 @@
-import {Command} from "commander";
-import {getEmailErrorMessage, getEmailSuccessMessage, reportError, validateEmailOptions} from "../utils.js";
+import {Command} from "@commander-js/extra-typings";
+import {getEmailErrorMessage, getEmailSuccessMessage, reportError} from "../utils.js";
 import {EmailTemplate, FusionAuthClient} from "@fusionauth/typescript-client";
-import * as fs from "fs";
 import {mkdir, writeFile} from "fs/promises";
 import chalk from "chalk";
 import {emptyDir, pathExists} from "fs-extra";
+import {apiKeyOption, hostOption} from "../options.js";
+import {existsSync} from "fs";
 
+// noinspection JSUnusedGlobalSymbols
 export const emailDownload = new Command('email:download')
     .description('Download email templates from FusionAuth')
     .argument('[emailTemplateId]', 'The email template id to download. If not provided, all email templates will be downloaded')
     .option('-o, --output <output>', 'The output directory', './emails/')
-    .option('-k, --key <key>', 'The API key to use')
-    .option('-h, --host <url>', 'The FusionAuth host to use', 'http://localhost:9011')
+    .addOption(apiKeyOption)
+    .addOption(hostOption)
     .option('-c, --clean', 'Clean the output directory before downloading', false)
-    .action(async (emailTemplateId, options) => {
-        const {output, apiKey, host, clean} = validateEmailOptions(options);
+    .action(async (emailTemplateId, {output, key: apiKey, host, clean}) => {
 
         let clientResponse;
         const errorMessage = getEmailErrorMessage('download', emailTemplateId);
@@ -28,7 +29,7 @@ export const emailDownload = new Command('email:download')
         try {
             if (clean) {
                 const cleanDirectory = emailTemplateId ? `${output}/${emailTemplateId}` : output;
-                if(await pathExists(cleanDirectory)) {
+                if (await pathExists(cleanDirectory)) {
                     console.log(`Cleaning ${cleanDirectory}`);
                     await emptyDir(cleanDirectory);
                 }
@@ -58,7 +59,7 @@ export const emailDownload = new Command('email:download')
                 const emailTemplateId = emailTemplate.id;
                 const emailTemplateDirectory = `${output}/${emailTemplateId}/`;
 
-                if (!fs.existsSync(emailTemplateDirectory)) {
+                if (!existsSync(emailTemplateDirectory)) {
                     await mkdir(emailTemplateDirectory, {recursive: true});
                 }
 
@@ -75,7 +76,7 @@ export const emailDownload = new Command('email:download')
                 const locales = getLocalesFromEmailTemplates(emailTemplate);
                 for (const locale of locales) {
                     const localeDirectory = `${emailTemplateDirectory}/${locale}/`;
-                    if (!fs.existsSync(localeDirectory)) {
+                    if (!existsSync(localeDirectory)) {
                         await mkdir(localeDirectory);
                     }
 
