@@ -28,13 +28,13 @@ Currently, the CLI supports the following commands:
   - `fusionauth email:html-to-text` - Convert HTML email templates to text, where the text template is missing.
   - `fusionauth email:upload` - Upload a specific template or all email templates to a FusionAuth server.
   - `fusionauth email:watch` - Watch the email template directory and upload changes to a FusionAuth server.
-  - `fusionauth theme:download` - Download a theme from a FusionAuth server.
+  - `fusionauth email:create` - Create a new email template locally.
 - Lambdas
   - `fusionauth lambda:create` - Upload a lambda to a FusionAuth server.
   - `fusionauth lambda:delete` - Delete a lambda from a FusionAuth server.
   - `fusionauth lambda:retrieve` - Download a lambda from a FusionAuth server.
 - Themes
-  - `fusionauth email:create` - Create a new email template locally.
+  - `fusionauth theme:download` - Download a theme from a FusionAuth server.
   - `fusionauth theme:upload` - Upload a theme to a FusionAuth server.
   - `fusionauth theme:watch` - Watch a theme directory and upload changes to a FusionAuth server.
 
