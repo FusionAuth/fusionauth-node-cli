@@ -98,7 +98,7 @@ export const emailDownload = new Command('email:download')
  * Gets the locales from a list of email templates
  * @param emailTemplate
  */
-export const getLocalesFromEmailTemplates = (emailTemplate: EmailTemplate): string[] => {
+const getLocalesFromEmailTemplates = (emailTemplate: EmailTemplate): string[] => {
     const locales: string[] = [];
     locales.push(...Object.keys(emailTemplate.localizedFromNames ?? {}));
     locales.push(...Object.keys(emailTemplate.localizedSubjects ?? {}));
