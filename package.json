@@ -29,14 +29,23 @@
     "chokidar": "3.5.3",
     "commander": "11.0.0",
     "figlet": "1.6.0",
+    "fs-extra": "11.1.1",
+    "html-to-text": "9.0.5",
     "log-symbols": "5.1.0",
     "log-update": "5.0.1",
-    "queue": "7.0.0"
+    "merge": "2.1.1",
+    "queue": "7.0.0",
+    "remove-undefined-objects": "3.0.0",
+    "uuid": "9.0.0"
   },
   "devDependencies": {
     "@types/figlet": "1.5.6",
+    "@types/fs-extra": "11.0.1",
+    "@types/html-to-text": "9.0.1",
     "@types/node": "20.4.5",
+    "@types/uuid": "9.0.2",
     "ts-node": "10.9.1",
+    "type-fest": "3.13.0",
     "typescript": "5.1.6"
   },
   "bin": {
