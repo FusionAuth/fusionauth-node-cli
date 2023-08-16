@@ -6,6 +6,7 @@ import {join} from 'path';
 import {mkdir, writeFile} from 'fs/promises';
 import {errorAndExit, toJson} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
+import {dump} from 'js-yaml';
 
 const action = async function (lambdaId: string, {output, key: apiKey, host}: {
     output: string;
@@ -20,8 +21,11 @@ const action = async function (lambdaId: string, {output, key: apiKey, host}: {
             errorAndExit(`Error retrieving lambda: `, clientResponse);
         if (!existsSync(output))
             await mkdir(output);
-        const filename = join(output, clientResponse.response.lambda?.id + ".json");
-        await writeFile(filename, toJson(clientResponse.response.lambda));
+        const filename = join(output, clientResponse.response.lambda?.id + ".yaml");
+        const yamlData = dump(clientResponse.response.lambda);
+        // fs.writeFileSync(filename, yamlData, 'utf8');
+        await writeFile(filename, toJson(yamlData));
+        // await writeFile(filename, toJson(clientResponse.response.lambda));
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }
     catch (e: unknown) {

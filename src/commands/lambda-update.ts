@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import {join} from 'path';
 import {errorAndExit} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
+import {load} from 'js-yaml';
 
 const action = async function (lambdaId: string, {input, key: apiKey, host}: {
     input: string;
@@ -15,7 +16,8 @@ const action = async function (lambdaId: string, {input, key: apiKey, host}: {
     try {
         const filename = join(input, lambdaId + ".json");
         const data = await readFile(filename, 'utf-8');
-        const lambda = JSON.parse(data);
+        // const lambda = JSON.parse(data);
+        const lambda = load(data) as object;
         const request = { lambda };
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
         const clientResponse = await fusionAuthClient.updateLambda(lambdaId, request);
