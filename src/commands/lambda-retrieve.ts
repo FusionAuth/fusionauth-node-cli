@@ -22,10 +22,11 @@ const action = async function (lambdaId: string, {output, key: apiKey, host}: {
         if (!existsSync(output))
             await mkdir(output);
         const filename = join(output, clientResponse.response.lambda?.id + ".yaml");
-        const yamlData = dump(clientResponse.response.lambda);
-        // fs.writeFileSync(filename, yamlData, 'utf8');
-        await writeFile(filename, toJson(yamlData));
-        // await writeFile(filename, toJson(clientResponse.response.lambda));
+        const lambdaContent = clientResponse.response.lambda;
+        if (lambdaContent)
+            lambdaContent.body = lambdaContent?.body?.replace(/\r\n/g, '\n'); // allow newlines in .yaml file
+        const yamlData = dump(lambdaContent, { styles: { '!!str': '|' } });
+        await writeFile(filename, yamlData);
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }
     catch (e: unknown) {

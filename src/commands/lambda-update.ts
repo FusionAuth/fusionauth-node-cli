@@ -14,9 +14,8 @@ const action = async function (lambdaId: string, {input, key: apiKey, host}: {
 }): Promise<void> {
     console.log(`Updating lambda ${lambdaId} on ${host}`);
     try {
-        const filename = join(input, lambdaId + ".json");
+        const filename = join(input, lambdaId + ".yaml");
         const data = await readFile(filename, 'utf-8');
-        // const lambda = JSON.parse(data);
         const lambda = load(data) as object;
         const request = { lambda };
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
