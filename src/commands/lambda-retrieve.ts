@@ -6,7 +6,7 @@ import {join} from 'path';
 import {mkdir, writeFile} from 'fs/promises';
 import {errorAndExit, toJson} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
-import {dump} from 'js-yaml';
+import {dump as dumpYaml} from 'js-yaml';
 
 const action = async function (lambdaId: string, {output, key: apiKey, host}: {
     output: string;
@@ -25,7 +25,7 @@ const action = async function (lambdaId: string, {output, key: apiKey, host}: {
         const lambdaContent = clientResponse.response.lambda;
         if (lambdaContent)
             lambdaContent.body = lambdaContent?.body?.replace(/\r\n/g, '\n'); // allow newlines in .yaml file
-        const yamlData = dump(lambdaContent, { styles: { '!!str': '|' } });
+        const yamlData = dumpYaml(lambdaContent, { styles: { '!!str': '|' } });
         await writeFile(filename, yamlData);
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }
