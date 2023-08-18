@@ -72,6 +72,9 @@ npm run build;
 
 # now you can use it
 npx fusionauth --version;
+
+# to get help on a command
+npm run build; npx fusionauth lambda:link-to-application --help
 ```
 
 To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.
