@@ -36,6 +36,7 @@ const action = async function ( applicationId: string,
 
 // noinspection JSUnusedGlobalSymbols
 export const lambdaLinkToApplication = new Command('lambda:link-to-application')
+    .summary('Link an existing lambda to an application on FusionAuth')
     .description(`Link an existing lambda to an application on FusionAuth as both the "Access Token populate lambda" and the "Id Token populate lambda".
 Example use:
   npx fusionauth lambda:link-to-application e9fdb985-9173-4e01-9d73-ac2d60d1dc8e  f3b3b547-7754-452d-8729-21b50d111505 --key lambda_testing_key;`)

@@ -49,6 +49,7 @@ const action = async function ( applicationId: string,
 
 // noinspection JSUnusedGlobalSymbols
 export const lambdaUnlinkFromApplication = new Command('lambda:unlink-from-application')
+    .summary('Unlink an existing lambda from an application on FusionAuth')
     .description(`Unlink an existing lambda from an application on FusionAuth from both "Access Token populate lambda" and the "Id Token populate lambda" if it was used as either or both.
 Example use:
   npx fusionauth lambda:unlink-from-application e9fdb985-9173-4e01-9d73-ac2d60d1dc8e  f3b3b547-7754-452d-8729-21b50d111505 --key lambda_testing_key;`)

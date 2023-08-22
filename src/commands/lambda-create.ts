@@ -30,6 +30,7 @@ const action = async function (lambdaId: string, {input, key: apiKey, host}: {
 
 // noinspection JSUnusedGlobalSymbols
 export const lambdaCreate = new Command('lambda:create')
+    .summary('Create a lambda on FusionAuth')
     .description(`Create a lambda on FusionAuth.
 Example lambda .yaml file:
 
