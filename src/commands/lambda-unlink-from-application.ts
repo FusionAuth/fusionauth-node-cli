@@ -15,13 +15,8 @@ const action = async function ( applicationId: string,
 {
     console.log(`Unlinking lambda ${lambdaId} from application ${applicationId} on ${host}`);
     try {
+        const request: ApplicationRequest = { "application": { "lambdaConfiguration": {} } };
         const application = await getApplication(applicationId, {key: apiKey, host});
-        const request: ApplicationRequest = {
-            "application": {
-                "name": application.name,
-                "lambdaConfiguration": {}
-            }
-        };
         const accessTokenPopulateId = application.lambdaConfiguration?.accessTokenPopulateId;
         const idTokenPopulateId     = application.lambdaConfiguration?.idTokenPopulateId;
 

@@ -1,7 +1,7 @@
 import {Command} from '@commander-js/extra-typings';
 import {FusionAuthClient, ApplicationRequest} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {errorAndExit, getApplicationName} from '../utils.js';
+import {errorAndExit} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
 
 const action = async function ( applicationId: string,
@@ -15,10 +15,8 @@ const action = async function ( applicationId: string,
 {
     console.log(`Linking lambda ${lambdaId} to application ${applicationId} on ${host}`);
     try {
-        const applicationName = await getApplicationName(applicationId, {key: apiKey, host});
         const request: ApplicationRequest = {
             "application": {
-                "name": applicationName,
                 "lambdaConfiguration": {
                     "accessTokenPopulateId": lambdaId,
                     "idTokenPopulateId": lambdaId

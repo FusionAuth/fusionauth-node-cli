@@ -128,18 +128,6 @@ export function errorAndExit(message: string, error?: any) {
     process.exit(1);
 }
 
-export async function getApplicationName(applicationId: string,
-                                         {key: apiKey, host}:
-                                            {
-                                                key: string;
-                                                host: string
-                                            }
-                                        ): Promise<string>
-{
-    const app = await getApplication(applicationId, {key: apiKey, host});
-    return app?.name || "";
-}
-
 export async function getApplication(applicationId: string,
                                          {key: apiKey, host}:
                                             {
