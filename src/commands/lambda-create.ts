@@ -19,8 +19,9 @@ const action = async function (lambdaId: string, {input, key: apiKey, host}: {
         const lambda = loadYaml(data) as object;
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
         const clientResponse = await fusionAuthClient.createLambda(lambdaId, { lambda });
-        if (!clientResponse.wasSuccessful())
+        if (!clientResponse.wasSuccessful()) {
             errorAndExit(`Error creating lambda: `, clientResponse);
+        }
         console.log(chalk.green(`Lambda created`));
     }
     catch (e: unknown) {

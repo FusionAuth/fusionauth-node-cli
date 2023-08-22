@@ -25,8 +25,9 @@ const action = async function ( applicationId: string,
         };
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
         const clientResponse = await fusionAuthClient.patchApplication(applicationId, request)
-        if (!clientResponse.wasSuccessful())
+        if (!clientResponse.wasSuccessful()) {
             errorAndExit(`Error linking lambda: `, clientResponse);
+        }
         console.log(chalk.green(`Lambda linked`));
     }
     catch (e: unknown) {
