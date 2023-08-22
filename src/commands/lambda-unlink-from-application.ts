@@ -25,19 +25,24 @@ const action = async function ( applicationId: string,
         const accessTokenPopulateId = application.lambdaConfiguration?.accessTokenPopulateId;
         const idTokenPopulateId     = application.lambdaConfiguration?.idTokenPopulateId;
 
-        if (!accessTokenPopulateId && !idTokenPopulateId)
+        if (!accessTokenPopulateId && !idTokenPopulateId) {
             errorAndExit(`No existing lambdas were linked`);
-        if (accessTokenPopulateId && accessTokenPopulateId == lambdaId)
-            request.application!.lambdaConfiguration!.accessTokenPopulateId = null;
-        else
+        }
+        if (accessTokenPopulateId && accessTokenPopulateId == lambdaId) {
+            request.application!.lambdaConfiguration!.accessTokenPopulateId = '';
+        }
+        else {
             request.application!.lambdaConfiguration!.accessTokenPopulateId = accessTokenPopulateId;
-        if (idTokenPopulateId && idTokenPopulateId == lambdaId)
-            request.application!.lambdaConfiguration!.idTokenPopulateId = null;
-        else
+        }
+        if (idTokenPopulateId && idTokenPopulateId == lambdaId) {
+            request.application!.lambdaConfiguration!.idTokenPopulateId = '';
+        }
+        else {
             request.application!.lambdaConfiguration!.idTokenPopulateId = idTokenPopulateId;
+        }
 
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
-        const clientResponse = await fusionAuthClient.updateApplication(applicationId, request)
+        const clientResponse = await fusionAuthClient.patchApplication(applicationId, request)
         if (!clientResponse.wasSuccessful())
             errorAndExit(`Error unlinking lambda: `, clientResponse);
         console.log(chalk.green(`Lambda unlinked`));
