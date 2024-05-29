@@ -6,7 +6,7 @@ import logUpdate from "log-update";
 import {EmailTemplate, FusionAuthClient} from "@fusionauth/typescript-client";
 import {readFile, realpath} from "fs/promises";
 import chalk from "chalk";
-import nodePath from "path";
+import {sep as pathSeparator} from "path";
 import logSymbols from "log-symbols";
 import {ConditionalKeys} from "type-fest";
 import {apiKeyOption, hostOption} from "../options.js";
@@ -61,7 +61,7 @@ export const emailWatch = new Command('email:watch')
 
                     const relativePath = absolutePath.substring(absoluteInput.length + 1);
 
-                    const parts = relativePath.split(nodePath.sep);
+                    const parts = relativePath.split(pathSeparator);
 
                     let emailTemplateId, locale, fileName;
                     if (parts.length === 2) {

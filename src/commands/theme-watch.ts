@@ -8,7 +8,7 @@ import logUpdate from "log-update";
 import logSymbols from "log-symbols";
 import chalk from "chalk";
 import {apiKeyOption, hostOption, themeTypeOption} from "../options.js";
-import nodePath from 'path';
+import {basename} from 'path';
 
 // To prevent multiple uploads from happening at once, we use a queue
 const q = new Queue({autostart: true, concurrency: 1});
@@ -64,7 +64,7 @@ export const themeWatch = new Command('theme:watch')
                     }
 
                     if (path.endsWith('.ftl')) {
-                        const name = nodePath.basename(path).replace('.ftl', '');
+                        const name = basename(path).replace('.ftl', '');
                         theme.templates = {[name!]: content};
                     }
 
