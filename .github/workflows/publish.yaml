@@ -32,9 +32,10 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'  # required to push tags
 
       - name: configure git
-        shell: bash
         run: |
           git config --global user.name "FusionAuth Automation"
           git config --global user.email "donotreply@fusionauth.io"
@@ -67,22 +68,22 @@ jobs:
       - name: set version
         run: npm version ${{ inputs.version }}
 
-      - name: install dependencies
-        run: npm install
+      # - name: install dependencies
+      #   run: npm install
 
-      - name: build the package
-        run: npm run build
+      # - name: build the package
+      #   run: npm run build
 
-      - name: test publish to npmjs
-        if: inputs.command == 'test'
-        run: npm publish --dry-run
+      # - name: test publish to npmjs
+      #   if: inputs.command == 'test'
+      #   run: npm publish --dry-run
 
-      - name: publish to npmjs (only on main branch)
-        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
-        run: npm publish
+      # - name: publish to npmjs (only on main branch)
+      #   if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
+      #   run: npm publish
 
       - name: commit version changes (only on main branch)
         if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
         run: |
           git commit -am "publish v${{ inputs.version }}"
-          git push origin main --tags
+          git push origin main "v${{ inputs.version }}"
