@@ -1,10 +1,9 @@
 # Run locally with act:
 #
 # act workflow_dispatch \
-#  --input command=<command> \
+#  --input command=<test|publish> \
 #  --input version=<version> \
 #  --workflows ./.github/workflows/release.yaml \
-#  --platform fusionauth-standard=[ecr-repo-name]/gha-runner-fusionauth-standard:latest \
 #  --env-file <(aws configure export-credentials --profile [aws-profile] --format env)
 
 name: Publish
@@ -24,11 +23,11 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
-    runs-on: fusionauth-standard
+    runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -42,7 +41,7 @@ jobs:
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::752443094709:role/github-actions
+          role-to-assume: ${{ secrets.ACTIONS_AWS_ROLE_ARN }}
           role-session-name: aws-auth-action
           aws-region: us-west-2
 
@@ -64,22 +63,29 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{ env.API_KEY }}" >> ~/.npmrc
           chmod 600 ~/.npmrc
 
-      - name: install packages
-        shell: bash -l {0}
+      - name: set version
+        run: npm version ${{ inputs.version }} --git-tag-version false
+
+      - name: install dependencies
         run: npm install
 
-      - name: set version
-        shell: bash -l {0}
-        run: npm version ${{ inputs.version }}
+      - name: build the package
+        run: npm run build
 
       - name: test publish to npmjs
-        if: github.event_name == 'workflow_dispatch' && inputs.command == 'test'
-        shell: bash -l {0}
+        if: inputs.command == 'test'
         run: npm publish --dry-run
 
       - name: publish to npmjs
-        if: |
-          github.event_name == 'push' ||
-          (github.event_name == 'workflow_dispatch' && inputs.command == 'publish')
-        shell: bash -l {0}
+        if: inputs.command == 'publish'
         run: npm publish
+
+      - name: commit version changes
+        if: inputs.command == 'publish'
+        run: |
+          if [[ "$(git branch --show-current)" == "main" ]]; then
+            git commit -am "publish v${{ inputs.version }}"
+            git push origin main --tags
+          else
+            echo "Not on main branch, nothing to do"
+          fi
