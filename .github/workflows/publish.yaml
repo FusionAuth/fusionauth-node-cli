@@ -76,21 +76,12 @@ jobs:
         if: inputs.command == 'test'
         run: npm publish --dry-run
 
-      - name: publish to npmjs
-        if: inputs.command == 'publish'
-        run: |
-          if [[ "$(git branch --show-current)" == "main" ]]; then
-            npm publish
-          else
-            echo "Not on main branch, nothing to do"
-          fi
+      - name: publish to npmjs (only on main branch)
+        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
+        run: npm publish
 
-      - name: commit version changes
-        if: inputs.command == 'publish'
+      - name: commit version changes (only on main branch)
+        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
         run: |
-          if [[ "$(git branch --show-current)" == "main" ]]; then
-            git commit -am "publish v${{ inputs.version }}"
-            git push origin main --tags
-          else
-            echo "Not on main branch, nothing to do"
-          fi
+          git commit -am "publish v${{ inputs.version }}"
+          git push origin main --tags
