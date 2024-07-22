@@ -78,7 +78,12 @@ jobs:
 
       - name: publish to npmjs
         if: inputs.command == 'publish'
-        run: npm publish
+        run: |
+          if [[ "$(git branch --show-current)" == "main" ]]; then
+            npm publish
+          else
+            echo "Not on main branch, nothing to do"
+          fi
 
       - name: commit version changes
         if: inputs.command == 'publish'
