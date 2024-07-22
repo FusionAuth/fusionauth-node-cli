@@ -64,7 +64,7 @@ jobs:
           chmod 600 ~/.npmrc
 
       - name: set version
-        run: npm version ${{ inputs.version }} --git-tag-version false
+        run: npm version ${{ inputs.version }}
 
       - name: install dependencies
         run: npm install
