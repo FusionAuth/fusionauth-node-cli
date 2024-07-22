@@ -4,6 +4,7 @@
 #  --input command=<test|publish> \
 #  --input version=<version> \
 #  --workflows ./.github/workflows/release.yaml \
+#  --platform fusionauth-standard=[repo]/gha-runner-fusionauth-standard:latest \
 #  --env-file <(aws configure export-credentials --profile [aws-profile] --format env)
 
 name: Publish
@@ -27,7 +28,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: fusionauth-standard
     steps:
       - name: checkout
         uses: actions/checkout@v4
