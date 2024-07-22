@@ -1,6 +1,7 @@
 # Run locally with act:
 #
 # act workflow_dispatch \
+#  --input command=<command> \
 #  --input version=<version> \
 #  --workflows ./.github/workflows/release.yaml \
 #  --platform fusionauth-standard=[ecr-repo-name]/gha-runner-fusionauth-standard:latest \
@@ -14,9 +15,16 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
     inputs:
-      version:
-        type: string
+      command:
         required: true
+        type: choice
+        values:
+          - test
+          - publish
+        default: test
+      version:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -60,11 +68,21 @@ jobs:
           chmod 600 ~/.npmrc
 
       - name: set version
+        shell: bash -l {0}
         run: |
           npm version ${{ inputs.version }}
 
-      # - name: publish to npmjs
-      #   if: inputs.command == 'publish'
-      #   shell: bash -l {0}
-      #   run: |
-      #     npm publish
+      - name: test publish to npmjs
+        if: |
+          github.event_name == 'workflow_dispatch' && inputs.command == 'test'
+        shell: bash -l {0}
+        run: |
+          npm publish --dry-run
+
+      - name: publish to npmjs
+        if: |
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.command == 'publish')
+        shell: bash -l {0}
+        run: |
+          npm publish
