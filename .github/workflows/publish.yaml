@@ -68,6 +68,12 @@ jobs:
       - name: set version
         run: npm version ${{ inputs.version }}
 
+      - name: commit version changes (only on main branch)
+        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
+        run: |
+          git push
+          git push --tags
+
       # - name: install dependencies
       #   run: npm install
 
@@ -82,9 +88,3 @@ jobs:
       #   if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
       #   run: npm publish
 
-      - name: commit version changes (only on main branch)
-        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
-        run: |
-          git commit -am "publish v${{ inputs.version }}"
-          git push
-          git push --tags
