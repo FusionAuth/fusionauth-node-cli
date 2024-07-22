@@ -67,6 +67,10 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{ env.API_KEY }}" >> ~/.npmrc
           chmod 600 ~/.npmrc
 
+      - name: install packages
+        shell: bash -l {0}
+        run: npm install && npm list
+
       - name: set version
         shell: bash -l {0}
         run: |
