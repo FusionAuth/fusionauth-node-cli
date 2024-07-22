@@ -69,18 +69,14 @@ jobs:
 
       - name: install packages
         shell: bash -l {0}
-        run: npm install && npm list
-
-      - name: set version
-        shell: bash -l {0}
-        run: |
-          npm version ${{ inputs.version }}
+        run: npm install
 
       - name: test publish to npmjs
         if: |
           github.event_name == 'workflow_dispatch' && inputs.command == 'test'
         shell: bash -l {0}
         run: |
+          npm version ${{ inputs.version }} --force
           npm publish --dry-run
 
       - name: publish to npmjs
@@ -89,4 +85,5 @@ jobs:
           (github.event_name == 'workflow_dispatch' && inputs.command == 'publish')
         shell: bash -l {0}
         run: |
+          npm version ${{ inputs.version }}
           npm publish

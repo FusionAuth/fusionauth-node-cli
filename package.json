@@ -15,7 +15,10 @@
     "oauth",
     "themes"
   ],
-  "repository": "git+https://github.com/FusionAuth/fusionauth-node-cli.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FusionAuth/fusionauth-node-cli.git"
+  },
   "author": "FusionAuth",
   "license": "Apache-2.0",
   "bugs": {
@@ -49,7 +52,7 @@
     "typescript": "5.1.6"
   },
   "bin": {
-    "fusionauth": "./dist/index.js"
+    "fusionauth": "dist/index.js"
   },
   "type": "module"
 }
