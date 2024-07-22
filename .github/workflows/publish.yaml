@@ -86,4 +86,5 @@ jobs:
         if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
         run: |
           git commit -am "publish v${{ inputs.version }}"
-          git push origin main "v${{ inputs.version }}"
+          git push
+          git push --tags
