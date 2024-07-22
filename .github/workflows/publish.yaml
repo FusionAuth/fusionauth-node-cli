@@ -14,7 +14,7 @@ on:
       command:
         required: true
         type: choice
-        values:
+        options:
           - test
           - publish
         default: test
