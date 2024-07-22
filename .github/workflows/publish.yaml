@@ -28,6 +28,12 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+      - name: configure git
+        shell: bash
+        run: |
+          git config --global user.name "FusionAuth Automation"
+          git config --global user.email "donotreply@fusionauth.io"
+
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
