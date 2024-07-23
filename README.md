@@ -31,6 +31,7 @@ Currently, the CLI supports the following commands:
   - `fusionauth email:create` - Create a new email template locally.
 - Lambdas
   - `fusionauth lambda:create` - Upload a lambda to a FusionAuth server.
+  - `fusionauth lambda:update` - Update a lambda on a FusionAuth server.
   - `fusionauth lambda:delete` - Delete a lambda from a FusionAuth server.
   - `fusionauth lambda:retrieve` - Download a lambda from a FusionAuth server.
 - Themes
@@ -66,6 +67,9 @@ npm run build;
 
 # now you can use it
 npx fusionauth --version;
+
+# to get help on a command
+npm run build; npx fusionauth lambda:link-to-application --help
 ```
 
 To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.

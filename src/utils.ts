@@ -1,4 +1,5 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
+import {FusionAuthClient, Application} from '@fusionauth/typescript-client';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 
@@ -125,4 +126,19 @@ export function toJson(item: unknown): string {
 export function errorAndExit(message: string, error?: any) {
     reportError(message, error);
     process.exit(1);
+}
+
+export async function getApplication(applicationId: string,
+                                         {key: apiKey, host}:
+                                            {
+                                                key: string;
+                                                host: string
+                                            }
+                                        ): Promise<Application>
+{
+    const fusionAuthClient = new FusionAuthClient(apiKey, host);
+    const clientResponse = await fusionAuthClient.retrieveApplication(applicationId);
+    if (!clientResponse.wasSuccessful() || !clientResponse.response.application)
+        errorAndExit(`Error retrieving application: `, clientResponse);
+    return clientResponse.response.application as Application;
 }
