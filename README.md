@@ -51,13 +51,7 @@ Otherwise, please [post your question in the community forum](https://fusionauth
 
 ## Releasing
 
-To bump the version and create a git commit and tag, run:
-
-`npm version <major|minor|patch>`
-
-To build and publish the package to the npm registry, run:
-
-`npm publish`
+Run the [Publish Workflow](https://github.com/FusionAuth/fusionauth-node-cli/actions/workflows/publish.yaml).
 
 ## Contributing
 

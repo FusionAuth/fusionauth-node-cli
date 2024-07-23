@@ -81,17 +81,17 @@ jobs:
           git push
           git push --tags
 
-      # - name: install dependencies
-      #   run: npm install
+      - name: install dependencies
+        run: npm install
 
-      # - name: build the package
-      #   run: npm run build
+      - name: build the package
+        run: npm run build
 
-      # - name: test publish to npmjs
-      #   if: inputs.command == 'test'
-      #   run: npm publish --dry-run
+      - name: test publish to npmjs
+        if: inputs.command == 'test'
+        run: npm publish --dry-run
 
-      # - name: publish to npmjs (only on main branch)
-      #   if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
-      #   run: npm publish
+      - name: publish to npmjs (only on main branch)
+        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
+        run: npm publish
 
