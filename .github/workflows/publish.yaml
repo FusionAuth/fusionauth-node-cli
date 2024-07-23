@@ -30,50 +30,63 @@ jobs:
   publish:
     runs-on: fusionauth-standard
     steps:
+      - name: create github token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.ACTIONS_RUNNER_APP_ID }}
+          private-key: ${{ secrets.ACTIONS_RUNNER_PRIVATE_KEY }}
+
       - name: checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: '0'  # required to push tags
-          token: ${{ secrets.ACTIONS_PUSH_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: configure git
         run: |
           git config --global user.name "FusionAuth Automation"
           git config --global user.email "donotreply@fusionauth.io"
 
-      - name: set aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.ACTIONS_AWS_ROLE_ARN }}
-          role-session-name: aws-auth-action
-          aws-region: us-west-2
+      # - name: set aws credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.ACTIONS_AWS_ROLE_ARN }}
+      #     role-session-name: aws-auth-action
+      #     aws-region: us-west-2
 
-      - name: get secret
+      - name: test
         run: |
-          while IFS=$'\t' read -r key value; do
-            echo "::add-mask::${value}"
-            echo "${key}=${value}" >> $GITHUB_ENV
-          done < <(aws secretsmanager get-secret-value \
-            --region us-west-2 \
-            --secret-id platform/npmjs \
-            --query SecretString \
-            --output text | \
-            jq -r 'to_entries[] | [.key, .value] | @tsv')
+          git fetch --all
+          git pull
 
-      - name: create npmrc
-        run: |
-          echo "color=false" > ~/.npmrc
-          echo "//registry.npmjs.org/:_authToken=${{ env.API_KEY }}" >> ~/.npmrc
-          chmod 600 ~/.npmrc
+      # - name: get secret
+      #   run: |
+      #     while IFS=$'\t' read -r key value; do
+      #       echo "::add-mask::${value}"
+      #       echo "${key}=${value}" >> $GITHUB_ENV
+      #     done < <(aws secretsmanager get-secret-value \
+      #       --region us-west-2 \
+      #       --secret-id platform/npmjs \
+      #       --query SecretString \
+      #       --output text | \
+      #       jq -r 'to_entries[] | [.key, .value] | @tsv')
 
-      - name: set version
-        run: npm version ${{ inputs.version }}
+      # - name: create npmrc
+      #   run: |
+      #     echo "color=false" > ~/.npmrc
+      #     echo "//registry.npmjs.org/:_authToken=${{ env.API_KEY }}" >> ~/.npmrc
+      #     chmod 600 ~/.npmrc
 
-      - name: commit version changes (only on main branch)
-        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
-        run: |
-          git push
-          git push --tags
+      # - name: set version
+      #   run: npm version ${{ inputs.version }}
+
+      # - name: commit version changes (only on main branch)
+      #   if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
+      #   run: |
+      #     git push
+      #     git push --tags
+
+
 
       # - name: install dependencies
       #   run: npm install
