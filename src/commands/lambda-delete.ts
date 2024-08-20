@@ -12,8 +12,9 @@ const action = async function (lambdaId: string, {key: apiKey, host}: {
     try {
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
         const clientResponse = await fusionAuthClient.deleteLambda(lambdaId);
-        if (!clientResponse.wasSuccessful())
+        if (!clientResponse.wasSuccessful()) {
             errorAndExit(`Error deleting lambda: `, clientResponse);
+        }
         console.log(chalk.green(`Lambda deleted`));
     }
     catch (e: unknown) {
