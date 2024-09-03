@@ -7,7 +7,7 @@ import {validate as isUUID} from "uuid";
 import logUpdate from "log-update";
 import chalk from "chalk";
 import logSymbols from "log-symbols";
-import {merge} from "merge";
+import {recursive} from "merge";
 import removeUndefinedObjects from "remove-undefined-objects";
 import {apiKeyOption, hostOption} from "../options.js";
 
@@ -85,7 +85,7 @@ export const emailUpload = new Command('email:upload')
                             const fileContent = await readIfExist(localeDirectory + '/' + fileNames[i]);
 
                             if (fileContent) {
-                                merge(emailTemplate, {[properties[i]]: {[locale]: fileContent}});
+                                recursive(emailTemplate, {[properties[i]]: {[locale]: fileContent}});
                             }
                         }
                     }
