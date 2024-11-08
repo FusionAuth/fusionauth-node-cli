@@ -6,6 +6,7 @@ import {join} from 'path';
 import {mkdir, writeFile} from 'fs/promises';
 import {errorAndExit, toJson} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
+import {dump as dumpYaml} from 'js-yaml';
 
 const action = async function (lambdaId: string, {output, key: apiKey, host}: {
     output: string;
@@ -16,12 +17,19 @@ const action = async function (lambdaId: string, {output, key: apiKey, host}: {
     try {
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
         const clientResponse = await fusionAuthClient.retrieveLambda(lambdaId);
-        if (!clientResponse.wasSuccessful())
+        if (!clientResponse.wasSuccessful()) {
             errorAndExit(`Error retrieving lambda: `, clientResponse);
-        if (!existsSync(output))
+        }
+        if (!existsSync(output)) {
             await mkdir(output);
-        const filename = join(output, clientResponse.response.lambda?.id + ".json");
-        await writeFile(filename, toJson(clientResponse.response.lambda));
+        }
+        const filename = join(output, clientResponse.response.lambda?.id + ".yaml");
+        const lambdaContent = clientResponse.response.lambda;
+        if (lambdaContent) {
+            lambdaContent.body = lambdaContent?.body?.replace(/\r\n/g, '\n'); // allow newlines in .yaml file
+        }
+        const yamlData = dumpYaml(lambdaContent, { styles: { '!!str': '|' } });
+        await writeFile(filename, yamlData);
         console.log(chalk.green(`Lambda downloaded to ${filename}`));
     }
     catch (e: unknown) {
