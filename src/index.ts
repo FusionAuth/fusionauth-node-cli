@@ -5,7 +5,7 @@ import {Command} from '@commander-js/extra-typings';
 import chalk from 'chalk';
 import * as commands from './commands/index.js';
 // @ts-ignore
-import pkg from '../package.json' assert { type: 'json' };
+import pkg from '../package.json' with { type: 'json' };
 
 const fusionString = figlet.textSync('Fusion').split('\n');
 const authString = figlet.textSync('Auth').split('\n');
