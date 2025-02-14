@@ -65,7 +65,7 @@ npm install &&
 npm run build;
 
 # now you can use it
-npx fusionauth --version;
+npx fusionauth -h;
 ```
 
 To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.
