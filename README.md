@@ -4,7 +4,7 @@ The FusionAuth CLI is a command line tool for interacting with FusionAuth. It is
 
 ## Requirements
 
-* A modern version of node (tested on 19)
+* A modern version of node (tested on 19, 20 and 22)
 * A FusionAuth instance (download it here: https://fusionauth.io/download)
 
 ## Installation & usage
