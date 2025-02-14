@@ -41,6 +41,8 @@ Currently, the CLI supports the following commands:
 Instead of supplying the API key with the `-k` option on every command, you can set the `FUSIONAUTH_API_KEY` environment variable.
 The same goes for the host URL option `-h`, which can be set with the `FUSIONAUTH_HOST` environment variable.
 
+The `download` and `retrieve` commands will succeed even if there are no templates or lambdas to retrieve.
+
 ## Questions and support
 
 If you have a question or support issue regarding this client library, we'd love to hear from you.
