@@ -1,12 +1,4 @@
-# Run locally with act:
-#
-# act workflow_dispatch \
-#  --input command=<test|publish> \
-#  --input version=<version> \
-#  --workflows ./.github/workflows/release.yaml \
-#  --platform fusionauth-standard=[repo]/gha-runner-fusionauth-standard:latest \
-#  --env-file <(aws configure export-credentials --profile [aws-profile] --format env)
-
+---
 name: Publish
 
 on:
@@ -27,8 +19,8 @@ permissions:
   contents: write
 
 jobs:
-  publish:
-    runs-on: fusionauth-standard
+  deploy:
+    runs-on: ubuntu-latest
     steps:
       - name: create github token
         id: app-token
@@ -50,7 +42,7 @@ jobs:
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.ACTIONS_AWS_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::752443094709:role/gha-fusionauth-node-cli
           role-session-name: aws-auth-action
           aws-region: us-west-2
 
