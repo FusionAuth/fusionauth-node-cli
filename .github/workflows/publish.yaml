@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: create github token
