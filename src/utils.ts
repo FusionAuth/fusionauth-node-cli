@@ -103,6 +103,32 @@ export const getEmailSuccessMessage = (emailTemplateId: string | undefined, outp
 }
 
 /**
+ * Returns the error message for a given message template id
+ * @param action
+ * @param messageTemplateId
+ */
+export const getMessageErrorMessage = (action: string, messageTemplateId: string | undefined) => {
+    let templateIdMessage = 'templates';
+    if (messageTemplateId) {
+        templateIdMessage = `template ${messageTemplateId}`
+    }
+    return `Error ${action} message ${templateIdMessage}`
+}
+
+/**
+ * Returns the success message for a given message template id
+ * @param messageTemplateId
+ * @param output
+ */
+export const getMessageSuccessMessage = (messageTemplateId: string | undefined, output: string) => {
+    let templateIdMessage = 'templates';
+    if (messageTemplateId) {
+        templateIdMessage = `template ${messageTemplateId}`
+    }
+    return `Successfully downloaded message ${templateIdMessage} to ${output}`;
+}
+
+/**
  * Returns the given item if it is not undefined, otherwise returns an empty string
  */
 export function toString(item: string | undefined): string {
