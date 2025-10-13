@@ -30,9 +30,12 @@ Currently, the CLI supports the following commands:
   - `fusionauth email:watch` - Watch the email template directory and upload changes to a FusionAuth server.
   - `fusionauth email:create` - Create a new email template locally.
 - Lambdas
-  - `fusionauth lambda:create` - Upload a lambda to a FusionAuth server.
+  - `fusionauth lambda:update` - Update a lambda on a FusionAuth server.
   - `fusionauth lambda:delete` - Delete a lambda from a FusionAuth server.
   - `fusionauth lambda:retrieve` - Download a lambda from a FusionAuth server.
+- Messages
+  - `fusionauth message:download` - Download a specific message template or all message templates from a FusionAuth server.
+  - `fusionauth message:upload` - Upload a specific message template or all message templates to a FusionAuth server.
 - Themes
   - `fusionauth theme:download` - Download a theme from a FusionAuth server.
   - `fusionauth theme:upload` - Upload a theme to a FusionAuth server.
