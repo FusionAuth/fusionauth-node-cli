@@ -48,7 +48,7 @@ export const importGenerate = new Command('import:generate')
     .option('-c, --countPerFile <countPerFile>', 'The count of records per file.')
     .option('-a, --applicationId <applicationId>', 'The application to register users to.')
     .option('-g, --groupId <groupId>', 'The group id to add users to.')
-    .option('-f, --filePath <filePath>', 'The file path to output sample files to.')
+    .option('-f, --filePath <filePath>', 'The path and filename prefix to write files to. To output files to tmp/output0, tmp/output1, etc, use tmp/output.')
     .action(action);
 
 
