@@ -346,7 +346,7 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
 }
 
 // noinspection JSUnusedGlobalSymbols
-export const commonConfigCheck = new Command('commonConfigCheck')
+export const commonConfigCheck = new Command('common-config-check')
     .description('Checks for common configuration settings that should be changed')
     .addOption(apiKeyOption)
     .addOption(hostOption)
