@@ -77,6 +77,10 @@ npx fusionauth -h;
 
 To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.
 
+## Troubleshooting
+
+If you run this multiple times in a row against a local instance, the number of admin users may be incorrect until you re-index. See [this issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/3271).
+
 ## License
 
 This code is available as open source under the terms of the [Apache v2.0 License](https://opensource.org/licenses/Apache-2.0).
