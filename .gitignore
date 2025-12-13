@@ -212,3 +212,6 @@ dist
 # FusionAuth data folders
 /tpl/
 lambdas/
+emails/
+
+*.swp
