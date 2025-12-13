@@ -27,8 +27,73 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
     try {
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
 
-        // Check 1: API Key permissions by creating and deleting a test admin user
-        console.log(chalk.cyan('\n1. Checking API key permissions...'));
+        // Check 1: Multiple admin users
+        console.log(chalk.cyan('\n1. Checking for multiple admin users...'));
+        try {
+            // Search for the FusionAuth application
+            const searchAppsResponse = await fusionAuthClient.searchApplications({
+                search: {
+                    name: 'FusionAuth'
+                }
+            });
+
+            if (!searchAppsResponse.wasSuccessful() || !searchAppsResponse.response.applications || searchAppsResponse.response.applications.length === 0) {
+                results.push({
+                    passed: false,
+                    message: 'Could not find FusionAuth application'
+                });
+                allPassed = false;
+            } else {
+                const fusionAuthApp = searchAppsResponse.response.applications[0];
+                
+                if (!fusionAuthApp.id) {
+                    results.push({
+                        passed: false,
+                        message: 'FusionAuth application has no ID'
+                    });
+                    allPassed = false;
+                } else {
+                    const searchResponse = await fusionAuthClient.searchUsersByQuery({
+                        search: {
+                            queryString: `registrations.applicationId:${fusionAuthApp.id} AND registrations.roles:admin`,
+                            accurateTotal: true
+                        }
+                    });
+
+                    if (!searchResponse.wasSuccessful()) {
+                        results.push({
+                            passed: false,
+                            message: 'Could not search for admin users'
+                        });
+                        allPassed = false;
+                    } else {
+                        const adminCount = searchResponse.response.total || 0;
+                        
+                        if (adminCount >= 2) {
+                            results.push({
+                                passed: true,
+                                message: `Found ${adminCount} admin users ✓`
+                            });
+                        } else {
+                            results.push({
+                                passed: false,
+                                message: `Only ${adminCount} admin user(s) found - recommend at least 2 for redundancy`
+                            });
+                            allPassed = false;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            results.push({
+                passed: false,
+                message: `Admin user check failed: ${e instanceof Error ? e.message : String(e)}`
+            });
+            allPassed = false;
+        }
+
+        // Check 2: API Key permissions by creating and deleting a test admin user
+        console.log(chalk.cyan('\n2. Checking API key permissions...'));
         try {
             const testEmail = `test-admin-${Date.now()}@fusionauth-cli-check.local`;
             const testPassword = `TestPass-${Date.now()}-!@#$`;
@@ -118,8 +183,8 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
             allPassed = false;
         }
 
-        // Check 2: Email server configuration
-        console.log(chalk.cyan('\n2. Checking email server configuration...'));
+        // Check 3: Email server configuration
+        console.log(chalk.cyan('\n3. Checking email server configuration...'));
         try {
             const tenantResponse = await fusionAuthClient.retrieveTenants();
             if (!tenantResponse.wasSuccessful()) {
@@ -133,7 +198,8 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
                 let emailConfigured = false;
 
                 for (const tenant of tenants) {
-                    if (tenant.emailConfiguration?.host) {
+                    const emailHost = tenant.emailConfiguration?.host;
+                    if (emailHost && emailHost !== 'localhost') {
                         emailConfigured = true;
                         break;
                     }
@@ -147,7 +213,7 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
                 } else {
                     results.push({
                         passed: false,
-                        message: 'Email server not configured - required for password resets'
+                        message: 'Email server not configured or set to default "localhost" - required for password resets'
                     });
                     allPassed = false;
                 }
@@ -156,70 +222,6 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
             results.push({
                 passed: false,
                 message: `Email configuration check failed: ${e instanceof Error ? e.message : String(e)}`
-            });
-            allPassed = false;
-        }
-
-        // Check 3: Multiple admin users
-        console.log(chalk.cyan('\n3. Checking for multiple admin users...'));
-        try {
-            // Search for the FusionAuth application
-            const searchAppsResponse = await fusionAuthClient.searchApplications({
-                search: {
-                    name: 'FusionAuth'
-                }
-            });
-
-            if (!searchAppsResponse.wasSuccessful() || !searchAppsResponse.response.applications || searchAppsResponse.response.applications.length === 0) {
-                results.push({
-                    passed: false,
-                    message: 'Could not find FusionAuth application'
-                });
-                allPassed = false;
-            } else {
-                const fusionAuthApp = searchAppsResponse.response.applications[0];
-                
-                if (!fusionAuthApp.id) {
-                    results.push({
-                        passed: false,
-                        message: 'FusionAuth application has no ID'
-                    });
-                    allPassed = false;
-                } else {
-                    const searchResponse = await fusionAuthClient.searchUsersByQuery({
-                        search: {
-                            queryString: `registrations.applicationId:${fusionAuthApp.id} AND registrations.roles:admin`
-                        }
-                    });
-
-                    if (!searchResponse.wasSuccessful()) {
-                        results.push({
-                            passed: false,
-                            message: 'Could not search for admin users'
-                        });
-                        allPassed = false;
-                    } else {
-                        const adminCount = searchResponse.response.total || 0;
-                        
-                        if (adminCount >= 2) {
-                            results.push({
-                                passed: true,
-                                message: `Found ${adminCount} admin users ✓`
-                            });
-                        } else {
-                            results.push({
-                                passed: false,
-                                message: `Only ${adminCount} admin user(s) found - recommend at least 2 for redundancy`
-                            });
-                            allPassed = false;
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            results.push({
-                passed: false,
-                message: `Admin user check failed: ${e instanceof Error ? e.message : String(e)}`
             });
             allPassed = false;
         }
