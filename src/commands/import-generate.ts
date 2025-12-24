@@ -7,31 +7,39 @@ import {errorAndExit} from '../utils.js';
 import { faker } from '@faker-js/faker';
 import * as fs from 'fs';
 
-const action = async function ({numberOfFiles, countPerFile, applicationId, groupId, filePath }
+const action = async function ({numberOfFiles, countPerFile, applicationId, groupId, tmpDir, filePrefix}
 : {
     numberOfFiles?: string | undefined;
     countPerFile?: string | undefined;
     applicationId?: string | undefined;
     groupId?: string | undefined;
-    filePath?: string | undefined;
+    tmpDir?: string | undefined;
+    filePrefix?: string | undefined;
 }
 ): Promise<void> {
     console.log(`Generating users`);
     try {
         const finalNumberOfFiles = (numberOfFiles !== undefined ? parseInt(numberOfFiles) : 10);
         const finalCountPerFile = (countPerFile !== undefined ? parseInt(countPerFile) : 1000);
-        const finalFilePath = (filePath !== undefined ? filePath : "tmp/output");
+        const finalTmpDir = (tmpDir !== undefined ? tmpDir : "tmp");
+        const finalFilePrefix = (filePrefix !== undefined ? filePrefix : "output");
         const finalAppId = (applicationId !== undefined ? applicationId : '85a03867-dccf-4882-adde-1a79aeec50df');
         const finalGroupId = (groupId !== undefined ? groupId : 'a730d8c9-d060-4016-935e-170a5baaa4c7');
 
+        // Ensure the tmp directory exists
+        if (!fs.existsSync(finalTmpDir)) {
+          fs.mkdirSync(finalTmpDir, { recursive: true });
+        }
+
         for (let i = 0; i < finalNumberOfFiles; i++) {
           const jsonData = generateData(finalCountPerFile, finalAppId, finalGroupId, i * finalCountPerFile);
-          fs.writeFile(finalFilePath+i, JSON.stringify({"users": jsonData}), (err) => {
+          const filePath = join(finalTmpDir, finalFilePrefix + i);
+          fs.writeFile(filePath, JSON.stringify({"users": jsonData}), (err) => {
             if (err) {
               console.error('Error writing to file:', err);
               return;
             }
-            //console.log('Data has been written to', finalFilePath);
+            //console.log('Data has been written to', filePath);
           });
         }
         console.log(chalk.green(`Users generated`));
@@ -48,7 +56,8 @@ export const importGenerate = new Command('import:generate')
     .option('-c, --countPerFile <countPerFile>', 'The count of records per file.')
     .option('-a, --applicationId <applicationId>', 'The application to register users to.')
     .option('-g, --groupId <groupId>', 'The group id to add users to.')
-    .option('-f, --filePath <filePath>', 'The path and filename prefix to write files to. To output files to tmp/output0, tmp/output1, etc, use tmp/output.')
+    .option('-d, --tmpDir <tmpDir>', 'The directory to write files to.', 'tmp')
+    .option('-f, --filePrefix <filePrefix>', 'The file prefix for output files.', 'output')
     .action(action);
 
 
