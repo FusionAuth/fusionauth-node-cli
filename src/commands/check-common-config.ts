@@ -11,7 +11,7 @@ interface CheckResult {
 
 const skipLicenseCheckOption = new Option(
     '--skip-license-check',
-    'Skip checking license activation (for community edition users)'
+    'Skip checking license activation (for community plan users)'
 ).default(false);
 
 const action = async function ({key: apiKey, host, skipLicenseCheck}: {
@@ -348,7 +348,7 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
 }
 
 // noinspection JSUnusedGlobalSymbols
-export const commonConfigCheck = new Command('common-config-check')
+export const checkCommonConfig = new Command('check:commonConfig')
     .description('Checks for common configuration settings that should be changed')
     .addOption(apiKeyOption)
     .addOption(hostOption)
