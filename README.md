@@ -23,7 +23,7 @@ fusionauth --help;
 
 Currently, the CLI supports the following commands:
 - Common config check
-  - `fusionauth common-config-check` - Checks to make sure common configuration settings are set.
+  - `fusionauth check:common-config` - Checks to make sure common configuration settings are set.
 - Emails
   - `fusionauth email:download` - Download a specific template or all email templates from a FusionAuth server.
   - `fusionauth email:duplicate` - Duplicate an email template locally.
