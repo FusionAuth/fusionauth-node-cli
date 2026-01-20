@@ -22,6 +22,8 @@ fusionauth --help;
 ```
 
 Currently, the CLI supports the following commands:
+- Common config check
+  - `fusionauth check:common-config` - Checks to make sure common configuration settings are set.
 - Emails
   - `fusionauth email:download` - Download a specific template or all email templates from a FusionAuth server.
   - `fusionauth email:duplicate` - Duplicate an email template locally.
@@ -74,6 +76,10 @@ npx fusionauth -h;
 ```
 
 To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.
+
+## Troubleshooting
+
+If you run this multiple times in a row against a local instance, the number of admin users may be incorrect until you re-index. See [this issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/3271).
 
 ## License
 
