@@ -55,6 +55,12 @@ jobs:
             --output text | \
             jq -r 'to_entries[] | [.key, .value] | @tsv')
 
+
+      - name: configure git
+        run: |
+          git config --global user.name "FusionAuth Automation"
+          git config --global user.email "donotreply@fusionauth.io"
+
       - name: setup node for publishing
         if: inputs.command == 'publish'
         uses: actions/setup-node@v6
