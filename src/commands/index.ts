@@ -13,3 +13,4 @@ export * from './message-upload.js';
 export * from './theme-watch.js';
 export * from './theme-upload.js';
 export * from './theme-download.js';
+export * from './import-generate.js';
