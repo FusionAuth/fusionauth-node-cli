@@ -1,44 +1,39 @@
 ---
-name: Publish
+name: Publish the node CLI to NPM
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       command:
-        required: true
         type: choice
         options:
-          - test
-          - publish
+          - test     # build only
+          - publish  # build & publish to npmjs
         default: test
       version:
         required: true
         type: string
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
-  publish:
+  deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: /usr/bin/bash -l -e -o pipefail {0}
     steps:
-      - name: create github token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.ACTIONS_RUNNER_APP_ID }}
-          private-key: ${{ secrets.ACTIONS_RUNNER_PRIVATE_KEY }}
-
       - name: checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
 
-      - name: configure git
-        run: |
-          git config --global user.name "FusionAuth Automation"
-          git config --global user.email "donotreply@fusionauth.io"
 
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -48,6 +43,7 @@ jobs:
           aws-region: us-west-2
 
       - name: get secret
+        if: inputs.command == 'publish'
         run: |
           while IFS=$'\t' read -r key value; do
             echo "::add-mask::${value}"
@@ -59,11 +55,12 @@ jobs:
             --output text | \
             jq -r 'to_entries[] | [.key, .value] | @tsv')
 
-      - name: create npmrc
-        run: |
-          echo "color=false" > ~/.npmrc
-          echo "//registry.npmjs.org/:_authToken=${{ env.API_KEY }}" >> ~/.npmrc
-          chmod 600 ~/.npmrc
+      - name: setup node for publishing
+        if: inputs.command == 'publish'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org' # This generates the necessary .npmrc
 
       - name: set version
         run: npm version ${{ inputs.version }}
@@ -84,7 +81,10 @@ jobs:
         if: inputs.command == 'test'
         run: npm publish --dry-run
 
-      - name: publish to npmjs (only on main branch)
-        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
-        run: npm publish
-
+      - name: publish to npmjs
+        if: inputs.command == 'publish'
+        run: |
+          npm install -g npm@latest
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: "sigstore" # npm uses OIDC when this is any non-empty string
