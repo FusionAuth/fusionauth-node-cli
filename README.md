@@ -60,7 +60,17 @@ Otherwise, please [post your question in the community forum](https://fusionauth
 
 ## Releasing
 
-Run the [Publish Workflow](https://github.com/FusionAuth/fusionauth-node-cli/actions/workflows/publish.yaml).
+1. Bump the version and create a tag:
+   ```bash
+   npm version patch  # or minor, major
+   ```
+
+2. Push the commit and tag:
+   ```bash
+   git push && git push --tags
+   ```
+
+3. The [GitHub Action](https://github.com/FusionAuth/fusionauth-node-cli/actions/workflows/publish.yaml) will automatically build and publish to npm when the tag is pushed.
 
 ## Contributing
 
