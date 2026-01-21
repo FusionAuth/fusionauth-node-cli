@@ -1,31 +1,17 @@
 ---
-name: Publish the node CLI to NPM
+name: Publish to NPM
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      command:
-        type: choice
-        options:
-          - test     # build only
-          - publish  # build & publish to npmjs
-        default: test
-      version:
-        required: true
-        type: string
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,7 +19,16 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for branch verification
 
+      - name: verify tag is on main branch
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor ${{ github.sha }} origin/main; then
+            echo "Error: Tag must be on the main branch"
+            exit 1
+          fi
 
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -43,7 +38,6 @@ jobs:
           aws-region: us-west-2
 
       - name: get secret
-        if: inputs.command == 'publish'
         run: |
           while IFS=$'\t' read -r key value; do
             echo "::add-mask::${value}"
@@ -55,42 +49,19 @@ jobs:
             --output text | \
             jq -r 'to_entries[] | [.key, .value] | @tsv')
 
-
-      - name: configure git
-        run: |
-          git config --global user.name "FusionAuth Automation"
-          git config --global user.email "donotreply@fusionauth.io"
-
-      - name: setup node for publishing
-        if: inputs.command == 'publish'
+      - name: setup node
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org' # This generates the necessary .npmrc
-
-      - name: set version
-        run: npm version ${{ inputs.version }}
-
-      - name: commit version changes (only on main branch)
-        if: inputs.command == 'publish' && github.ref == 'refs/heads/main'
-        run: |
-          git push
-          git push --tags
+          registry-url: 'https://registry.npmjs.org'
 
       - name: install dependencies
         run: npm install
 
-      - name: build the package
+      - name: build
         run: npm run build
 
-      - name: test publish to npmjs
-        if: inputs.command == 'test'
-        run: npm publish --dry-run
-
-      - name: publish to npmjs
-        if: inputs.command == 'publish'
-        run: |
-          npm install -g npm@latest
-          npm publish --provenance --access public
+      - name: publish to npm
+        run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: "sigstore" # npm uses OIDC when this is any non-empty string
+          NODE_AUTH_TOKEN: "sigstore"  # npm uses OIDC when this is any non-empty string
