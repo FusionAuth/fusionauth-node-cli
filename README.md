@@ -77,7 +77,7 @@ npm run build;
 npx fusionauth -h;
 ```
 
-To see examples of use look at https://fusionauth.io/docs/v1/tech/lambdas/testing.
+To see examples of use: https://fusionauth.io/docs/extend/code/lambdas/testing
 
 ## Troubleshooting
 
