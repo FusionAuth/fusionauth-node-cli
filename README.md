@@ -60,17 +60,21 @@ Otherwise, please [post your question in the community forum](https://fusionauth
 
 ## Releasing
 
-1. Bump the version and create a tag:
-   ```bash
-   npm version patch  # or minor, major
-   ```
+1. Run the release script from the main branch:
 
-2. Push the commit and tag:
-   ```bash
-   git push && git push --tags
-   ```
+```bash
+./scripts/release.sh patch  # or minor, major
+```
 
-3. The [GitHub Action](https://github.com/FusionAuth/fusionauth-node-cli/actions/workflows/publish.yaml) will automatically build and publish to npm when the tag is pushed.
+2. Create a Pull Request from the release branch to `main`.
+
+3. After the PR is merged, tag the release, make sure they match:
+
+```bash
+./scripts/tag-release.sh <version>  # e.g., 1.2.3
+```
+
+4. The [GitHub Action](https://github.com/FusionAuth/fusionauth-node-cli/actions/workflows/publish.yaml) will automatically build and publish to npm when the tag is pushed.
 
 ## Contributing
 
