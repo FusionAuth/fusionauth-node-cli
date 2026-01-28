@@ -18,7 +18,7 @@ jobs:
         shell: /usr/bin/bash -l -e -o pipefail {0}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch full history for branch verification
 
@@ -30,38 +30,16 @@ jobs:
             exit 1
           fi
 
-      - name: set aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::752443094709:role/gha-fusionauth-node-cli
-          role-session-name: aws-auth-action
-          aws-region: us-west-2
-
-      - name: get secret
-        run: |
-          while IFS=$'\t' read -r key value; do
-            echo "::add-mask::${value}"
-            echo "${key}=${value}" >> $GITHUB_ENV
-          done < <(aws secretsmanager get-secret-value \
-            --region us-west-2 \
-            --secret-id platform/npmjs \
-            --query SecretString \
-            --output text | \
-            jq -r 'to_entries[] | [.key, .value] | @tsv')
-
       - name: setup node
         uses: actions/setup-node@v6
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: install dependencies
-        run: npm install
-
-      - name: build
-        run: npm run build
-
-      - name: publish to npm
-        run: npm publish --provenance --access public
+      - name: build and publish
         env:
           NODE_AUTH_TOKEN: "sigstore"  # npm uses OIDC when this is any non-empty string
+        run: |
+          npm install
+          npm run build
+          npm publish --provenance --access public
