@@ -37,8 +37,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: build and publish
-        env:
-          NODE_AUTH_TOKEN: "sigstore"  # npm uses OIDC when this is any non-empty string
         run: |
           npm install
           npm run build
