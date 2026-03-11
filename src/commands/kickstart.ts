@@ -1,5 +1,6 @@
 import {Command} from "@commander-js/extra-typings";
 import chalk from "chalk";
+import inquirer from 'inquirer';
 
 
 import process from 'node:process';
@@ -8,9 +9,13 @@ import { isDockerInstalled } from "../utils.js";
 
 
 
-async function createKickstart(kickstartPath: string) {
+async function createKickstart(kickstartPath: string, answers: any) {
   const kickstartContent = fs.readFileSync(kickstartPath)
-  const kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
+  var kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
+
+  kickstartObject.variables.adminEmail = answers.email;
+  kickstartObject.variables.adminPassword = answers.password;
+  kickstartObject.variables.applicationName = answers.appName
 
   fs.writeFileSync('./fusionauth/kickstart/kickstart.json', JSON.stringify(kickstartObject, null, 2))
 
@@ -18,25 +23,60 @@ async function createKickstart(kickstartPath: string) {
 }
 
 
-const action = async function () {
+const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
   const cwd = process.cwd()
   console.log(chalk.blue(`Running kickstart.`));
 
   if (dockerInstalled) {
-    // move fusionauth folder to user's project
-    fs.cpSync(cwd + '/resources/kickstart/fusionauth', './fusionauth', { recursive: true })
-    createKickstart(cwd + '/resources/kickstart/kickstart.json')
 
-    // rename .env.defaults
-    fs.renameSync('./fusionauth/.env.defaults', './fusionauth/.env')
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'email',
+        message: "Admin Email Address",
+        default: 'admin@example.com'
+      },
+      {
+        type: 'input',
+        name: 'password',
+        message: "Admin user password",
+        default: 'password'
+      },
+      {
+        type: 'input',
+        name: 'appName',
+        message: 'Name your application',
+        default: "Example App"
+      }
+      
+    ])
+      .then((answers) => {
+          // move fusionauth folder to user's project
+          fs.cpSync(cwd + '/resources/kickstart/fusionauth', `./${dir}`, { recursive: true })
+          createKickstart(cwd + '/resources/kickstart/kickstart.json', answers)
+
+          // rename .env.defaults
+          fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
 
 
-    // say next steps
-    console.log(chalk.green("Congratulations! You're ready to start your Docker container"))
-    console.log(`${chalk.magenta('Step 1: ')}cd fusionauth`)
-    console.log(`${chalk.magenta('Step 2: ')}docker compose up -d`)
-    console.log(`${chalk.magenta('Step 3: ')}Visit http://localhost:9011`)
+          // say next steps
+          console.log(chalk.green("Congratulations! You're ready to start your Docker container"))
+          console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
+          console.log(`${chalk.magenta('Step 2: ')}docker compose up -d`)
+
+          console.table({
+            Email: answers.email,
+            Password: answers.password,
+            URL: 'http://localhost:9011/admin'
+          })
+          
+
+      }).catch((error) => {
+        console.error(error)
+      })
+
+
     
 
   } else {
@@ -48,7 +88,8 @@ const action = async function () {
 
 export const kickstart = new Command()
   .command('kickstart')
-  .action(action)
+  .argument('[dir]', 'Optional directory to install FusionAuth', 'fusionauth')
+  .action((dir) => action(dir))
 
 
   // kickstart start
