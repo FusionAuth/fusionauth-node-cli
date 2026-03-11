@@ -5,8 +5,12 @@ import inquirer from 'inquirer';
 
 import process from 'node:process';
 import fs from 'node:fs'
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+    
 import { isDockerInstalled } from "../utils.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 async function createKickstart(kickstartPath: string, answers: any) {
@@ -27,7 +31,7 @@ const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
   const cwd = process.cwd()
   console.log(chalk.blue(`Running kickstart.`));
-
+  
   if (dockerInstalled) {
 
     inquirer.prompt([
@@ -53,8 +57,8 @@ const action = async function (dir: string) {
     ])
       .then((answers) => {
           // move fusionauth folder to user's project
-          fs.cpSync(cwd + '/resources/kickstart/fusionauth', `./${dir}`, { recursive: true })
-          createKickstart(cwd + '/resources/kickstart/kickstart.json', answers)
+          fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
+          createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers)
 
           // rename .env.defaults
           fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
