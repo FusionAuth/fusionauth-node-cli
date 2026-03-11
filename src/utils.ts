@@ -1,7 +1,7 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-
+import { execSync } from 'node:child_process';
 /**
  * Checks if the response is a client response
  * @param response
@@ -151,4 +151,16 @@ export function toJson(item: unknown): string {
 export function errorAndExit(message: string, error?: any) {
     reportError(message, error);
     process.exit(1);
+}
+
+/**
+ * Returns if Docker is installed on the user's PATH
+ */
+export function isDockerInstalled() {
+  try {
+    execSync('docker --version');
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
