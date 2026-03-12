@@ -32,7 +32,6 @@ async function createKickstart(kickstartPath: string, answers: any, newDir: stri
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
   const directory = path.resolve(dir)
-  console.log(directory)
   console.log(chalk.green(`Running kickstart.\n`));
 
   if (dockerInstalled) {
