@@ -1,6 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 import inquirer from 'inquirer';
+import yoctoSpinner from 'yocto-spinner';
 
 import fs from 'node:fs'
 import { dirname } from 'node:path';
@@ -9,6 +10,12 @@ import { fileURLToPath } from 'node:url';
 import { isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function spinnerText(text: string, spinner: any, interval: number = 500) {
+  setTimeout(() => {
+    spinner.text = text
+  }, interval)
+}
 
 async function createKickstart(kickstartPath: string, answers: any, newDir: string) {
   const kickstartContent = fs.readFileSync(kickstartPath)
@@ -47,23 +54,43 @@ const action = async function (dir: string) {
       }
     ])
       .then((answers) => {
-        // move fusionauth folder to user's project
-        fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
-        createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, dir)
+        const spinner = yoctoSpinner({ text: "Building..."}).start()
+        setTimeout(() => {
+          // move fusionauth folder to user's project
+          console.log(chalk.green(`Transferring files to ./${dir}`))
+          fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
 
-        // rename .env.defaults
-        fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
 
-        // say next steps
+        }, 500)
+        setTimeout(() => {
+          console.log(chalk.green(`Creating Kickstart file`))
+          createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, dir)
+
+        }, 1500)
+
+        setTimeout(() => {
+          spinnerText(chalk.green(`Transferring environment variables`), spinner)
+          fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
+        }, 2500)
+
+
+        setTimeout(() => {
+          spinner.success("Done building!")
+
+          // say next steps
         console.log(chalk.green("Congratulations! You're ready to start your Docker container"))
         console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
         console.log(`${chalk.magenta('Step 2: ')}docker compose up -d`)
+
 
         console.table({
           Email: answers.email,
           Password: answers.password,
           URL: 'http://localhost:9011/admin'
         })
+        }, 3500)
+
+        
       }).catch((error) => {
         console.error(error)
       })
