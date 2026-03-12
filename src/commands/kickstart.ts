@@ -4,6 +4,7 @@ import inquirer from 'inquirer';
 import yoctoSpinner from 'yocto-spinner';
 
 import fs from 'node:fs'
+import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,11 +26,13 @@ async function createKickstart(kickstartPath: string, answers: any, newDir: stri
   kickstartObject.variables.adminPassword = answers.password;
   kickstartObject.variables.applicationName = answers.appName
 
-  fs.writeFileSync(`./${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
+  fs.writeFileSync(`${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
 }
 
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
+  const directory = path.resolve(dir)
+  console.log(directory)
   console.log(chalk.green(`Running kickstart.\n`));
 
   if (dockerInstalled) {
@@ -57,17 +60,17 @@ const action = async function (dir: string) {
         const spinner = yoctoSpinner({ text: "Building..."}).start()
         setTimeout(() => {
           // move fusionauth folder to user's project
-          console.log(chalk.green(`\nTransferring files to ./${dir}`))
-          fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
+          console.log(chalk.green(`\nTransferring files to ${dir}`))
+          fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
         }, 500)
         setTimeout(() => {
           console.log(chalk.green(`Creating Kickstart file`))
-          createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, dir)
+          createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
         }, 1500)
 
         setTimeout(() => {
           spinnerText(chalk.green(`Transferring environment variables`), spinner)
-          fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
+          fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
         }, 2500)
 
         setTimeout(() => {
