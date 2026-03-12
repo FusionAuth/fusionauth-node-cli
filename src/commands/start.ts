@@ -1,10 +1,7 @@
 import {Command} from "@commander-js/extra-typings";
 import chalk from "chalk";
 
-
-import process from 'node:process';
-import fs from 'node:fs'
-import { execSync, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { isDockerInstalled } from "../utils.js";
 
 
@@ -28,7 +25,7 @@ const action = async function () {
     }
 
   } else {
-    console.error(chalk.red('Error: You need Docker to run currently.'))
+    console.error(chalk.red('Error: You need Docker to run.'))
   }
 
 }

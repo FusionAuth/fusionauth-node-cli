@@ -1,13 +1,11 @@
-import {Command} from "@commander-js/extra-typings";
+import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 import inquirer from 'inquirer';
 
-
-import process from 'node:process';
 import fs from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-    
+
 import { isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -29,11 +27,9 @@ async function createKickstart(kickstartPath: string, answers: any) {
 
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
-  const cwd = process.cwd()
   console.log(chalk.blue(`Running kickstart.`));
-  
-  if (dockerInstalled) {
 
+  if (dockerInstalled) {
     inquirer.prompt([
       {
         type: 'input',
@@ -53,42 +49,36 @@ const action = async function (dir: string) {
         message: 'Name your application',
         default: "Example App"
       }
-      
     ])
       .then((answers) => {
-          // move fusionauth folder to user's project
-          fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
-          createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers)
+        // move fusionauth folder to user's project
+        fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
+        createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers)
 
-          // rename .env.defaults
-          fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
+        // rename .env.defaults
+        fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
 
+        // say next steps
+        console.log(chalk.green("Congratulations! You're ready to start your Docker container"))
+        console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
+        console.log(`${chalk.magenta('Step 2: ')}docker compose up -d`)
 
-          // say next steps
-          console.log(chalk.green("Congratulations! You're ready to start your Docker container"))
-          console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
-          console.log(`${chalk.magenta('Step 2: ')}docker compose up -d`)
+        console.table({
+          Email: answers.email,
+          Password: answers.password,
+          URL: 'http://localhost:9011/admin'
+        })
 
-          console.table({
-            Email: answers.email,
-            Password: answers.password,
-            URL: 'http://localhost:9011/admin'
-          })
-          
 
       }).catch((error) => {
         console.error(error)
       })
 
-
-    
-
   } else {
     console.log(chalk.red("Error: You don't have Docker installed. It's the easiest way to get everything you need"))
     console.log(chalk.cyan("Please install Docker. For developers new to Docker, we suggest Orbstack: https://docs.orbstack.dev/quick-start"))
   }
-  
-  }
+}
 
 export const kickstart = new Command()
   .command('kickstart')
@@ -96,5 +86,5 @@ export const kickstart = new Command()
   .action((dir) => action(dir))
 
 
-  // kickstart start
-  // kickstart stop
+// kickstart start
+// kickstart stop
