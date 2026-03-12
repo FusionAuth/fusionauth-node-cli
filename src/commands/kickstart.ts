@@ -30,7 +30,7 @@ async function createKickstart(kickstartPath: string, answers: any, newDir: stri
 
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
-  console.log(chalk.blue(`Running kickstart.`));
+  console.log(chalk.green(`Running kickstart.\n`));
 
   if (dockerInstalled) {
     inquirer.prompt([
@@ -57,15 +57,12 @@ const action = async function (dir: string) {
         const spinner = yoctoSpinner({ text: "Building..."}).start()
         setTimeout(() => {
           // move fusionauth folder to user's project
-          console.log(chalk.green(`Transferring files to ./${dir}`))
+          console.log(chalk.green(`\nTransferring files to ./${dir}`))
           fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
-
-
         }, 500)
         setTimeout(() => {
           console.log(chalk.green(`Creating Kickstart file`))
           createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, dir)
-
         }, 1500)
 
         setTimeout(() => {
@@ -73,21 +70,23 @@ const action = async function (dir: string) {
           fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
         }, 2500)
 
-
         setTimeout(() => {
           spinner.success("Done building!")
 
           // say next steps
-        console.log(chalk.green("Congratulations! You're ready to start your Docker container"))
+        console.log(chalk.green("================================================================="))
+        console.log(chalk.green("=  Congratulations! You're ready to start your Docker container ="))
+        console.log(chalk.green("================================================================="))
+
+        console.log(chalk.magentaBright('\nTime to run FusionAuth!'));
         console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
-        console.log(`${chalk.magenta('Step 2: ')}docker compose up -d`)
+        console.log(`${chalk.magenta('Step 2: ')}npx fusionauth start \n`)
 
-
-        console.table({
-          Email: answers.email,
-          Password: answers.password,
-          URL: 'http://localhost:9011/admin'
-        })
+        // console.table({
+        //   Email: answers.email,
+        //   Password: answers.password,
+        //   URL: 'http://localhost:9011/admin'
+        // })
         }, 3500)
 
         
