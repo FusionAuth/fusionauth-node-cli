@@ -10,7 +10,6 @@ import { isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-
 async function createKickstart(kickstartPath: string, answers: any) {
   const kickstartContent = fs.readFileSync(kickstartPath)
   var kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
@@ -20,10 +19,7 @@ async function createKickstart(kickstartPath: string, answers: any) {
   kickstartObject.variables.applicationName = answers.appName
 
   fs.writeFileSync('./fusionauth/kickstart/kickstart.json', JSON.stringify(kickstartObject, null, 2))
-
-
 }
-
 
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
@@ -68,8 +64,6 @@ const action = async function (dir: string) {
           Password: answers.password,
           URL: 'http://localhost:9011/admin'
         })
-
-
       }).catch((error) => {
         console.error(error)
       })
@@ -84,7 +78,6 @@ export const kickstart = new Command()
   .command('kickstart')
   .argument('[dir]', 'Optional directory to install FusionAuth', 'fusionauth')
   .action((dir) => action(dir))
-
 
 // kickstart start
 // kickstart stop
