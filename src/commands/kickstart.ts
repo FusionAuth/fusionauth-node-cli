@@ -10,7 +10,7 @@ import { isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-async function createKickstart(kickstartPath: string, answers: any) {
+async function createKickstart(kickstartPath: string, answers: any, newDir: string) {
   const kickstartContent = fs.readFileSync(kickstartPath)
   var kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
 
@@ -18,7 +18,7 @@ async function createKickstart(kickstartPath: string, answers: any) {
   kickstartObject.variables.adminPassword = answers.password;
   kickstartObject.variables.applicationName = answers.appName
 
-  fs.writeFileSync('./fusionauth/kickstart/kickstart.json', JSON.stringify(kickstartObject, null, 2))
+  fs.writeFileSync(`./${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
 }
 
 const action = async function (dir: string) {
@@ -49,7 +49,7 @@ const action = async function (dir: string) {
       .then((answers) => {
         // move fusionauth folder to user's project
         fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, `./${dir}`, { recursive: true })
-        createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers)
+        createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, dir)
 
         // rename .env.defaults
         fs.renameSync(`./${dir}/.env.defaults`, `./${dir}/.env`)
