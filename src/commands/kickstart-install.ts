@@ -70,6 +70,7 @@ const action = async function (dir: string) {
         setTimeout(() => {
           spinnerText(chalk.green(`Transferring environment variables`), spinner)
           fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
+          fs.appendFileSync(`${directory}/.env`, `\nADMIN_EMAIL=${answers.email}\nADMIN_PASSWORD=${answers.password}`)
         }, 2500)
 
         setTimeout(() => {
@@ -83,12 +84,6 @@ const action = async function (dir: string) {
         console.log(chalk.magentaBright('\nTime to run FusionAuth!'));
         console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
         console.log(`${chalk.magenta('Step 2: ')}npx fusionauth start \n`)
-
-        // console.table({
-        //   Email: answers.email,
-        //   Password: answers.password,
-        //   URL: 'http://localhost:9011/admin'
-        // })
         }, 3500)
 
         

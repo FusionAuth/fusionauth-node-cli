@@ -3,6 +3,7 @@ import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
 import { isDockerInstalled } from "../utils.js";
+import 'dotenv/config';
 
 
 const action = async function () {
@@ -19,16 +20,13 @@ const action = async function () {
         console.log(`${chalk.green(`FusionAuth:`)} ${data}`);
       };}
 
-      starting.on('close', code => {
-        // if (code !== 0) throw "There was an error"
+      starting.on('close', () => {
         console.log(chalk.green('FusionAuth is running...'))
         console.log('\n')
         console.log(chalk.bgGreen('==== YOUR FUSIONAUTH DOCKER IS RUNNING ===='))
         console.log('Login at http://localhost:9011/admin')
-        console.log('Username: <todo>')
-        console.log('Password: <todo>')
-        console.log('closed', code)
-      
+        console.log(`Username: ${process.env.ADMIN_EMAIL}`)
+        console.log(`Password: ${process.env.ADMIN_PASSWORD}`)      
       })
 
     } catch (e){
