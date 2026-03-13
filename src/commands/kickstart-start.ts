@@ -10,11 +10,17 @@ const action = async function () {
 
   if (isDockerInstalled()) {
     try {
-      const starting = spawn('docker compose up -d', {shell:true})
+      const starting = spawn('docker compose up -d', {shell:true, stdio: 'inherit'})
       starting.on('error', e => {
-        console.log('in on error', e)
-        console.log(e)})
+        console.error(e)
+      })
+      if (starting?.stdout){
+      for await (const data of starting.stdout) { 
+        console.log(`${chalk.green(`FusionAuth:`)} ${data}`);
+      };}
+
       starting.on('close', code => {
+        // if (code !== 0) throw "There was an error"
         console.log(chalk.green('FusionAuth is running...'))
         console.log('\n')
         console.log(chalk.bgGreen('==== YOUR FUSIONAUTH DOCKER IS RUNNING ===='))
@@ -24,19 +30,8 @@ const action = async function () {
         console.log('closed', code)
       
       })
-      for await (const data of starting.stdout) { 
-        console.log(`${chalk.green(`FusionAuth:`)} ${data}`);
-        
-        if (data.includes(' Maintenance mode complete (no further stages left to execute)')){
-          console.log(chalk.bgBlue('FOUND IT!'))
-        }
 
-      };
-      starting.stdout.on('end', () => {
-        console.log('i think output stopped?')
-      })
     } catch (e){
-      console.log('in the error!')
       console.error(e)
     }
 
@@ -47,9 +42,5 @@ const action = async function () {
 }
 
 export const start = new Command()
-  .command('start')
+  .command('kickstart:start')
   .action(action)
-  
-  process.on('SIGINT', () =>{
-    
-  })

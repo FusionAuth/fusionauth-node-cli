@@ -103,7 +103,7 @@ const action = async function (dir: string) {
 }
 
 export const kickstart = new Command()
-  .command('kickstart')
+  .command('kickstart:install')
   .argument('[dir]', 'Optional directory to install FusionAuth', 'fusionauth')
   .action((dir) => action(dir))
 
