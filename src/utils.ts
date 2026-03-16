@@ -159,7 +159,7 @@ export function errorAndExit(message: string, error?: any) {
  * Returns a console log that can be added to a beta feature to warn the user
  */
 export function betaWarning() {
-    console.log(boxen(`${chalk.yellow("This feature is currently in beta.")}`, {title: 'Beta', borderColor: 'yellow', borderStyle: 'bold', textAlignment: 'center'}))
+    console.log(boxen(`${chalk.yellow("This feature is currently in beta.")}`, {title: 'Beta', borderColor: 'yellow', borderStyle: 'bold', textAlignment: 'center'}) + "\n")
 }
 
 /**
