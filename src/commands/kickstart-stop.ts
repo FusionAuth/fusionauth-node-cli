@@ -2,10 +2,11 @@ import {Command} from "@commander-js/extra-typings";
 import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
-import { isDockerInstalled } from "../utils.js";
+import { betaWarning, isDockerInstalled } from "../utils.js";
 
 
 const action = async function () {
+  betaWarning();
   console.log(chalk.yellow('Stopping FusionAuth...\n'))
 
   if (isDockerInstalled()) {

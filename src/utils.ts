@@ -1,6 +1,8 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
+
+import boxen from 'boxen';
 import { execSync } from 'node:child_process';
 /**
  * Checks if the response is a client response
@@ -151,6 +153,13 @@ export function toJson(item: unknown): string {
 export function errorAndExit(message: string, error?: any) {
     reportError(message, error);
     process.exit(1);
+}
+
+/**
+ * Returns a console log that can be added to a beta feature to warn the user
+ */
+export function betaWarning() {
+    console.log(boxen(`${chalk.yellow("This feature is currently in beta.")}`, {title: 'Beta', borderColor: 'yellow', borderStyle: 'bold', textAlignment: 'center'}))
 }
 
 /**

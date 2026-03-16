@@ -2,13 +2,14 @@ import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 import inquirer from 'inquirer';
 import yoctoSpinner from 'yocto-spinner';
+import boxen from "boxen";
 
 import fs from 'node:fs'
 import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { isDockerInstalled } from "../utils.js";
+import { betaWarning, isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -32,21 +33,31 @@ async function createKickstart(kickstartPath: string, answers: any, newDir: stri
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
   const directory = path.resolve(dir)
-  console.log(chalk.green(`Running kickstart.\n`));
-
+  betaWarning()
+  
   if (dockerInstalled) {
     inquirer.prompt([
       {
         type: 'input',
         name: 'email',
         message: "Admin Email Address",
-        default: 'admin@example.com'
+        default: 'admin@example.com',
+        validate: function(email) {
+            return /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/.test(email) ? true :'Not a valid email address' ;
+        }
       },
       {
-        type: 'input',
+        type: 'password',
         name: 'password',
         message: "Admin user password",
-        default: 'password'
+        mask: true,
+        validate: (text) => {
+          if (text.length == 0) {
+            return 'Custom password is required'
+          } else {
+            return true
+          }
+        }
       },
       {
         type: 'input',
@@ -68,25 +79,17 @@ const action = async function (dir: string) {
         }, 1500)
 
         setTimeout(() => {
-          spinnerText(chalk.green(`Transferring environment variables`), spinner)
+          console.log(chalk.green(`Transferring environment variables`))
           fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
-          fs.appendFileSync(`${directory}/.env`, `\nADMIN_EMAIL=${answers.email}\nADMIN_PASSWORD=${answers.password}`)
         }, 2500)
 
         setTimeout(() => {
-          spinner.success("Done building!")
+          spinner.success("Done building!\n")
 
-          // say next steps
-        console.log(chalk.green("================================================================="))
-        console.log(chalk.green("=  Congratulations! You're ready to start your Docker container ="))
-        console.log(chalk.green("================================================================="))
+          console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, {padding: 1, title: "Next Steps", borderColor:"green", borderStyle:'bold'}))
 
-        console.log(chalk.magentaBright('\nTime to run FusionAuth!'));
-        console.log(`${chalk.magenta('Step 1: ')}cd ${dir}`)
-        console.log(`${chalk.magenta('Step 2: ')}npx fusionauth start \n`)
-        }, 3500)
-
-        
+      }, 3500)
+      
       }).catch((error) => {
         console.error(error)
       })

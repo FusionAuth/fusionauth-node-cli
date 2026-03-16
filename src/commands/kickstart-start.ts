@@ -4,6 +4,7 @@ import chalk from "chalk";
 import { spawn } from 'node:child_process';
 import { isDockerInstalled } from "../utils.js";
 import 'dotenv/config';
+import boxen from "boxen";
 
 
 const action = async function () {
@@ -21,12 +22,7 @@ const action = async function () {
       };}
 
       starting.on('close', () => {
-        console.log(chalk.green('FusionAuth is running...'))
-        console.log('\n')
-        console.log(chalk.bgGreen('==== YOUR FUSIONAUTH DOCKER IS RUNNING ===='))
-        console.log('Login at http://localhost:9011/admin')
-        console.log(`Username: ${process.env.ADMIN_EMAIL}`)
-        console.log(`Password: ${process.env.ADMIN_PASSWORD}`)      
+        console.log(boxen(`${chalk.magenta('Login URL:')} http://localhost:9011/admin`, {padding: 2, margin: 1, titleAlignment: 'center', borderStyle: 'bold', borderColor: 'green', title: "Your FusionAuth Docker is Running"}))
       })
 
     } catch (e){

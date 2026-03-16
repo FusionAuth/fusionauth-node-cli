@@ -2,10 +2,12 @@ import {Command} from "@commander-js/extra-typings";
 import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
-import { isDockerInstalled } from "../utils.js";
+import { betaWarning, isDockerInstalled } from "../utils.js";
+import boxen from "boxen";
 
 
 const action = async function () {
+  betaWarning();
   console.log(chalk.yellow('Killing FusionAuth...\n'))
 
   if (isDockerInstalled()) {
@@ -20,8 +22,7 @@ const action = async function () {
       };}
 
       starting.on('close', code => {
-        console.log(chalk.bgRed('\n==== YOUR FUSIONAUTH DOCKER IS REMOVED ===='))
-        console.log('To start it up, run npx fusionauth kickstart:start')
+        console.log(boxen(`The Docker image is shut down and the database has been destroyed.\nTo start it up, run ${chalk.green("npx fusionauth kickstart:start")}`, {borderStyle: 'bold', borderColor:'red', padding: 1}))
       })
 
     } catch (e){
