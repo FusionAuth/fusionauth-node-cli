@@ -3,12 +3,11 @@ import chalk from "chalk";
 import inquirer from 'inquirer';
 import yoctoSpinner from 'yocto-spinner';
 import boxen from "boxen";
-
+import bcrypt from 'bcryptjs'
 import fs from 'node:fs'
 import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import crypto from 'node:crypto'
 import { betaWarning, isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,14 +19,18 @@ function spinnerText(text: string, spinner: any, interval: number = 500) {
 }
 
 async function createKickstart(kickstartPath: string, answers: any, newDir: string) {
-  const hashedPassword = crypto.createHash('md5').update(answers.password).digest('hex')
-  const basePassword = Buffer.from(hashedPassword, 'hex').toString('base64')
+  const salt = bcrypt.genSaltSync(10)
+  const saltBase = salt.split('$10$')[1];
+  const fullHash = bcrypt.hashSync(answers.password, salt)
+  const hashedPassword = fullHash.split(salt)[1]
   const kickstartContent = fs.readFileSync(kickstartPath)
   var kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
 
   kickstartObject.variables.adminEmail = answers.email;
-  kickstartObject.variables.adminPassword = basePassword;
+  kickstartObject.variables.adminPassword = hashedPassword;
   kickstartObject.variables.applicationName = answers.appName;
+  kickstartObject.variables.saltPassword = saltBase
+
   fs.writeFileSync(`${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
 }
 

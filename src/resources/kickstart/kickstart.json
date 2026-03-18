@@ -62,10 +62,10 @@
           {
             "email": "#{adminEmail}",
             "password": "#{adminPassword}",
-            "encryptionScheme": "salted-md5",
-            "factor": 1,
+            "salt": "#{saltPassword}",
+            "encryptionScheme": "bcrypt",
+            "factor": 10,
             "active": true,
-            "salt": "",
             "verified": true,
             "skipRegistrationVerification": true,
             "roles": [
