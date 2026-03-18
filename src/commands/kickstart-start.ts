@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { betaWarning, isDockerInstalled } from "../utils.js";
 import 'dotenv/config';
 import boxen from "boxen";
+import yoctoSpinner from "yocto-spinner";
 
 
 const action = async function () {
@@ -23,9 +24,13 @@ const action = async function () {
       };}
 
       starting.on('close', () => {
-        console.log(boxen(`${chalk.magenta('Login URL:')} http://localhost:9011/admin`, {padding: 2, margin: 1, titleAlignment: 'center', borderStyle: 'bold', borderColor: 'green', title: "Your FusionAuth Docker is Running"}))
+        const spinner = yoctoSpinner({ text: "Configuring ..."}).start()
+        setTimeout(()=> {
+          spinner.stop()
+          console.log(boxen(`${chalk.magenta('Login URL:')} http://localhost:9011/admin`, {padding: 2, margin: 1, titleAlignment: 'center', borderStyle: 'bold', borderColor: 'green', title: "Your FusionAuth Docker is Running"}))
+        }, 5000) // Timeout to allow kickstart to run in the Docker
       })
-
+      
     } catch (e){
       console.error(e)
     }
