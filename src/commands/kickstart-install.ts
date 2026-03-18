@@ -83,8 +83,12 @@ const action = async function (dir: string) {
         }, 1500)
 
         setTimeout(() => {
+          const postgresPass = crypto.randomUUID()
+          const dbPass= crypto.randomUUID() 
+
           console.log(chalk.green(`Transferring environment variables`))
           fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
+          fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}`)
         }, 2500)
 
         setTimeout(() => {
