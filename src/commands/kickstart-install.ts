@@ -25,6 +25,7 @@ async function createKickstart(kickstartPath: string, answers: any, newDir: stri
   kickstartObject.variables.applicationName = answers.appName;
   kickstartObject.variables.saltPassword = saltBase
 
+  fs.mkdirSync(`${newDir}/kickstart`)
   fs.writeFileSync(`${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
 }
 
