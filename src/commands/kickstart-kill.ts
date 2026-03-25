@@ -22,7 +22,7 @@ const action = async function () {
       };}
 
       starting.on('close', code => {
-        console.log(boxen(`The Docker image is shut down and the database has been destroyed.\nTo start it up, run ${chalk.green("npx fusionauth kickstart:start")}`, {borderStyle: 'bold', borderColor:'red', padding: 1}))
+        console.log(boxen(`The Docker container is shut down and the database has been destroyed.\nTo start it up, run ${chalk.green("npx fusionauth kickstart:start")}`, {borderStyle: 'bold', borderColor:'red', padding: 1}))
       })
 
     } catch (e){
