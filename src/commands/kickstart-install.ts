@@ -12,12 +12,6 @@ import { betaWarning, isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function spinnerText(text: string, spinner: any, interval: number = 500) {
-  setTimeout(() => {
-    spinner.text = text
-  }, interval)
-}
-
 async function createKickstart(kickstartPath: string, answers: any, newDir: string) {
   const salt = bcrypt.genSaltSync(10)
   const saltBase = salt.split('$10$')[1];
