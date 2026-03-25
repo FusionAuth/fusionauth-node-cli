@@ -41,6 +41,7 @@ const action = async function () {
 
 }
 
-export const start = new Command()
+export const kickstartStart = new Command()
   .command('kickstart:start')
+  .description('Runs Docker container in the current directory')
   .action(action)

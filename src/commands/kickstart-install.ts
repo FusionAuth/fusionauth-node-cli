@@ -102,10 +102,8 @@ const action = async function (dir: string) {
   }
 }
 
-export const kickstart = new Command()
+export const kickstartInstall = new Command()
   .command('kickstart:install')
+  .description('Adds a directory with a FusionAuth Docker + Kickstart')
   .argument('[dir]', 'Optional directory to install FusionAuth', 'fusionauth')
   .action((dir) => action(dir))
-
-// kickstart start
-// kickstart stop

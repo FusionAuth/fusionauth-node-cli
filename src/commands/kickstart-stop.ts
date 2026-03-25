@@ -35,7 +35,8 @@ const action = async function () {
 
 }
 
-export const stop = new Command()
+export const kickstartStop = new Command()
   .command('kickstart:stop')
+  .description('Runs docker compose stop in current directory')
   .action(action)
   

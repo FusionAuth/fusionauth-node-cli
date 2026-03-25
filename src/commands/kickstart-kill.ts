@@ -35,7 +35,8 @@ const action = async function () {
 
 }
 
-export const kill = new Command()
+export const kickstartKill = new Command()
+  .description('Runs docker compose down in current directory')
   .command('kickstart:kill')
   .action(action)
   
