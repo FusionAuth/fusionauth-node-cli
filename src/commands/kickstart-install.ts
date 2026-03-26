@@ -42,6 +42,13 @@ const action = async function (dir: string) {
     if (fs.existsSync(directory)) {
       throw (chalk.red(`Target directory (${directory}) already exists`))
     }
+    const parentDir = path.dirname(directory)
+
+    try {
+      fs.accessSync(parentDir, fs.constants.W_OK)
+    } catch(err) {
+      console.error(chalk.red(`Can't write to ${parentDir}. Please check permissions on the directory`))
+    }
 
     inquirer.prompt([
       {
