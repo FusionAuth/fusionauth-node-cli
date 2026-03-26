@@ -68,6 +68,8 @@ const action = async function (dir: string) {
         validate: (text) => {
           if (text.length == 0) {
             return 'Custom password is required'
+          } else if(text.length < 8) {
+            return 'Password must be at least 8 characters (You can change this requirement later in your tenant password settings)'
           } else {
             return true
           }
