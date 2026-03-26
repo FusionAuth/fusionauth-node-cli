@@ -33,16 +33,24 @@ const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
   const directory = path.resolve(dir)
   betaWarning()
-  
-  if (dockerInstalled) {
+
+  try {
+    if (!dockerInstalled) {
+      throw (chalk.red("Error: You don't have Docker installed. It's the easiest way to get everything you need\n") + chalk.cyan("Please install Docker. For developers new to Docker, we suggest Orbstack: https://docs.orbstack.dev/quick-start"))
+    }
+
+    if (fs.existsSync(directory)) {
+      throw (chalk.red(`Target directory (${directory}) already exists`))
+    }
+
     inquirer.prompt([
       {
         type: 'input',
         name: 'email',
         message: "Admin Email Address",
         default: 'admin@example.com',
-        validate: function(email) {
-            return /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/.test(email) ? true :'Not a valid email address' ;
+        validate: function (email) {
+          return /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/.test(email) ? true : 'Not a valid email address';
         }
       },
       {
@@ -66,7 +74,7 @@ const action = async function (dir: string) {
       }
     ])
       .then((answers) => {
-        const spinner = yoctoSpinner({ text: "Building..."}).start()
+        const spinner = yoctoSpinner({ text: "Building..." }).start()
         setTimeout(() => {
           // move fusionauth folder to user's project
           console.log(chalk.green(`\nTransferring files to ${dir}`))
@@ -74,12 +82,13 @@ const action = async function (dir: string) {
         }, 500)
         setTimeout(() => {
           console.log(chalk.green(`Creating Kickstart file`))
+          if (!fs.existsSync(directory)) throw(chalk.red(`Something went wrong. ${directory} does not exists.`))
           createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
         }, 1500)
 
         setTimeout(() => {
           const postgresPass = crypto.randomUUID()
-          const dbPass= crypto.randomUUID() 
+          const dbPass = crypto.randomUUID()
 
           console.log(chalk.green(`Transferring environment variables`))
           fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
@@ -89,18 +98,20 @@ const action = async function (dir: string) {
         setTimeout(() => {
           spinner.success("Done building!\n")
 
-          console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, {padding: 1, title: "Next Steps", borderColor:"green", borderStyle:'bold'}))
+          console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
 
-      }, 3500)
-      
+        }, 3500)
+
       }).catch((error) => {
         console.error(error)
       })
 
-  } else {
-    console.log(chalk.red("Error: You don't have Docker installed. It's the easiest way to get everything you need"))
-    console.log(chalk.cyan("Please install Docker. For developers new to Docker, we suggest Orbstack: https://docs.orbstack.dev/quick-start"))
+
+
+  } catch (e) {
+    console.error(e)
   }
+
 }
 
 export const kickstartInstall = new Command()
