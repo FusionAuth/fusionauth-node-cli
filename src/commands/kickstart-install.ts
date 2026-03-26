@@ -103,7 +103,7 @@ const action = async function (dir: string) {
         }, 3500)
 
       }).catch((error) => {
-        console.error(error)
+        console.error(chalk.red('Cancelling kickstart installation'))
       })
 
 
