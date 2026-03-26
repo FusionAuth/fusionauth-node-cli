@@ -1,4 +1,4 @@
-import {Command} from "@commander-js/extra-typings";
+import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
@@ -12,33 +12,31 @@ const action = async function () {
   betaWarning();
   console.log(chalk.yellow('Starting FusionAuth...'))
 
-  if (isDockerInstalled()) {
-    try {
-      const starting = spawn('docker compose up -d', {shell:true, stdio: 'inherit'})
-      starting.on('error', e => {
-        console.error(e)
-      })
-      if (starting?.stdout){
-      for await (const data of starting.stdout) { 
-        console.log(`${chalk.green(`FusionAuth:`)} ${data}`);
-      };}
+  try {
+    if (process.cwd() != process.env.CLI_DIR) throw (chalk.red('Error: Current directory was not kickstarted.'))
 
-      starting.on('close', () => {
-        const spinner = yoctoSpinner({ text: "Configuring ..."}).start()
-        setTimeout(()=> {
-          spinner.stop()
-          console.log(boxen(`${chalk.magenta('Login URL:')} http://localhost:9011/admin`, {padding: 2, margin: 1, titleAlignment: 'center', borderStyle: 'bold', borderColor: 'green', title: "Your FusionAuth Docker is Running"}))
-        }, 5000) // Timeout to allow kickstart to run in the Docker
-      })
-      
-    } catch (e){
+    if (!isDockerInstalled()) console.error(chalk.red('Error: You need Docker to run.'))
+
+    const starting = spawn('docker compose up -d', { shell: true, stdio: 'inherit' })
+    starting.on('error', e => {
       console.error(e)
+    })
+    if (starting?.stdout) {
+      for await (const data of starting.stdout) {
+        console.log(`${chalk.green(`FusionAuth:`)} ${data}`);
+      };
     }
 
-  } else {
-    console.error(chalk.red('Error: You need Docker to run.'))
+    starting.on('close', () => {
+      const spinner = yoctoSpinner({ text: "Configuring ..." }).start()
+      setTimeout(() => {
+        spinner.stop()
+        console.log(boxen(`${chalk.magenta('Login URL:')} http://localhost:9011/admin`, { padding: 2, margin: 1, titleAlignment: 'center', borderStyle: 'bold', borderColor: 'green', title: "Your FusionAuth Docker is Running" }))
+      }, 5000) // Timeout to allow kickstart to run in the Docker
+    })
+  } catch (err) {
+    console.log(err)
   }
-
 }
 
 export const kickstartStart = new Command()

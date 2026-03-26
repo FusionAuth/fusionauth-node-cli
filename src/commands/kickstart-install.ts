@@ -101,7 +101,7 @@ const action = async function (dir: string) {
 
           console.log(chalk.green(`Transferring environment variables`))
           fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
-          fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}`)
+          fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
         }, 2500)
 
         setTimeout(() => {
