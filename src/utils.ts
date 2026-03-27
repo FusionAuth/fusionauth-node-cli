@@ -1,7 +1,10 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
-import chalk from 'chalk';
+import fs from 'node:fs'
 
+import chalk from 'chalk';
+import boxen from 'boxen';
+import { execSync } from 'node:child_process';
 /**
  * Checks if the response is a client response
  * @param response
@@ -151,4 +154,38 @@ export function toJson(item: unknown): string {
 export function errorAndExit(message: string, error?: any) {
     reportError(message, error);
     process.exit(1);
+}
+
+/**
+ * Returns a console log that can be added to a beta feature to warn the user
+ */
+export function betaWarning() {
+    console.log(boxen(`${chalk.yellow("This feature is currently in beta.")}`, {title: 'Beta', borderColor: 'yellow', borderStyle: 'bold', textAlignment: 'center'}) + "\n")
+}
+
+/**
+ * Returns if Docker is installed on the user's PATH
+ */
+export function isDockerInstalled() {
+  try {
+    execSync('docker --version');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Returns true if path directory contains no files
+ * Path must exist
+ * @param path
+ */
+export function isDirEmpty(path: string) {
+  const data = fs.readdirSync(path)
+  
+  if (data.length > 0) {
+    return false
+  } else {
+    return true
+  }
 }
