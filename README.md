@@ -35,6 +35,11 @@ Currently, the CLI supports the following commands:
   - `fusionauth email:create` - Create a new email template locally.
 Fake user generation
   - `fusionauth import:generate` - Generate JSON for importing fake users for testing.
+- Kickstart (beta test)
+  - `fusionauth kickstart:install [dir]` - Generate the appropriate files to kickstart and install FusionAuth
+  - `fusionauth kickstart:start` - Run in the directory of a FusionAuth Docker image to run the image
+  - `fusionauth kickstart:stop` - Run in the directory of a FusionAuth Docker image to stop the image
+  - `fusionauth kickstart:kill` - Run in the directory of a FusionAuth Docker image to shutdown and wipe the FusionAuth instance
 - Lambdas
   - `fusionauth lambda:update` - Update a lambda on a FusionAuth server.
   - `fusionauth lambda:delete` - Delete a lambda from a FusionAuth server.
