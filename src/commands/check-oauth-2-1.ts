@@ -5,6 +5,7 @@ import {
     GrantType,
     Oauth2AuthorizedURLValidationPolicy,
     ProofKeyForCodeExchangePolicy,
+    ReactorFeatureStatus,
     RefreshTokenUsagePolicy,
     Tenant,
 } from '@fusionauth/typescript-client';
@@ -120,10 +121,8 @@ function isBuiltInApplication(app: Application): boolean {
         return true;
     }
 
-    // Tenant Manager — universalConfiguration is not in the v1.47.0 client
-    // types (added in v1.58.0), so access it dynamically.
-    const universal = (app as Record<string, unknown>).universalConfiguration as Record<string, unknown> | undefined;
-    if (universal?.universal !== true) {
+    // Tenant Manager — universal application with specific redirect and role
+    if (app.universalConfiguration?.universal !== true) {
         return false;
     }
 
@@ -253,34 +252,31 @@ function checkDeprecatedGrants(ctx: AppCheckContext, strict: boolean): CheckResu
     return failures;
 }
 
-function checkDpop(ctx: AppCheckContext, hasLicense: boolean): CheckResult | null {
-    if (!hasLicense) {
+/**
+ * DPoP is an instance-level capability, not a per-application setting.
+ * FusionAuth automatically handles DPoP when the client initiates a DPoP flow
+ * — there is no server-side toggle to enable it. The only prerequisite is an
+ * Enterprise license.
+ *
+ * See: https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/dpop
+ */
+function checkDpop(dpopFeatureActive: boolean): CheckResult | null {
+    if (!dpopFeatureActive) {
         return {
             name: 'dpop',
             passed: false,
             severity: 'warning',
-            message: `Application "${ctx.appName}" (${ctx.appId}): DPoP unavailable (Enterprise license required)`,
+            message: 'DPoP unavailable: Enterprise license required. DPoP sender-constrains tokens to the client that requested them (§1.4.3).',
+            details: [
+                'DPoP requires no server-side configuration — FusionAuth handles it automatically when the client initiates a DPoP flow.',
+                'However, an Enterprise license is required for this feature.',
+                'See: https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/dpop',
+            ],
             specSection: '1.4.3',
             specUrl: specUrl('1.4.3'),
         };
     }
-
-    // The TypeScript client v1.47.0 does not include the DPoP field.
-    // Access it dynamically from the JWT configuration.
-    const jwtConfig = ctx.app.jwtConfiguration as Record<string, unknown> | undefined;
-    const dpopEnabled = jwtConfig?.['enabledDemonstratingProofOfPossession'] === true;
-
-    if (!dpopEnabled) {
-        return {
-            name: 'dpop',
-            passed: false,
-            severity: 'warning',
-            message: `Application "${ctx.appName}" (${ctx.appId}): DPoP not enabled (recommended for sender-constrained tokens)`,
-            specSection: '1.4.3',
-            specUrl: specUrl('1.4.3'),
-        };
-    }
-    return null; // pass
+    return null; // pass — DPoP is available, clients can use it at will
 }
 
 function checkTenantIssuer(tenant: Tenant): CheckResult | null {
@@ -308,10 +304,8 @@ function checkRefreshTokenRevocationOnReuse(tenant: Tenant): CheckResult | null 
     const tenantName = tenant.name || 'Unnamed Tenant';
     const tenantId = tenant.id || 'unknown';
 
-    // The TypeScript client v1.47.0 does not include onOneTimeTokenReuse.
-    // Access it dynamically from the revocation policy.
-    const revocationPolicy = tenant.jwtConfiguration?.refreshTokenRevocationPolicy as Record<string, unknown> | undefined;
-    const onReuse = revocationPolicy?.['onOneTimeTokenReuse'] === true;
+    // onOneTimeTokenReuse is now properly typed in the v1.64.0 client.
+    const onReuse = tenant.jwtConfiguration?.refreshTokenRevocationPolicy?.onOneTimeTokenReuse === true;
 
     if (onReuse) {
         return null; // pass
@@ -379,15 +373,15 @@ const action = async function (options: {
 
         // -- Fetch data ------------------------------------------------------
 
-        // License status (for DPoP check)
-        let hasLicense = false;
+        // Reactor status (for DPoP check — DPoP requires Enterprise license)
+        let dpopFeatureActive = false;
         try {
             const reactorResponse = await client.retrieveReactorStatus();
             if (reactorResponse.wasSuccessful()) {
-                hasLicense = reactorResponse.response.status?.licensed === true;
+                dpopFeatureActive = reactorResponse.response.status?.dPoP === ReactorFeatureStatus.ACTIVE;
             }
         } catch {
-            // If we can't check reactor status, assume no license
+            // If we can't check reactor status, assume DPoP is unavailable
         }
 
         // Tenants
@@ -459,6 +453,11 @@ const action = async function (options: {
             if (authCodeResult) results.push(authCodeResult);
         }
 
+        // -- Instance-level checks -------------------------------------------
+
+        const dpopResult = checkDpop(dpopFeatureActive);
+        if (dpopResult) results.push(dpopResult);
+
         // -- Application-level checks ----------------------------------------
 
         for (const app of appsToCheck) {
@@ -510,16 +509,6 @@ const action = async function (options: {
             }
 
             // Warning checks
-            const dpopResult = checkDpop(ctx, hasLicense);
-            if (dpopResult) results.push(dpopResult);
-            if (verbose && !jsonOutput) {
-                if (dpopResult) {
-                    console.log(chalk.yellow(`  ⚠ ${dpopResult.message}`));
-                } else {
-                    console.log(chalk.green(`  ✓ DPoP: Enabled`));
-                }
-            }
-
             const deprecatedResults = checkDeprecatedGrants(ctx, strict);
             results.push(...deprecatedResults);
             if (verbose && !jsonOutput) {
@@ -558,7 +547,7 @@ const action = async function (options: {
 
         const issuerFailCount = results.filter(r => r.name === 'tenantIssuer').length;
 
-        const dpopFailCount = results.filter(r => r.name === 'dpop').length;
+        const dpopAvailable = dpopResult === null;
 
         const authCodeFailCount = results.filter(r => r.name === 'authCodeLifetime').length;
 
@@ -589,7 +578,7 @@ const action = async function (options: {
                     'deprecatedGrants': specUrl('10'),
                     'fusionAuthOAuthConfig': 'https://fusionauth.io/docs/apis/applications',
                     'fusionAuthTenantConfig': 'https://fusionauth.io/docs/apis/tenants',
-                    'fusionAuthDPoP': 'https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints#demonstrating-proof-of-possession-dpop-',
+                    'fusionAuthDPoP': 'https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/dpop',
                 },
             };
 
@@ -649,10 +638,10 @@ const action = async function (options: {
             };
             output.checks['dpop'] = {
                 severity: 'warning',
-                passed: dpopFailCount === 0,
-                message: dpopFailCount === 0
-                    ? 'DPoP enabled on all applications'
-                    : `${dpopFailCount} application(s) do not have DPoP enabled`,
+                passed: dpopAvailable,
+                message: dpopAvailable
+                    ? 'DPoP available (Enterprise license active). Clients can initiate DPoP flows — no server-side configuration needed.'
+                    : 'DPoP unavailable (Enterprise license required). Sender-constrained tokens are recommended by OAuth 2.1 §1.4.3.',
                 specSection: '1.4.3',
                 specUrl: specUrl('1.4.3'),
             };
@@ -705,9 +694,9 @@ const action = async function (options: {
                     ? chalk.green(`✓ Tenant issuer: Properly configured (${tenants.length}/${tenants.length} tenants)`)
                     : chalk.red(`✗ Tenant issuer: ${issuerFailCount} tenant(s) not properly configured`));
 
-                console.log(dpopFailCount === 0
-                    ? chalk.green(`✓ DPoP (sender-constrained tokens): Enabled (${appsToCheck.length}/${appsToCheck.length} applications)`)
-                    : chalk.yellow(`⚠ DPoP (sender-constrained tokens): Not enabled on ${dpopFailCount} application(s) (recommended)`));
+                console.log(dpopAvailable
+                    ? chalk.green(`✓ DPoP (sender-constrained tokens): Available (Enterprise license active)`)
+                    : chalk.yellow(`⚠ DPoP (sender-constrained tokens): Unavailable (Enterprise license required)`));
 
                 console.log(authCodeFailCount === 0
                     ? chalk.green(`✓ Authorization code lifetime: Within recommended range`)
@@ -763,7 +752,7 @@ const action = async function (options: {
             console.log(chalk.cyan(`    - Deprecated Grants (Section 10): ${specUrl('10')}`));
             console.log(chalk.cyan(`  - FusionAuth OAuth Configuration: https://fusionauth.io/docs/apis/applications`));
             console.log(chalk.cyan(`  - FusionAuth Tenant Configuration: https://fusionauth.io/docs/apis/tenants`));
-            console.log(chalk.cyan(`  - FusionAuth DPoP: https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints#demonstrating-proof-of-possession-dpop-`));
+            console.log(chalk.cyan(`  - FusionAuth DPoP: https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/dpop`));
         }
 
         if (!allRequiredPassed) {
