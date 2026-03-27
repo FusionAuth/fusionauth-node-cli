@@ -1,7 +1,8 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
-import chalk from 'chalk';
+import fs from 'node:fs'
 
+import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
 /**
@@ -171,5 +172,20 @@ export function isDockerInstalled() {
     return true;
   } catch (e) {
     return false;
+  }
+}
+
+/**
+ * Returns true if path directory contains no files
+ * Path must exist
+ * @param path
+ */
+export function isDirEmpty(path: string) {
+  const data = fs.readdirSync(path)
+  
+  if (data.length > 0) {
+    return false
+  } else {
+    return true
   }
 }

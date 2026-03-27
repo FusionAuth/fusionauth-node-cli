@@ -8,7 +8,7 @@ import fs from 'node:fs'
 import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { betaWarning, isDockerInstalled } from "../utils.js";
+import { betaWarning, isDirEmpty, isDockerInstalled } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -39,14 +39,15 @@ const action = async function (dir: string) {
       throw (chalk.red("Error: You don't have Docker installed. It's the easiest way to get everything you need\n") + chalk.cyan("Please install Docker. For developers new to Docker, we suggest Orbstack: https://docs.orbstack.dev/quick-start"))
     }
 
-    if (fs.existsSync(directory)) {
-      throw (chalk.red(`Target directory (${directory}) already exists`))
+    if (fs.existsSync(directory) && !isDirEmpty(directory)) {
+      throw (chalk.redBright(`Error: `) + `Target directory (${chalk.yellow(directory)}) has files.\n\nPlease choose an empty or non-existent directory\n`)
     }
+
     const parentDir = path.dirname(directory)
 
     try {
       fs.accessSync(parentDir, fs.constants.W_OK)
-    } catch(err) {
+    } catch (err) {
       console.error(chalk.red(`Can't write to ${parentDir}. Please check permissions on the directory`))
     }
 
@@ -68,7 +69,7 @@ const action = async function (dir: string) {
         validate: (text) => {
           if (text.length == 0) {
             return 'Custom password is required'
-          } else if(text.length < 8) {
+          } else if (text.length < 8) {
             return 'Password must be at least 8 characters (You can change this requirement later in your tenant password settings)'
           } else {
             return true
@@ -91,7 +92,7 @@ const action = async function (dir: string) {
         }, 500)
         setTimeout(() => {
           console.log(chalk.green(`Creating Kickstart file`))
-          if (!fs.existsSync(directory)) throw(chalk.red(`Something went wrong. ${directory} does not exists.`))
+          if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
           createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
         }, 1500)
 
