@@ -98,6 +98,14 @@ npm run build;
 npx fusionauth -h;
 ```
 
+To run commands directly from source during development (without installing globally):
+```bash
+npm run build && node dist/index.js <command> [options]
+
+# Example:
+node dist/index.js check:oauth-2-1 --key <api-key> --host http://localhost:9011
+```
+
 To see examples of use: https://fusionauth.io/docs/extend/code/lambdas/testing
 
 ## Troubleshooting
