@@ -433,10 +433,26 @@ const action = async function (options: {
             console.log(chalk.cyan(`Applications skipped: ${skippedApps.length} (built-in FusionAuth apps or not using authorization_code + refresh_token grants)\n`));
         }
 
-        if (appsToCheck.length === 0 && !applicationId) {
-            if (!jsonOutput) {
-                console.log(chalk.yellow('No applications found using both authorization_code and refresh_token grants.'));
-                console.log(chalk.yellow('Nothing to check for OAuth 2.1 compliance.'));
+        if (appsToCheck.length === 0) {
+            if (applicationId) {
+                // The user explicitly requested this app but it was filtered out
+                const app = allApps[0];
+                if (app && isBuiltInApplication(app)) {
+                    if (!jsonOutput) {
+                        console.log(chalk.yellow(`Application "${app.name || applicationId}" is a built-in FusionAuth application and is excluded from OAuth 2.1 checks.`));
+                    }
+                } else {
+                    const grants = app?.oauthConfiguration?.enabledGrants || [];
+                    if (!jsonOutput) {
+                        console.log(chalk.yellow(`Application "${app?.name || applicationId}" does not use both authorization_code and refresh_token grants.`));
+                        console.log(chalk.yellow(`Enabled grants: ${grants.length > 0 ? grants.join(', ') : 'none'}`));
+                    }
+                }
+            } else {
+                if (!jsonOutput) {
+                    console.log(chalk.yellow('No applications found using both authorization_code and refresh_token grants.'));
+                    console.log(chalk.yellow('Nothing to check for OAuth 2.1 compliance.'));
+                }
             }
         }
 
