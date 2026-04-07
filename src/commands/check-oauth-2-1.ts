@@ -421,6 +421,12 @@ const action = async function (options: {
                 return;
             }
             allApps = [appResponse.response.application];
+
+            // Validate the application belongs to the specified tenant
+            if (tenantId && allApps[0].tenantId !== tenantId) {
+                errorAndExit(`Application "${allApps[0].name || applicationId}" belongs to tenant "${allApps[0].tenantId}", not the specified tenant "${tenantId}".`);
+                return;
+            }
         } else {
             const appsResponse = await client.retrieveApplications();
             if (!appsResponse.wasSuccessful() || !appsResponse.response.applications) {
@@ -483,7 +489,7 @@ const action = async function (options: {
 
         // -- Instance-level checks -------------------------------------------
 
-        const dpopResult = checkDpop(dpopFeatureActive);
+        const dpopResult = checkDpop(dpopFeatureActive ?? false);
         if (dpopResult) results.push(dpopResult);
 
         // -- Application-level checks ----------------------------------------
