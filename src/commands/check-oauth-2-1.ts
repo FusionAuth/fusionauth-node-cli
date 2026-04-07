@@ -374,16 +374,28 @@ const action = async function (options: {
         // -- Fetch data ------------------------------------------------------
 
         // Reactor status (for DPoP check — DPoP requires Enterprise license)
-        let dpopFeatureActive = false;
+        let dpopFeatureActive: boolean | undefined;
+        let dpopStatusError: unknown;
         try {
             const reactorResponse = await client.retrieveReactorStatus();
             if (reactorResponse.wasSuccessful()) {
                 dpopFeatureActive = reactorResponse.response.status?.dPoP === ReactorFeatureStatus.ACTIVE;
+            } else {
+                dpopFeatureActive = undefined;
             }
-        } catch {
-            // If we can't check reactor status, assume DPoP is unavailable
+        } catch (e: unknown) {
+            dpopFeatureActive = undefined;
+            dpopStatusError = e;
         }
 
+        if (dpopFeatureActive === undefined && verbose && !jsonOutput) {
+            const errorDetail = dpopStatusError instanceof Error
+                ? `: ${dpopStatusError.message}`
+                : dpopStatusError
+                    ? `: ${String(dpopStatusError)}`
+                    : '';
+            console.warn(chalk.yellow(`Warning: Unable to determine DPoP Reactor status${errorDetail}. DPoP availability is unknown.`));
+        }
         // Tenants
         const tenantResponse = await client.retrieveTenants();
         if (!tenantResponse.wasSuccessful() || !tenantResponse.response.tenants) {

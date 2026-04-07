@@ -17,7 +17,9 @@ interface ClientResponseLike {
  * @param response
  */
 export const isClientResponse = (response: any): response is ClientResponseLike => {
-    return response.wasSuccessful !== undefined;
+    return response !== null
+        && typeof response === 'object'
+        && typeof response.wasSuccessful === 'function';
 }
 
 /**
