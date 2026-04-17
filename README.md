@@ -159,20 +159,10 @@ Only applications with both the `authorization_code` and `refresh_token` grants 
 
 FusionAuth does not fully implement all OAuth 2.1 security requirements. The following gaps exist:
 
-1. **Incomplete refresh token chain revocation on reuse detection** ([§4.3.3](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15#section-4.3.3))
-   Refresh token chain revocation on reuse detection is incomplete in FusionAuth — a replayed one-time-use token doesn't revoke the new token the attacker already obtained. See [fusionauth-issues#1619](https://github.com/FusionAuth/fusionauth-issues/issues/1619) and the overall [OAuth 2.1 compatibility tracking issue #942](https://github.com/FusionAuth/fusionauth-issues/issues/942).
-
-2. **Sender-constrained token support is limited** ([§1.4.3](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15#section-1.4.3))
-   DPoP is Enterprise-only, and mTLS isn't confirmed as supported. OAuth 2.1 §1.4.3 recommends sender-constrained tokens. See [fusionauth-issues#1025 (mTLS)](https://github.com/FusionAuth/fusionauth-issues/issues/1025) and [fusionauth-issues#1679 (DPoP)](https://github.com/FusionAuth/fusionauth-issues/issues/1679).
-
-3. **Missing `iss` authorization response parameter** ([§7.14](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15#section-7.14))
+1. **Missing `iss` authorization response parameter** ([§7.14](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15#section-7.14))
    The `iss` authorization response parameter for mix-up mitigation doesn't appear to be supported — use distinct redirect URIs per authorization server as a workaround (§7.14.2). See [fusionauth-issues#1383](https://github.com/FusionAuth/fusionauth-issues/issues/1383).
 
 For more information:
 - [OAuth 2.1 Specification (draft-ietf-oauth-v2-1-15)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15)
 - [FusionAuth OAuth Configuration](https://fusionauth.io/docs/apis/applications)
 - [FusionAuth Tenant Configuration](https://fusionauth.io/docs/apis/tenants)
-
-## License
-
-This code is available as open source under the terms of the [Apache v2.0 License](https://opensource.org/licenses/Apache-2.0).
