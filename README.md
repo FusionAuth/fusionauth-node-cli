@@ -151,7 +151,7 @@ Only applications with both the `authorization_code` and `refresh_token` grants 
 - Tenant issuer properly configured — not default "acme.com"
 
 **WARNINGS (informational, does not cause exit 1):**
-- DPoP (sender-constrained tokens) enabled on applications (§1.4.3)
+- DPoP (sender-constrained tokens) available for applications (§1.4.3)
 - Authorization code lifetime ≤ 600 seconds (§7.5)
 - No deprecated grants enabled — Implicit, Password (§10); use `--strict` to make this a failure
 
