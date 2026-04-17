@@ -441,9 +441,16 @@ const action = async function (options: {
             allApps = allApps.filter(app => app.tenantId === tenantId);
         }
 
-        // Separate into checked and skipped
-        const appsToCheck = allApps.filter(shouldCheckApplication);
-        const skippedApps = allApps.filter(app => !shouldCheckApplication(app));
+        // Separate into checked and skipped in a single pass
+        const appsToCheck: Application[] = [];
+        const skippedApps: Application[] = [];
+        for (const app of allApps) {
+            if (shouldCheckApplication(app)) {
+                appsToCheck.push(app);
+            } else {
+                skippedApps.push(app);
+            }
+        }
 
         if (!jsonOutput) {
             console.log(chalk.cyan(`Tenants checked: ${tenants.length}`));
