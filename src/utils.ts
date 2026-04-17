@@ -1,16 +1,25 @@
-import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import fs from 'node:fs'
 
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
+
+/** Shape of a FusionAuth ClientResponse — used for duck-type checking without importing internals. */
+interface ClientResponseLike {
+    wasSuccessful: () => boolean;
+    response: unknown;
+    exception?: Error;
+}
+
 /**
  * Checks if the response is a client response
  * @param response
  */
-export const isClientResponse = (response: any): response is ClientResponse.default<any> => {
-    return response.wasSuccessful !== undefined;
+export const isClientResponse = (response: any): response is ClientResponseLike => {
+    return response !== null
+        && typeof response === 'object'
+        && typeof response.wasSuccessful === 'function';
 }
 
 /**
