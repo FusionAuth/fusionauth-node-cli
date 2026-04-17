@@ -427,6 +427,11 @@ const action = async function (options: {
                 errorAndExit(`Application "${allApps[0].name || applicationId}" belongs to tenant "${allApps[0].tenantId}", not the specified tenant "${tenantId}".`);
                 return;
             }
+
+            // Narrow tenant-level checks to just this application's tenant
+            if (!tenantId) {
+                tenants = tenants.filter(t => t.id === allApps[0].tenantId);
+            }
         } else {
             const appsResponse = await client.retrieveApplications();
             if (!appsResponse.wasSuccessful() || !appsResponse.response.applications) {
