@@ -3,7 +3,7 @@ import {FusionAuthClient} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
 import chalk from 'chalk';
 import {join} from 'path';
-import {errorAndExit} from '../utils.js';
+import {errorAndExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
 
 const action = async function (lambdaId: string, {input, key: apiKey, host}: {
@@ -11,6 +11,8 @@ const action = async function (lambdaId: string, {input, key: apiKey, host}: {
     key: string;
     host: string
 }): Promise<void> {
+    logEvent('cli command lambda:update')
+    
     console.log(`Updating lambda ${lambdaId} on ${host}`);
     try {
         const filename = join(input, lambdaId + ".json");

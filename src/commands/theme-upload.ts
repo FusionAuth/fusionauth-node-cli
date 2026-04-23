@@ -2,7 +2,7 @@ import {Command} from '@commander-js/extra-typings';
 import {FusionAuthClient, Templates, Theme} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 import {readdir, readFile} from 'fs/promises';
-import {errorAndExit, getLocaleFromLocalizedMessageFileName} from '../utils.js';
+import {errorAndExit, getLocaleFromLocalizedMessageFileName, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption, themeTypeOption} from "../options.js";
 
 // noinspection JSUnusedGlobalSymbols
@@ -14,6 +14,8 @@ export const themeUpload = new Command('theme:upload')
     .addOption(hostOption)
     .addOption(themeTypeOption)
     .action(async (themeId: string, {input, key: apiKey, host, types}) => {
+        logEvent('cli command theme:upload')
+        
         console.log(`Uploading theme ${themeId} from ${input}`);
 
         try {

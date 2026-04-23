@@ -49,6 +49,7 @@
     "log-symbols": "5.1.0",
     "log-update": "5.0.1",
     "merge": "2.1.1",
+    "posthog-node": "^5.21.2",
     "queue": "7.0.0",
     "remove-undefined-objects": "3.0.0",
     "uuid": "9.0.0",

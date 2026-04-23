@@ -1,6 +1,6 @@
 import {Command} from '@commander-js/extra-typings';
 import {watch} from 'chokidar';
-import {getLocaleFromLocalizedMessageFileName, reportError} from '../utils.js';
+import {getLocaleFromLocalizedMessageFileName, logEvent, reportError} from '../utils.js';
 import Queue from 'queue';
 import {FusionAuthClient, Theme} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
@@ -22,6 +22,8 @@ export const themeWatch = new Command('theme:watch')
     .addOption(hostOption)
     .addOption(themeTypeOption)
     .action((themeId: string, {input, key: apiKey, host, types}) => {
+        logEvent('cli command theme:watch')
+        
         console.log(`Watching theme directory ${input} for changes and uploading to ${themeId}`);
 
         const watchedFiles: string[] = [];

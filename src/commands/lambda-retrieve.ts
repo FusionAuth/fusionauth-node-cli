@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import {existsSync} from 'fs';
 import {join} from 'path';
 import {mkdir, writeFile} from 'fs/promises';
-import {errorAndExit, toJson} from '../utils.js';
+import {errorAndExit, logEvent, toJson} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
 
 const action = async function (lambdaId: string, {output, key: apiKey, host}: {
@@ -12,6 +12,8 @@ const action = async function (lambdaId: string, {output, key: apiKey, host}: {
     key: string;
     host: string
 }) {
+    logEvent('cli command lambda:retrieve')
+    
     console.log(`Retrieving lambda ${lambdaId} from ${host}`);
     try {
         const fusionAuthClient = new FusionAuthClient(apiKey, host);

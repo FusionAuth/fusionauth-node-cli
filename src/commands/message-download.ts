@@ -1,5 +1,5 @@
 import {Command} from "@commander-js/extra-typings";
-import {getMessageErrorMessage, getMessageSuccessMessage, reportError} from "../utils.js";
+import {getMessageErrorMessage, getMessageSuccessMessage, logEvent, reportError} from "../utils.js";
 import {MessageTemplate, SMSMessageTemplate, FusionAuthClient} from "@fusionauth/typescript-client";
 import {mkdir, writeFile} from "fs/promises";
 import chalk from "chalk";
@@ -16,7 +16,8 @@ export const messageDownload = new Command('message:download')
     .addOption(hostOption)
     .option('-c, --clean', 'Clean the output directory before downloading', false)
     .action(async (messageTemplateId, {output, key: apiKey, host, clean}) => {
-
+        logEvent('cli command message:download')
+        
         let clientResponse;
         const errorMessage = getMessageErrorMessage('download', messageTemplateId);
 

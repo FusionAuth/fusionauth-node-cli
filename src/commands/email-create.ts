@@ -2,6 +2,7 @@ import {Command} from "@commander-js/extra-typings";
 import {ensureDir, ensureFile} from "fs-extra";
 import {v4} from "uuid";
 import chalk from "chalk";
+import { logEvent } from "../utils.js";
 
 // noinspection JSUnusedGlobalSymbols
 export const emailCreate = new Command('email:create')
@@ -9,6 +10,8 @@ export const emailCreate = new Command('email:create')
     .option('-o, --output <output>', 'The output directory', './emails/')
     .option('-l, --locales <locales...>', 'The locales to create.',  [])
     .action(async ({output, locales}) => {
+        logEvent('cli command email:create')
+        
         console.log(`Creating email template in ${output}`);
 
         const emailTemplateId = v4();

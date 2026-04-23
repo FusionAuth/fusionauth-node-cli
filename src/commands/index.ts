@@ -14,6 +14,8 @@ export * from './lambda-delete.js';
 export * from './lambda-retrieve.js';
 export * from './message-download.js';
 export * from './message-upload.js';
+export * from './telemetry-disable.js';
+export * from './telemetry-enable.js';
 export * from './theme-watch.js';
 export * from './theme-upload.js';
 export * from './theme-download.js';

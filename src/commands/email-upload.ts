@@ -1,5 +1,5 @@
 import {Command} from "@commander-js/extra-typings";
-import {getEmailErrorMessage, reportError} from "../utils.js";
+import {getEmailErrorMessage, logEvent, reportError} from "../utils.js";
 import {EmailTemplate, EmailTemplateRequest, FusionAuthClient} from "@fusionauth/typescript-client";
 import {pathExists} from "fs-extra";
 import {lstat, readdir, readFile} from "fs/promises";
@@ -24,6 +24,8 @@ export const emailUpload = new Command('email:upload')
     .option('-o, --overwrite', 'Overwrite the existing email template with the new one. F.e. locales that are not defined in the directory, but on the FusionAuth server will be removed.', false)
     .option('--no-create', 'Create the email template if it does not exist')
     .action(async (emailTemplateId, {input, key: apiKey, host, overwrite, create}) => {
+        logEvent('cli command email:upload')
+        
         const errorMessage = getEmailErrorMessage('uploading', emailTemplateId);
 
         if (emailTemplateId) {

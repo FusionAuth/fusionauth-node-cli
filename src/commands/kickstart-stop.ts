@@ -2,7 +2,7 @@ import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
-import { betaWarning, isDockerInstalled } from "../utils.js";
+import { betaWarning, isDockerInstalled, logEvent } from "../utils.js";
 import boxen from "boxen";
 
 
@@ -12,6 +12,7 @@ const action = async function () {
   try {
     if (process.cwd() != process.env.CLI_DIR) throw (chalk.red('Error: Current directory was not kickstarted.'))
     if (!isDockerInstalled()) throw (chalk.red('Error: You need Docker to run.'))
+    logEvent('cli command kickstart:stop')
 
     console.log(chalk.yellow('Stopping FusionAuth...\n'))
     const starting = spawn('docker compose stop', { shell: true, stdio: 'inherit' })

@@ -1,5 +1,5 @@
 import {Command} from "@commander-js/extra-typings";
-import {getEmailErrorMessage, getEmailSuccessMessage, reportError} from "../utils.js";
+import {getEmailErrorMessage, getEmailSuccessMessage, logEvent, reportError} from "../utils.js";
 import {EmailTemplate, FusionAuthClient} from "@fusionauth/typescript-client";
 import {mkdir, writeFile} from "fs/promises";
 import chalk from "chalk";
@@ -16,6 +16,7 @@ export const emailDownload = new Command('email:download')
     .addOption(hostOption)
     .option('-c, --clean', 'Clean the output directory before downloading', false)
     .action(async (emailTemplateId, {output, key: apiKey, host, clean}) => {
+        logEvent('cli command email:download')
 
         let clientResponse;
         const errorMessage = getEmailErrorMessage('download', emailTemplateId);

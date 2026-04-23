@@ -1,10 +1,24 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import fs from 'node:fs'
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
+
+import { PostHog } from 'posthog-node'
+
+export const posthogClient = new PostHog(
+    'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
+    { host: 'https://us.i.posthog.com' }
+)
+
+
+
+export const __dirname = dirname(fileURLToPath(import.meta.url));
+
 /**
  * Checks if the response is a client response
  * @param response
@@ -188,4 +202,29 @@ export function isDirEmpty(path: string) {
   } else {
     return true
   }
+}
+
+export function loadConfig() {
+    const globalConfig = JSON.parse(fs.readFileSync(__dirname + '/.fa/config.json').toString())
+    // TODO: Combine this with a local-project config
+    return {globalConfig}
+}
+
+export function allowsTelemetry() {
+    const {globalConfig} = loadConfig()
+
+    return globalConfig.telemetry
+}
+
+
+export async function logEvent(eventName:string, eventDetails:any = {}) {
+    const config = loadConfig()
+    if (allowsTelemetry()) {
+        posthogClient.capture({
+            distinctId: config.globalConfig.id,
+            event: eventName,
+            properties: eventDetails
+        })
+        await posthogClient.shutdown()
+    } 
 }
