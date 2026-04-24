@@ -1,12 +1,16 @@
 import { Command } from "@commander-js/extra-typings";
 import { __dirname, loadConfig } from '../utils.js'
 import fs from 'node:fs'
+import chalk from "chalk";
 const action = async function () {
 
   try {
     let config = loadConfig()
     config.globalConfig.telemetry = true
     fs.writeFileSync(__dirname + '/.fa/config.json', JSON.stringify(config.globalConfig, null, 2))
+  
+      console.log(chalk.green(`Sharing usage data has been re-enabled. To disable, run ${chalk.bold.bgWhite(' npx fusionauth telemetry:disable ')}.`))
+
   } catch (err) {
     console.log(err)
   }
@@ -14,6 +18,6 @@ const action = async function () {
 }
 
 export const telemetryEnable = new Command()
-  .description('Sets a global config value to allow telemetry to be collected')
   .command('telemetry:enable')
+  .description('Sets a global config value to allow telemetry to be collected')
   .action(action)
