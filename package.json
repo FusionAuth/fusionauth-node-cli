@@ -11,6 +11,7 @@
     "build": "tsc && npm run copy-files",
     "copy-files": "cp -r ./src/resources/ ./dist/commands/resources/",
     "prepublishOnly": "npm run build",
+    "postinstall": "node dist/postinstall.js",
     "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

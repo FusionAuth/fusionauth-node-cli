@@ -225,6 +225,7 @@ export async function logEvent(eventName:string, eventDetails:any = {}) {
             event: eventName,
             properties: eventDetails
         })
+        console.log('logged: ' + eventName)
         await posthogClient.shutdown()
     } 
 }
