@@ -3,18 +3,14 @@ import fs from 'node:fs'
 
 function run() {
   const dir = 'dist/.fa'
-  if (!fs.existsSync(dir)) {
+  const configPath = dir + '/config.json'
+  fs.mkdirSync(dir, { recursive: true })
+  if (!fs.existsSync(configPath)) {
     const configObject = {
       id: randomUUID(),
       telemetry: true
     }
-
-    fs.mkdirSync('dist/.fa')
-    if (!fs.existsSync(dir + '/config.json')){
-      fs.writeFileSync(dir + '/config.json', JSON.stringify(configObject, null, 2))
-    }
-    fs.chmodSync(dir, '00020')
-  }
+    fs.writeFileSync(configPath, JSON.stringify(configObject, null, 2))  }
 }
 
 run()
