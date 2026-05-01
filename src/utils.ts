@@ -205,9 +205,21 @@ export function isDirEmpty(path: string) {
 }
 
 export function loadConfig() {
-    const globalConfig = JSON.parse(fs.readFileSync(__dirname + '/.fa/config.json').toString())
-    // TODO: Combine this with a local-project config
-    return {globalConfig}
+    const defaultConfig = {
+        telemetry: false,
+        id: ''
+    }
+    const configPath = __dirname + '/.fa/config.json'
+    try {
+        if (!fs.existsSync(configPath)) {
+            return {globalConfig: defaultConfig}
+        }
+        const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
+        // TODO: Combine this with a local-project config
+        return {globalConfig: {...defaultConfig, ...globalConfig}}
+    } catch (e) {
+        return {globalConfig: defaultConfig}
+    }
 }
 
 export function allowsTelemetry() {
@@ -225,7 +237,6 @@ export async function logEvent(eventName:string, eventDetails:any = {}) {
             event: eventName,
             properties: eventDetails
         })
-        console.log('logged: ' + eventName)
         await posthogClient.shutdown()
     } 
 }
