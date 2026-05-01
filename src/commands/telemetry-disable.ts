@@ -1,8 +1,9 @@
 import { Command } from "@commander-js/extra-typings";
-import { __dirname, loadConfig } from '../utils.js'
+import { __dirname, loadConfig, logEvent } from '../utils.js'
 import fs from 'node:fs'
 import chalk from "chalk";
 const action = async function () {
+    logEvent('cli do not track')
 
   try {
     let config = loadConfig()
