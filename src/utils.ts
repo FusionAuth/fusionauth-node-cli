@@ -207,7 +207,7 @@ export function isDirEmpty(path: string) {
 export function loadConfig() {
     const defaultConfig = {
         telemetry: false,
-        id: ''
+        id: 'id-unavailable'
     }
     const configPath = __dirname + '/.fa/config.json'
     try {
