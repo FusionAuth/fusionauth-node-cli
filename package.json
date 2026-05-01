@@ -12,7 +12,7 @@
     "copy-files": "cp -r ./src/resources/ ./dist/commands/resources/",
     "prepublishOnly": "npm run build",
     "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [
     "fusionauth",
@@ -60,6 +60,7 @@
     "@types/html-to-text": "9.0.1",
     "@types/node": "20.4.5",
     "@types/uuid": "9.0.2",
+    "jest": "^30.3.0",
     "ts-node": "10.9.1",
     "type-fest": "3.13.0",
     "typescript": "5.1.6"
