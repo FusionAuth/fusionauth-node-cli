@@ -222,16 +222,9 @@ export function loadConfig() {
     }
 }
 
-export function allowsTelemetry() {
-    const {globalConfig} = loadConfig()
-
-    return globalConfig.telemetry
-}
-
-
 export async function logEvent(eventName:string, eventDetails:any = {}) {
     const config = loadConfig()
-    if (allowsTelemetry()) {
+    if (config.globalConfig.telemetry) {
         posthogClient.capture({
             distinctId: config.globalConfig.id,
             event: eventName,
