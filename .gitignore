@@ -215,3 +215,6 @@ lambdas/
 emails/
 
 *.swp
+
+
+.fa/

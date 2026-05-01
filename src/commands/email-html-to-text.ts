@@ -3,6 +3,7 @@ import {validate as isUUID} from "uuid";
 import chalk from "chalk";
 import {lstat, readdir, readFile, writeFile} from "fs/promises";
 import {compile} from "html-to-text";
+import { logEvent } from "../utils.js";
 
 const htmlToText = compile({
     wordwrap: false,
@@ -17,6 +18,8 @@ export const emailHtmlToText = new Command('email:html-to-text')
     .argument('[emailTemplateId]', 'The email template id to convert. If not provided, all email templates will be converted')
     .option('-o, --output <output>', 'The output directory', './emails/')
     .action(async (emailTemplateId: string | undefined, {output}) => {
+        logEvent('cli command email:html-to-text')
+        
         if (!emailTemplateId) {
             console.log(`Converting all email templates in ${output}`);
         } else {

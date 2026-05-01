@@ -1,5 +1,5 @@
 import {Command} from "@commander-js/extra-typings";
-import {reportError} from "../utils.js";
+import {logEvent, reportError} from "../utils.js";
 import {watch} from "chokidar";
 import Queue from "queue";
 import logUpdate from "log-update";
@@ -40,6 +40,8 @@ export const emailWatch = new Command('email:watch')
     .addOption(apiKeyOption)
     .addOption(hostOption)
     .action(async ({input, key: apiKey, host}) => {
+        logEvent('cli command email:watch')
+        
         console.log(`Watching email templates in ${input}`);
 
         const watchedFiles = [

@@ -8,7 +8,7 @@ import fs from 'node:fs'
 import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { betaWarning, isDirEmpty, isDockerInstalled } from "../utils.js";
+import { betaWarning, isDirEmpty, isDockerInstalled, logEvent } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +32,8 @@ async function createKickstart(kickstartPath: string, answers: any, newDir: stri
 const action = async function (dir: string) {
   const dockerInstalled = isDockerInstalled();
   const directory = path.resolve(dir)
+  logEvent('cli command kickstart:install')
+  
   betaWarning()
 
   try {

@@ -2,7 +2,7 @@ import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
-import { betaWarning, isDockerInstalled } from "../utils.js";
+import { betaWarning, isDockerInstalled, logEvent } from "../utils.js";
 import boxen from "boxen";
 import inquirer from "inquirer";
 
@@ -14,6 +14,7 @@ const action = async function () {
     if (!isDockerInstalled()) throw (chalk.red('Error: You need Docker to run.'))
     
     if (process.cwd() != process.env.CLI_DIR) throw(chalk.red('Error: Current directory was not kickstarted.'))
+    logEvent('cli command kickstart:kill')
 
     inquirer.prompt([
       {
@@ -60,6 +61,6 @@ const action = async function () {
 }
 
 export const kickstartKill = new Command()
-  .description('Runs docker compose down in current directory')
   .command('kickstart:kill')
+  .description('Runs docker compose down in current directory')
   .action(action)

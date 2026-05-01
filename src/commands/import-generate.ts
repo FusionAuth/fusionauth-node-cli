@@ -3,7 +3,7 @@ import {FusionAuthClient} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
 import chalk from 'chalk';
 import {join} from 'path';
-import {errorAndExit} from '../utils.js';
+import {errorAndExit, logEvent} from '../utils.js';
 import { faker } from '@faker-js/faker';
 import * as fs from 'fs';
 
@@ -17,6 +17,8 @@ const action = async function ({numberOfFiles, countPerFile, applicationId, grou
     filePrefix?: string | undefined;
 }
 ): Promise<void> {
+    logEvent('cli command import:generate')
+    
     console.log(`Generating users`);
     try {
         const finalNumberOfFiles = (numberOfFiles !== undefined ? parseInt(numberOfFiles) : 10);
