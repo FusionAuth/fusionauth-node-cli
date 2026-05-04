@@ -2,7 +2,7 @@ import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 
 import { spawn } from 'node:child_process';
-import { betaWarning, isDockerInstalled } from "../utils.js";
+import { betaWarning, isDockerInstalled, logEvent } from "../utils.js";
 import 'dotenv/config';
 import boxen from "boxen";
 import yoctoSpinner from "yocto-spinner";
@@ -16,6 +16,7 @@ const action = async function () {
     if (process.cwd() != process.env.CLI_DIR) throw (chalk.red('Error: Current directory was not kickstarted.'))
 
     if (!isDockerInstalled()) console.error(chalk.red('Error: You need Docker to run.'))
+    logEvent('cli command kickstart:start')
 
     const starting = spawn('docker compose up -d', { shell: true, stdio: 'inherit' })
     starting.on('error', e => {
