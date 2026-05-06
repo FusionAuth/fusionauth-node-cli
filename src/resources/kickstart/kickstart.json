@@ -22,7 +22,9 @@
           "algorithm": "RS256",
           "name": "For example app",
           "length": 2048
-        }
+        },
+        "tenantId": "#{defaultTenantId}"
+
       }
     },
     {
