@@ -3,7 +3,7 @@ import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
 import {existsSync} from 'fs';
 import {mkdir, writeFile} from 'fs/promises';
-import {errorAndExit, toString} from '../utils.js';
+import {errorAndExit, logEvent, toString} from '../utils.js';
 import {apiKeyOption, hostOption, themeTypeOption} from "../options.js";
 
 // noinspection JSUnusedGlobalSymbols
@@ -15,6 +15,8 @@ export const themeDownload = new Command('theme:download')
     .addOption(hostOption)
     .addOption(themeTypeOption)
     .action(async (themeId: string, {output, key: apiKey, host, types}) => {
+        logEvent('cli command theme:download')
+        
         console.log(`Downloading theme ${themeId} to ${output}`);
 
         try {

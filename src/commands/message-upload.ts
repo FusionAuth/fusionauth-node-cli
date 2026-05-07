@@ -1,5 +1,5 @@
 import {Command} from "@commander-js/extra-typings";
-import {getMessageErrorMessage, reportError} from "../utils.js";
+import {getMessageErrorMessage, logEvent, reportError} from "../utils.js";
 import {MessageTemplate, MessageTemplateRequest, SMSMessageTemplate, FusionAuthClient} from "@fusionauth/typescript-client";
 import {pathExists} from "fs-extra";
 import {lstat, readdir, readFile} from "fs/promises";
@@ -21,6 +21,8 @@ export const messageUpload = new Command('message:upload')
     .option('-o, --overwrite', 'Overwrite the existing message template with the new one. F.e. locales that are not defined in the directory, but on the FusionAuth server will be removed.', false)
     .option('--no-create', 'Create the message template if it does not exist')
     .action(async (messageTemplateId, {input, key: apiKey, host, overwrite, create}) => {
+        logEvent('cli command message:upload')
+        
         const errorMessage = getMessageErrorMessage('uploading', messageTemplateId);
 
         if (messageTemplateId) {
