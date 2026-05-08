@@ -1,7 +1,7 @@
 import {Command, Option} from "@commander-js/extra-typings";
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from "chalk";
-import {errorAndExit} from '../utils.js';
+import {errorAndExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
 
 interface CheckResult {
@@ -19,6 +19,8 @@ const action = async function ({key: apiKey, host, skipLicenseCheck}: {
     host: string;
     skipLicenseCheck: boolean;
 }) {
+    logEvent('cli command check:common-config')
+    
     console.log(chalk.blue(`Checking common configuration on ${host}...`));
     
     const results: CheckResult[] = [];

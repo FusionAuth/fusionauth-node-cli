@@ -1,9 +1,12 @@
 import {Errors} from '@fusionauth/typescript-client';
 import fs from 'node:fs'
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
+import { PostHog } from 'posthog-node'
 
 /** Shape of a FusionAuth ClientResponse — used for duck-type checking without importing internals. */
 interface ClientResponseLike {
@@ -11,6 +14,13 @@ interface ClientResponseLike {
     response: unknown;
     exception?: Error;
 }
+
+export const posthogClient = new PostHog(
+    'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
+    { host: 'https://us.i.posthog.com' }
+)
+
+export const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Checks if the response is a client response
@@ -197,4 +207,34 @@ export function isDirEmpty(path: string) {
   } else {
     return true
   }
+}
+
+export function loadConfig() {
+    const defaultConfig = {
+        telemetry: false,
+        id: 'id-unavailable'
+    }
+    const configPath = __dirname + '/.fa/config.json'
+    try {
+        if (!fs.existsSync(configPath)) {
+            return {globalConfig: defaultConfig}
+        }
+        const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
+        // TODO: Combine this with a local-project config
+        return {globalConfig: {...defaultConfig, ...globalConfig}}
+    } catch (e) {
+        return {globalConfig: defaultConfig}
+    }
+}
+
+export async function logEvent(eventName:string, eventDetails:any = {}) {
+    const config = loadConfig()
+    if (config.globalConfig.telemetry) {
+        posthogClient.capture({
+            distinctId: config.globalConfig.id,
+            event: eventName,
+            properties: eventDetails
+        })
+        await posthogClient.shutdown()
+    } 
 }

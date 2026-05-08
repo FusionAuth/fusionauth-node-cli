@@ -1,13 +1,15 @@
 import {Command} from '@commander-js/extra-typings';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {errorAndExit} from '../utils.js';
+import {errorAndExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
 
 const action = async function (lambdaId: string, {key: apiKey, host}: {
     key: string;
     host: string
 }) {
+    logEvent('cli command lambda:delete')
+    
     console.log(`Deleting lambda ${lambdaId} from ${host}`);
     try {
         const fusionAuthClient = new FusionAuthClient(apiKey, host);
