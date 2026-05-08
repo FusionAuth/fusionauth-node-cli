@@ -10,7 +10,7 @@ import {
     Tenant,
 } from '@fusionauth/typescript-client';
 import chalk from "chalk";
-import {errorAndExit} from '../utils.js';
+import {errorAndExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from "../options.js";
 
 // -- Types -------------------------------------------------------------------
