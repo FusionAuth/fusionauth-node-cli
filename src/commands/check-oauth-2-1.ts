@@ -359,6 +359,7 @@ const action = async function (options: {
     json: boolean;
     verbose: boolean;
 }) {
+    logEvent('cli command check:oauth-2-1')
     const {key: apiKey, host, applicationId, tenantId, strict, json: jsonOutput, verbose} = options;
 
     if (!jsonOutput) {
