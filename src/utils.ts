@@ -1,4 +1,3 @@
-import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import fs from 'node:fs'
 import { dirname } from 'node:path';
@@ -7,15 +6,19 @@ import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
-
 import { PostHog } from 'posthog-node'
+
+/** Shape of a FusionAuth ClientResponse — used for duck-type checking without importing internals. */
+interface ClientResponseLike {
+    wasSuccessful: () => boolean;
+    response: unknown;
+    exception?: Error;
+}
 
 export const posthogClient = new PostHog(
     'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
     { host: 'https://us.i.posthog.com' }
 )
-
-
 
 export const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -23,8 +26,10 @@ export const __dirname = dirname(fileURLToPath(import.meta.url));
  * Checks if the response is a client response
  * @param response
  */
-export const isClientResponse = (response: any): response is ClientResponse.default<any> => {
-    return response.wasSuccessful !== undefined;
+export const isClientResponse = (response: any): response is ClientResponseLike => {
+    return response !== null
+        && typeof response === 'object'
+        && typeof response.wasSuccessful === 'function';
 }
 
 /**

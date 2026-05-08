@@ -24,6 +24,8 @@ fusionauth --help;
 Currently, the CLI supports the following commands:
 - Common config check
   - `fusionauth check:common-config` - Checks to make sure common configuration settings are set.
+- OAuth 2.1 compliance check
+  - `fusionauth check:oauth-2-1` - Checks FusionAuth configuration for OAuth 2.1 compliance.
 - Emails
   - `fusionauth email:download` - Download a specific template or all email templates from a FusionAuth server.
   - `fusionauth email:duplicate` - Duplicate an email template locally.
@@ -96,12 +98,71 @@ npm run build;
 npx fusionauth -h;
 ```
 
+To run commands directly from source during development (without installing globally):
+```bash
+npm run build && node dist/index.js <command> [options]
+
+# Example:
+node dist/index.js check:oauth-2-1 --key <api-key> --host http://localhost:9011
+```
+
 To see examples of use: https://fusionauth.io/docs/extend/code/lambdas/testing
 
 ## Troubleshooting
 
 If you run this multiple times in a row against a local instance, the number of admin users may be incorrect until you re-index. See [this issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/3271).
 
-## License
+## OAuth 2.1 Compliance
 
-This code is available as open source under the terms of the [Apache v2.0 License](https://opensource.org/licenses/Apache-2.0).
+The `check:oauth-2-1` command validates your FusionAuth instance against OAuth 2.1 specification requirements ([draft-ietf-oauth-v2-1-15](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15)).
+
+### Usage
+
+```bash
+# Check all applications across all tenants
+fusionauth check:oauth-2-1 --key <api-key> --host <url>
+
+# Check a specific application
+fusionauth check:oauth-2-1 --key <api-key> --host <url> --application-id <app-id>
+
+# Check all applications in a specific tenant
+fusionauth check:oauth-2-1 --key <api-key> --host <url> --tenant-id <tenant-id>
+
+# Enforce strict mode (fail on deprecated grants)
+fusionauth check:oauth-2-1 --key <api-key> --host <url> --strict
+
+# Output as JSON
+fusionauth check:oauth-2-1 --key <api-key> --host <url> --json
+
+# Show verbose per-application breakdown
+fusionauth check:oauth-2-1 --key <api-key> --host <url> --verbose
+```
+
+### What It Checks
+
+Only applications with both the `authorization_code` and `refresh_token` grants enabled are checked.
+
+**REQUIRED (causes exit 1 if failed):**
+- PKCE enforcement set to "Required" on all applications (§7.5)
+- Redirect URI validation set to "ExactMatch" — no wildcards (§4.1.3)
+- HTTPS enforcement for all redirect URIs except localhost (§1.5)
+- Refresh token rotation enabled via "OneTimeUse" usage policy (§4.3)
+- Refresh token revocation on one-time token reuse enabled at the tenant level (§4.3)
+- Tenant issuer properly configured — not default "acme.com"
+
+**WARNINGS (informational, does not cause exit 1):**
+- DPoP (sender-constrained tokens) available for applications (§1.4.3)
+- Authorization code lifetime ≤ 600 seconds (§7.5)
+- No deprecated grants enabled — Implicit, Password (§10); use `--strict` to make this a failure
+
+### Known FusionAuth OAuth 2.1 Limitations
+
+FusionAuth does not fully implement all OAuth 2.1 security requirements. The following gaps exist:
+
+1. **Missing `iss` authorization response parameter** ([§7.14](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15#section-7.14))
+   The `iss` authorization response parameter for mix-up mitigation doesn't appear to be supported — use distinct redirect URIs per authorization server as a workaround (§7.14.2). See [fusionauth-issues#1383](https://github.com/FusionAuth/fusionauth-issues/issues/1383).
+
+For more information:
+- [OAuth 2.1 Specification (draft-ietf-oauth-v2-1-15)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15)
+- [FusionAuth OAuth Configuration](https://fusionauth.io/docs/apis/applications)
+- [FusionAuth Tenant Configuration](https://fusionauth.io/docs/apis/tenants)
