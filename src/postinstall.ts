@@ -1,4 +1,3 @@
-import fs from 'node:fs'
 import { createConfig } from './utils.js'
 
 export function runPostinstall() {
