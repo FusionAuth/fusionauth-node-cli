@@ -1,8 +1,9 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
-import fs from 'node:fs'
+import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
@@ -232,4 +233,37 @@ export async function logEvent(eventName:string, eventDetails:any = {}) {
         })
         await posthogClient.shutdown()
     } 
+}
+
+type ConfigObject = {
+    id?: string,
+    telemetry?: boolean
+
+}
+
+export function createConfig(dir: string, configObject: ConfigObject = { id: randomUUID(), telemetry: true}) {
+    const configPath = dir + '/config.json'
+
+    if (!fs.existsSync(configPath)) {
+        // If no config, write a new config
+        fs.mkdirSync(dir, { recursive: true })
+
+        fs.writeFileSync(configPath, JSON.stringify(configObject, null, 2))  
+        return fs.existsSync(configPath)
+    } else {
+        // If config exists, check for data to write or not
+        const config = JSON.parse(readFileSync(dir + '/config.json').toString())
+
+        if (!config.id || !config.telemetry) {
+            // If no id OR telemetry, 
+            // still write the file with a new ID and/or telemetry
+            fs.writeFileSync(configPath, JSON.stringify({
+                id: config.id || randomUUID(), 
+                telemetry: config.telemetry === false ? false : true
+            }))
+            return fs.existsSync(configPath)
+        }
+        // If data is complete, return false to not write
+        return false
+    }
 }
