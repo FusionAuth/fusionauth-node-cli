@@ -259,7 +259,8 @@ export function createConfig(dir: string, configObject: ConfigObject = { id: ran
             // still write the file with a new ID and/or telemetry
             fs.writeFileSync(configPath, JSON.stringify({
                 id: config.id || randomUUID(), 
-                telemetry: config.telemetry === false ? false : true
+                telemetry: config.telemetry === false ? false : true,
+                ...config
             }))
             return fs.existsSync(configPath)
         }
