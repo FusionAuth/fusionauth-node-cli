@@ -1,20 +1,17 @@
 import { Command } from "@commander-js/extra-typings";
-import { __dirname, loadConfig, logEvent } from '../utils.js'
-import fs from 'node:fs'
+import { __dirname, logEvent } from '../../utils.js'
 import chalk from "chalk";
+import { telemetryUpdate } from "./telemetry-utils.js";
+
 const action = async function () {
     logEvent('cli do not track')
 
   try {
-    let config = loadConfig()
-    config.globalConfig.telemetry = false
-    fs.writeFileSync(__dirname + '/.fa/config.json', JSON.stringify(config.globalConfig, null, 2))
-    
+    telemetryUpdate(false)
     console.log(chalk.green(`Usage data will no longer be collected. To re-enable, run ${chalk.bold.bgWhite(' npx fusionauth telemetry:enable ')}.`))
   } catch (err) {
     console.log(err)
   }
-
 }
 
 export const telemetryDisable = new Command()

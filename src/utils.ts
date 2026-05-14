@@ -1,7 +1,7 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import fs, { readFileSync } from 'node:fs'
-import { dirname } from 'node:path';
+import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
@@ -207,13 +207,13 @@ export function isDirEmpty(path: string) {
 
 export function loadConfig() {
     const defaultConfig = {
-        telemetry: false,
-        id: 'id-unavailable'
+        telemetry: true,
+        id: randomUUID()
     }
     const configPath = __dirname + '/.fa/config.json'
     try {
         if (!fs.existsSync(configPath)) {
-            return {globalConfig: defaultConfig}
+            createConfig(__dirname + '/.fa', defaultConfig)
         }
         const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
         // TODO: Combine this with a local-project config
