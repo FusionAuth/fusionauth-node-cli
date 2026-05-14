@@ -4,7 +4,7 @@ import chalk from "chalk";
 import { telemetryUpdate } from "./telemetry-utils.js";
 
 const action = async function () {
-    logEvent('cli do not track')
+  logEvent('cli do not track')
 
   try {
     telemetryUpdate(false)

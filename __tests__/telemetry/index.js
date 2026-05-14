@@ -3,6 +3,8 @@ import assert from "node:assert"
 import fs, { readFileSync } from "node:fs"
 import mock from "mock-fs"
 import { telemetryUpdate } from "../../dist/commands/telemetry/telemetry-utils.js"
+import { telemetryDisable } from "../../dist/commands/telemetry/telemetry-disable.js"
+import { telemetryEnable } from "../../dist/commands/telemetry/telemetry-enable.js"
 import path from "node:path"
 
 export function telemetry() {
@@ -52,6 +54,30 @@ export function telemetry() {
       })
       const actualConfig = telemetryUpdate(true)
       assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+    })
+    test("Disable full command runs properly", (t) => {
+      before(() => {
+        mock({
+          "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
+        })
+      })
+
+      // TODO: Add quiet flag to remove outputs
+      telemetryDisable.parse()
+      const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
+      assert.equal(actualConfig.telemetry, false)
+    })
+    test("Enable full command runs properly", (t) => {
+      before(() => {
+        mock({
+          "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
+        })
+      })
+
+      // TODO: Add quiet flag to remove outputs
+      telemetryEnable.parse()
+      const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
+      assert.equal(actualConfig.telemetry, true)
     })
   })
 }
