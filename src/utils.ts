@@ -1,7 +1,7 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import fs, { readFileSync } from 'node:fs'
-import path, { dirname } from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
@@ -10,6 +10,10 @@ import boxen from 'boxen';
 import { execSync } from 'node:child_process';
 
 import { PostHog } from 'posthog-node'
+
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 export const posthogClient = new PostHog(
     'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
@@ -224,15 +228,23 @@ export function loadConfig() {
 }
 
 export async function logEvent(eventName:string, eventDetails:any = {}) {
+    if (process.env.FUSIONAUTH_TELEMETRY) {
+        return false
+    }
     const config = loadConfig()
+    
     if (config.globalConfig.telemetry) {
-        posthogClient.capture({
+        const capture = await posthogClient.capture({
             distinctId: config.globalConfig.id,
             event: eventName,
             properties: eventDetails
         })
         await posthogClient.shutdown()
-    } 
+        console.log(capture)
+        return capture
+    } else {
+        return false
+    }
 }
 
 type ConfigObject = {
