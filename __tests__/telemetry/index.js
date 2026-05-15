@@ -6,6 +6,8 @@ import { telemetryUpdate } from "../../dist/commands/telemetry/telemetry-utils.j
 import { telemetryDisable } from "../../dist/commands/telemetry/telemetry-disable.js"
 import { telemetryEnable } from "../../dist/commands/telemetry/telemetry-enable.js"
 import path from "node:path"
+import { logEvent } from "../../dist/utils.js"
+import nock from 'nock'
 
 export function telemetry() {
   const mockedTrueConfig = {
@@ -79,5 +81,33 @@ export function telemetry() {
       const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
       assert.equal(actualConfig.telemetry, true)
     })
+  })
+  describe('tests for logEvent', () => {
+    test("If FUSIONAUTH_TELEMETRY === false don't run", async (t) => {
+      before(() => {
+        process.env.FUSIONAUTH_TELEMETRY = false
+      })
+
+      const response = await logEvent('test event')
+      assert.equal(response, false, "logEvent still fired")
+    })
+
+    test("If FUSIONAUTH_TELEMETRY === true DO run", async (t) => {
+      before(() => {
+        process.env.FUSIONAUTH_TELEMETRY = true
+        nock('https://us.i.posthog.com')
+          .post('/batch/')
+          .reply(200, {
+            id: 'something'
+          })
+      })
+      after(() => {
+        nock.cleanAll();
+      })
+
+      const response = await logEvent('test event')
+      assert.equal(response, true, "logEvent didn't fire")
+    })
+    
   })
 }

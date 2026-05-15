@@ -228,7 +228,7 @@ export function loadConfig() {
 }
 
 export async function logEvent(eventName:string, eventDetails:any = {}) {
-    if (process.env.FUSIONAUTH_TELEMETRY) {
+    if (process.env.FUSIONAUTH_TELEMETRY === "false") {
         return false
     }
     const config = loadConfig()
@@ -240,8 +240,7 @@ export async function logEvent(eventName:string, eventDetails:any = {}) {
             properties: eventDetails
         })
         await posthogClient.shutdown()
-        console.log(capture)
-        return capture
+        return true
     } else {
         return false
     }
