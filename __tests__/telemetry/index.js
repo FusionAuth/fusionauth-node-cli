@@ -87,6 +87,9 @@ export function telemetry() {
       before(() => {
         process.env.FUSIONAUTH_TELEMETRY = false
       })
+      after(() => {
+        delete process.env.FUSIONAUTH_TELEMETRY
+      })
 
       const response = await logEvent('test event')
       assert.equal(response, false, "logEvent still fired")
@@ -97,14 +100,27 @@ export function telemetry() {
         process.env.FUSIONAUTH_TELEMETRY = true
         nock('https://us.i.posthog.com')
           .post('/batch/')
-          .reply(200, {
-            id: 'something'
-          })
+          .reply(200)
+      })
+      after(() => {
+        nock.cleanAll();
+        delete process.env.FUSIONAUTH_TELEMETRY
+      })
+
+      const response = await logEvent('test event')
+      assert.equal(response, true, "logEvent didn't fire")
+    })
+    test("If no .env, event submits", async (t) => {
+      before(() => {
+        nock('https://us.i.posthog.com')
+          .post('/batch/')
+          .reply(200)
       })
       after(() => {
         nock.cleanAll();
       })
 
+      assert.equal(process.env.FUSIONAUTH_TELEMETRY, undefined, 'Env variable FUSIONAUTH_TELEMETRY is defined')
       const response = await logEvent('test event')
       assert.equal(response, true, "logEvent didn't fire")
     })
