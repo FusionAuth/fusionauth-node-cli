@@ -1,14 +1,19 @@
 import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
-import fs from 'node:fs'
+import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
 
 import { PostHog } from 'posthog-node'
+
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 export const posthogClient = new PostHog(
     'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
@@ -206,13 +211,15 @@ export function isDirEmpty(path: string) {
 
 export function loadConfig() {
     const defaultConfig = {
-        telemetry: false,
-        id: 'id-unavailable'
+        telemetry: true,
+        id: randomUUID(),
+        version: "1.0"
+
     }
     const configPath = __dirname + '/.fa/config.json'
     try {
         if (!fs.existsSync(configPath)) {
-            return {globalConfig: defaultConfig}
+            createConfig(__dirname + '/.fa', defaultConfig)
         }
         const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
         // TODO: Combine this with a local-project config
@@ -223,13 +230,54 @@ export function loadConfig() {
 }
 
 export async function logEvent(eventName:string, eventDetails:any = {}) {
+    if (process.env.FUSIONAUTH_TELEMETRY === "false") {
+        return false
+    }
     const config = loadConfig()
+    
     if (config.globalConfig.telemetry) {
-        posthogClient.capture({
+        const capture = await posthogClient.capture({
             distinctId: config.globalConfig.id,
             event: eventName,
             properties: eventDetails
         })
         await posthogClient.shutdown()
-    } 
+        return true
+    } else {
+        return false
+    }
+}
+
+type ConfigObject = {
+    id?: string,
+    telemetry?: boolean
+
+}
+
+export function createConfig(dir: string, configObject: ConfigObject = { id: randomUUID(), telemetry: true}) {
+    const configPath = dir + '/config.json'
+
+    if (!fs.existsSync(configPath)) {
+        // If no config, write a new config
+        fs.mkdirSync(dir, { recursive: true })
+
+        fs.writeFileSync(configPath, JSON.stringify(configObject, null, 2))  
+        return fs.existsSync(configPath)
+    } else {
+        // If config exists, check for data to write or not
+        const config = JSON.parse(readFileSync(dir + '/config.json').toString())
+
+        if (!config.id || !config.telemetry) {
+            // If no id OR telemetry, 
+            // still write the file with a new ID and/or telemetry
+            fs.writeFileSync(configPath, JSON.stringify({
+                id: config.id || randomUUID(), 
+                telemetry: config.telemetry === false ? false : true,
+                ...config
+            }))
+            return fs.existsSync(configPath)
+        }
+        // If data is complete, return false to not write
+        return false
+    }
 }
