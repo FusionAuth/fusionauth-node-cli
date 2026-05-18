@@ -212,7 +212,9 @@ export function isDirEmpty(path: string) {
 export function loadConfig() {
     const defaultConfig = {
         telemetry: true,
-        id: randomUUID()
+        id: randomUUID(),
+        version: "1.0"
+
     }
     const configPath = __dirname + '/.fa/config.json'
     try {
