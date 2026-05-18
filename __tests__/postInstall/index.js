@@ -28,6 +28,15 @@ export function postInstall() {
       const configFileExists = createConfig('dist/.fa')
       assert.equal(configFileExists, true, 'Config not created at dist/.fa/config.json')
     })
+    test('No dist directory, still create the directory and file', (t) => {
+      before(() => {
+        mock({
+          "./": {}
+        })
+      })
+      const configFileExists = createConfig('dist/.fa')
+      assert.equal(configFileExists, true, 'Config not created at dist/.fa/config.json')
+    })
     test('No config creates full config file with expected types', (t) => {
       const configFileExists = createConfig('dist/.fa')
       const configObject = JSON.parse(readFileSync('dist/.fa/config.json'))
