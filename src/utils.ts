@@ -190,7 +190,7 @@ export function isDockerInstalled() {
     execSync('docker --version');
     return true;
   } catch (e) {
-    return false;
+    throw(chalk.red("Error: You don't have Docker installed. It's the easiest way to get everything you need\n") + chalk.cyan("Please install Docker. For developers new to Docker, we suggest Orbstack: https://docs.orbstack.dev/quick-start") )
   }
 }
 

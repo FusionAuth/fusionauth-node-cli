@@ -5,7 +5,7 @@ export * from './email-duplicate.js';
 export * from './email-html-to-text.js';
 export * from './email-upload.js';
 export * from './email-watch.js';
-export * from './kickstart-install.js'
+export {kickstartInstall} from './kickstart-install.js'
 export * from './kickstart-kill.js'
 export * from './kickstart-start.js';
 export * from './kickstart-stop.js';
