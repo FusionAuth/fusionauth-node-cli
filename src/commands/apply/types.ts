@@ -62,8 +62,6 @@ export interface KickstartRequest {
 export interface KickstartConfig {
   variables?: Record<string, KickstartVariable>;
   requests: KickstartRequest[];
-  licenseId?: string;
-  license?: Record<string, unknown>;
   settings?: {
     readTimeout?: string;
     connectTimeout?: string;
