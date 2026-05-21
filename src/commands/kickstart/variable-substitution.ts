@@ -10,7 +10,7 @@ import {
   KickstartConfig,
   KickstartRequest,
   SubstitutionResult,
-} from './types.js';
+} from '../apply/types.js';
 
 /**
  * Patterns for template substitution:
@@ -461,13 +461,6 @@ export class VariableSubstitutor {
 
       if (request.body) {
         this.findUnresolvedInObject(request.body, resolved, unresolved);
-      }
-    }
-
-    // Check apiKeys if present
-    if (config.apiKeys) {
-      for (const apiKey of config.apiKeys) {
-        this.findUnresolvedInString(apiKey.key, resolved, unresolved);
       }
     }
 

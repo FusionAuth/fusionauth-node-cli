@@ -11,7 +11,7 @@ import {
   ValidationError,
   ErrorCategory,
   HTTPMethod,
-} from './types.js';
+} from '../apply/types.js';
 
 /**
  * Validates kickstart.json configuration files
@@ -42,14 +42,6 @@ export class KickstartValidator {
       const variablesError = this.validateVariablesStructure(cfg.variables);
       if (variablesError) {
         errors.push(variablesError);
-      }
-    }
-
-    // Validate apiKeys (optional)
-    if (cfg.apiKeys !== undefined) {
-      const apiKeysError = this.validateAPIKeysStructure(cfg.apiKeys);
-      if (apiKeysError) {
-        errors.push(...apiKeysError);
       }
     }
 
@@ -165,44 +157,6 @@ export class KickstartValidator {
     }
 
     return null;
-  }
-
-  /**
-   * Validate apiKeys array structure
-   */
-  private validateAPIKeysStructure(apiKeys: unknown): ValidationError[] {
-    const errors: ValidationError[] = [];
-
-    if (!Array.isArray(apiKeys)) {
-      errors.push({
-        field: 'apiKeys',
-        message: 'apiKeys must be an array',
-        category: ErrorCategory.SCHEMA_INVALID,
-      });
-      return errors;
-    }
-
-    apiKeys.forEach((key, index) => {
-      if (typeof key !== 'object' || key === null) {
-        errors.push({
-          field: `apiKeys[${index + 1}]`,
-          message: 'Each API key must be an object',
-          category: ErrorCategory.SCHEMA_INVALID,
-        });
-        return;
-      }
-
-      const keyObj = key as Record<string, unknown>;
-      if (!keyObj.key || typeof keyObj.key !== 'string') {
-        errors.push({
-          field: `apiKeys[${index + 1}].key`,
-          message: 'Each API key must have a "key" string property',
-          category: ErrorCategory.SCHEMA_INVALID,
-        });
-      }
-    });
-
-    return errors;
   }
 
   /**
@@ -345,22 +299,6 @@ export class KickstartValidator {
         }
       });
     });
-
-    // Check apiKeys if present
-    if (config.apiKeys) {
-      config.apiKeys.forEach((apiKey, index) => {
-        const keyVarRefs = this.extractVariableReferencesFromString(apiKey.key);
-        keyVarRefs.forEach((varRef) => {
-          if (varRef !== 'UUID()' && !definedVariables.has(varRef)) {
-            errors.push({
-              field: `apiKeys[${index + 1}].key`,
-              message: `Undefined variable: #{${varRef}}`,
-              category: ErrorCategory.VARIABLE_NOT_DEFINED,
-            });
-          }
-        });
-      });
-    }
 
     return errors;
   }
