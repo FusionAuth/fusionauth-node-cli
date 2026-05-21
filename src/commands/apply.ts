@@ -102,7 +102,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
     return;
   }
 
-  const { config } = loadResult as { config: unknown };
+  const { config, lineNumbers } = loadResult as { config: unknown; lineNumbers: Record<number, number> };
   const configValidation = validator.validateConfig(config);
 
   if (!configValidation.valid) {
@@ -267,7 +267,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
         id: stepId,
         action: request.method as string,
         status: StepStatus.FAILED,
-        sourceLineNumber: index,
+        sourceLineNumber: lineNumbers[index] ?? index,
         completedAt: new Date().toISOString(),
         durationMs: 0,
         error: {
@@ -300,7 +300,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
       const { response, durationMs } = await stepExecutor.executeStep({
         id: stepId,
         index,
-        sourceLineNumber: index,
+        sourceLineNumber: lineNumbers[index] ?? index,
         request: request as never,
         substitutedRequest: substituted.request,
       });
@@ -312,7 +312,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
           id: stepId,
           action: request.method as string,
           status: StepStatus.SUCCESS,
-          sourceLineNumber: index,
+          sourceLineNumber: lineNumbers[index] ?? index,
           request: {
             method: substituted.request.method,
             url: substituted.request.url,
@@ -372,7 +372,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
           id: stepId,
           action: request.method as string,
           status: isDuplicate ? StepStatus.WARNING : StepStatus.FAILED,
-          sourceLineNumber: index,
+          sourceLineNumber: lineNumbers[index] ?? index,
           request: {
             method: substituted.request.method,
             url: substituted.request.url,
@@ -428,7 +428,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
         id: stepId,
         action: request.method as string,
         status: StepStatus.FAILED,
-        sourceLineNumber: index,
+        sourceLineNumber: lineNumbers[index] ?? index,
         request: {
           method: substituted.request.method,
           url: substituted.request.url,

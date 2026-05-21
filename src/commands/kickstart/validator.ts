@@ -11,7 +11,9 @@ import {
   ValidationError,
   ErrorCategory,
   HTTPMethod,
+  RequestLineNumbers,
 } from '../apply/types.js';
+import { LineTracker } from '../apply/line-tracker.js';
 
 /**
  * Validates kickstart.json configuration files
@@ -113,11 +115,11 @@ export class KickstartValidator {
   /**
    * Validate JSON structure of kickstart file
    * @param filePath Path to the kickstart file
-   * @returns Parsed config if valid, or ValidationResult with errors
+   * @returns Parsed config with line numbers if valid, or ValidationResult with errors
    */
   public loadAndValidateJSON(
     filePath: string
-  ): { config: KickstartConfig } | ValidationResult {
+  ): { config: KickstartConfig; lineNumbers: RequestLineNumbers } | ValidationResult {
     const fileError = this.validateFileExists(filePath);
     if (!fileError.valid) {
       return fileError;
@@ -126,7 +128,8 @@ export class KickstartValidator {
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
       const config = JSON.parse(content) as KickstartConfig;
-      return { config };
+      const lineNumbers = LineTracker.getArrayLineNumbers(filePath, 'requests');
+      return { config, lineNumbers };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       return {

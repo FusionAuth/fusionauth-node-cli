@@ -174,6 +174,13 @@ export interface TimeoutConfig {
 }
 
 /**
+ * Maps request array indices to their starting line numbers in the JSON file
+ */
+export interface RequestLineNumbers {
+  [index: number]: number;
+}
+
+/**
  * Parsed step information with metadata
  */
 export interface ParsedStep {
