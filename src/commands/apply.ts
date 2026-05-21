@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import * as fs from 'node:fs';
 import { apiKeyOption, hostOption } from '../options.js';
 import {
-  KickstartOptions,
+  ApplyOptions,
   ExecutionMetrics,
   StepResult,
   StepStatus,
@@ -17,13 +17,14 @@ import {
 import { KickstartValidator } from './kickstart/validator.js';
 import { VariableSubstitutor } from './kickstart/variable-substitution.js';
 import { HTTPClient, StepExecutor } from './apply/http-client.js';
+import { collectPromptedValues } from './apply/prompts.js';
 import { logEvent } from '../utils.js';
 import * as utils from '../utils.js';
 
 const action = async function (options: Record<string, unknown>): Promise<void> {
   try {
     logEvent('cli command apply');
-    await executeKickstart(options as Partial<KickstartOptions>);
+    await executeKickstart(options);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     utils.errorAndExit(chalk.red(`✖ ${message}`));
@@ -33,10 +34,33 @@ const action = async function (options: Record<string, unknown>): Promise<void> 
 /**
  * Execute the apply command
  */
-async function executeKickstart(options: Record<string, unknown>): Promise<void> {
-  const opts = validateOptions(options as Partial<KickstartOptions>);
+async function executeKickstart(commandOptions: Record<string, unknown>): Promise<void> {
+  // Extract connection and behavior options from command
+  const host = (commandOptions.host as string) || 'http://localhost:9011';
+  const key = commandOptions.key as string;
+  const continueOnError = (commandOptions.continueOnError as boolean) || false;
+  const quiet = (commandOptions.quiet as boolean) || false;
+  const verbose = (commandOptions.verbose as boolean) || false;
+  const logFile = commandOptions.logFile as string | undefined;
+  
+  // Validate required options
+  if (!key) {
+    utils.errorAndExit(chalk.red(`Missing required options:\n  The apply command requires an existing API Key supplied in the command`));
+  }
 
-  if (!opts.quiet) {
+  if (!(commandOptions.file as string)) {
+    utils.errorAndExit(chalk.red(`Missing required options:\n  --file is required`));
+  }
+
+  const opts: ApplyOptions = {
+    file: commandOptions.file as string,
+    continueOnError,
+    verbose,
+    quiet,
+    logFile,
+  };
+
+  if (!quiet) {
     console.log(
       chalk.blue(
         `\n⚙️  FusionAuth CLI - Apply\n`
@@ -122,6 +146,33 @@ async function executeKickstart(options: Record<string, unknown>): Promise<void>
 
   const resolved = substituter.resolveVariables(kickstartConfig as never);
 
+  // Collect prompted variables
+  const promptedVars = substituter.getPromptedVariables(kickstartConfig.variables || {});
+  const hiddenPromptedVars = substituter.getHiddenPromptedVariables(kickstartConfig.variables || {});
+  
+  if (promptedVars.size > 0 || hiddenPromptedVars.size > 0) {
+    if (!opts.quiet) {
+      console.log(chalk.gray('\n📋 Please provide the following values:\n'));
+    }
+
+    try {
+      const userValues = await collectPromptedValues(promptedVars, hiddenPromptedVars);
+      
+      // Update resolved map with user-provided values
+      for (const [varName, userValue] of userValues) {
+        resolved.set(varName, userValue);
+      }
+
+      if (!opts.quiet) {
+        console.log();
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      utils.errorAndExit(chalk.red(`✖ Failed to collect prompted values: ${message}`), 1);
+      return;
+    }
+  }
+
   if (!opts.quiet) {
     console.log(
       chalk.green(
@@ -141,15 +192,15 @@ async function executeKickstart(options: Record<string, unknown>): Promise<void>
   }
 
   // Step 3: Check server connectivity
-  if (!opts.quiet) {
+  if (!quiet) {
     console.log(chalk.gray('3️⃣  Checking FusionAuth server connectivity...'));
   }
 
-  const httpClient = new HTTPClient(opts.host, opts.key);
+  const httpClient = new HTTPClient(host, key);
 
   try {
     await httpClient.waitForServerReady(15, 2000);
-    if (!opts.quiet) {
+    if (!quiet) {
       console.log(chalk.green('✓ Connected to FusionAuth'));
     }
   } catch (err) {
@@ -241,30 +292,6 @@ async function executeKickstart(options: Record<string, unknown>): Promise<void>
         break;
       }
 
-      continue;
-    }
-
-    // Dry-run mode: skip actual execution
-    if (opts.dryRun) {
-      const stepResult: StepResult = {
-        id: stepId,
-        action: request.method as string,
-        status: StepStatus.SUCCESS,
-        sourceLineNumber: index,
-        request: {
-          method: substituted.request.method,
-          url: substituted.request.url,
-        },
-        completedAt: new Date().toISOString(),
-        durationMs: 0,
-      };
-      stepResults.push(stepResult);
-
-      if (!opts.quiet) {
-        console.log(chalk.cyan(' [DRY-RUN]'));
-      }
-
-      metrics.stepsSkipped++;
       continue;
     }
 
@@ -457,17 +484,13 @@ async function executeKickstart(options: Record<string, unknown>): Promise<void>
       `  Executed: ${chalk.cyan(metrics.stepsExecuted)} | Success: ${chalk.green(metrics.stepsSucceeded)} | Warnings: ${chalk.yellow(metrics.stepsWarned)} | Failed: ${chalk.red(metrics.stepsFailed)}`
     );
 
-    if (opts.dryRun) {
-      console.log(`  Dry-run: ${chalk.yellow(metrics.stepsSkipped)}`);
-    }
-
     console.log(`  Success Rate: ${chalk.bold(metrics.successRate)}%`);
     console.log();
   }
 
   // Write log file if requested
   if (opts.logFile) {
-    writeLogFile(opts.logFile, stepResults, metrics, opts.dryRun || false);
+    writeLogFile(opts.logFile, stepResults, metrics);
   }
 
   const exitCode = hasErrors || metrics.stepsFailed > 0 ? 2 : 0;
@@ -497,8 +520,7 @@ async function executeKickstart(options: Record<string, unknown>): Promise<void>
 function writeLogFile(
   logFilePath: string,
   stepResults: StepResult[],
-  metrics: ExecutionMetrics,
-  isDryRun: boolean
+  metrics: ExecutionMetrics
 ): void {
   try {
     const timestamp = new Date().toISOString();
@@ -512,7 +534,6 @@ function writeLogFile(
 
     const logData = {
       timestamp,
-      isDryRun,
       metrics: {
         totalDurationMs: metrics.totalDurationMs,
         startTime: metrics.startTime,
@@ -538,36 +559,6 @@ function writeLogFile(
 }
 
 /**
- * Validate and normalize command options
- */
-function validateOptions(options: Partial<KickstartOptions>): KickstartOptions {
-  const errors: string[] = [];
-
-  if (!options.file) {
-    errors.push('--file is required');
-  }
-
-  if (!options.key) {
-    errors.push('The apply command requires an existing API Key supplied in the command');
-  }
-
-  if (errors.length > 0) {
-    utils.errorAndExit(chalk.red(`Missing required options:\n  ${errors.join('\n  ')}`));
-  }
-
-  return {
-    host: options.host || 'http://localhost:9011',
-    key: options.key!,
-    file: options.file!,
-    dryRun: options.dryRun || false,
-    continueOnError: options.continueOnError || false,
-    verbose: options.verbose || false,
-    quiet: options.quiet || false,
-    logFile: options.logFile,
-  };
-}
-
-/**
  * Apply Command
  */
 export const applyCommand = new Command()
@@ -576,11 +567,6 @@ export const applyCommand = new Command()
   .addOption(hostOption)
   .addOption(apiKeyOption)
   .option('-f, --file <path>', 'Path to kickstart.json file')
-  .option(
-    '-d, --dry-run',
-    'Validate configuration without making API calls',
-    false
-  )
   .option(
     '-e, --continue-on-error',
     'Continue executing steps even if one fails',
