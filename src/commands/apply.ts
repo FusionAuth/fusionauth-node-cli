@@ -13,11 +13,11 @@ import {
   StepResult,
   StepStatus,
   ErrorCategory,
-} from './apply/types.js';
-import { KickstartValidator } from './kickstart/validator.js';
-import { VariableSubstitutor } from './kickstart/variable-substitution.js';
-import { HTTPClient, StepExecutor } from './apply/http-client.js';
-import { collectPromptedValues } from './apply/prompts.js';
+} from '../utilities/apply/types.js';
+import { KickstartValidator } from '../utilities/kickstart/validator.js';
+import { VariableSubstitutor } from '../utilities/kickstart/variable-substitution.js';
+import { HTTPClient, StepExecutor } from '../utilities/apply/http-client.js';
+import { collectPromptedValues } from '../utilities/apply/prompts.js';
 import { logEvent } from '../utils.js';
 import * as utils from '../utils.js';
 

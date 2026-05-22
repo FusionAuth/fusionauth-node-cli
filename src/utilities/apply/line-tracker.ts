@@ -83,4 +83,3 @@ export class LineTracker {
     return lineMap;
   }
 }
-
