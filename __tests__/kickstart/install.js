@@ -48,6 +48,7 @@ export function kickstartInstall() {
   //   })
 
   // })
+
   describe("moveResources", () => {
     it("should throw error if target directory already exists", async () => {
       before(() => {
@@ -118,6 +119,25 @@ export function kickstartInstall() {
       const newResources = moveResources('./myTargetDir')
       assert.deepEqual(newResources, [".env.defaults", "docker-compose.yml"])
     })
+    test(".env.default copies properly", () => {
+      before(() => {
+        mock({
+          "myDir": {
+            ".env.defaults": "has defaults"
+          }
+        })
+      })
+      const options = {
+        postgresPass: crypto.randomUUID(),
+        dbPass: crypto.randomUUID()
+      }
+
+      const expected = `has defaults\nPOSTGRES_PASSWORD=${options.postgresPass}\nDATABASE_PASSWORD=${options.dbPass}\nCLI_DIR=./myDir`
+
+      createEnv("./myDir", options)
+      assert.equal(fs.readFileSync('./myDir/.env').toString(), expected, "Environment strings don't match")
+      })
+
   })
   describe("Directory is created with proper name", () => {
     test("When no name is specified, create directory at fusionauth")

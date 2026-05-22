@@ -50,11 +50,10 @@ export async function createKickstart(kickstartPath: string, answers: any, newDi
   fs.writeFileSync(`${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
 }
 
-export function createEnv(directory: string) {
+export function createEnv(directory: string, options: any = {postgresPass: crypto.randomUUID(), dbPass: crypto.randomUUID()}) {
   try {
-    const postgresPass = crypto.randomUUID()
-    const dbPass = crypto.randomUUID()
-
+    const { postgresPass, dbPass } = options
+    
     console.log(chalk.green(`Transferring environment variables`))
     fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
     fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
