@@ -247,7 +247,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
     if (!opts.quiet) {
       process.stdout.write(
         chalk.gray(
-          `   [${index + 1}/${requests.length}] ${request.method as string} ${request.url as string}...`
+          `   [${index + 1}/${requests.length}] (line ${lineNumbers[index] ?? index}) ${request.method as string} ${request.url as string}...`
         )
       );
     }
