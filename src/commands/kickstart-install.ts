@@ -131,6 +131,7 @@ export const kickstartInstallAction = async function (dir: string) {
         }, 500)
         setTimeout(() => {
           console.log(chalk.green(`Creating Kickstart file`))
+          console.log(answers)
           if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
           createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
         }, 1500)

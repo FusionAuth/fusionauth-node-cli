@@ -2,7 +2,7 @@ import test, { it,describe, after, before, beforeEach, afterEach } from "node:te
 import assert from "node:assert"
 import fs, { readFileSync } from "node:fs"
 import mock from "mock-fs"
-import { dirname } from 'node:path';
+import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { __dirname, createEnv, createKickstart, installSetup, kickstartInstallAction, moveResources } from "../../dist/commands/kickstart-install.js"
 
@@ -29,26 +29,49 @@ export function kickstartInstall() {
     })
     assert.throws(() => installSetup('./has-content'))
   })
+  describe("createKickstart", () => {
+      beforeEach(async (t) => {
+        mock.restore()
+        mock({
+          "./myDir": {},
+          [__dirname + "/resources/kickstart"]: {
+            "kickstart.json": fs.readFileSync(path.resolve("./src/resources/kickstart/kickstart.json")).toString(),
+            "fusionauth": {
+              "docker-compose.yml": "yo"
+            }
+          }
+        })
+      const answers = {
+        password: "password",
+        email: "test@test.com",
+        appName: "myAppName"
+      }
+      await createKickstart(path.resolve(`${__dirname}/resources/kickstart/kickstart.json`), answers, "myDir")
+      t.newKickstart = JSON.parse(fs.readFileSync('./myDir/kickstart/kickstart.json').toString())
+      })
 
-  // describe('Kickstart resources are valid', () => {
-  //   test(".env variables are correctly set", (t) => {
-  //     assert(false)
-  //   })
-  //   test("docker-compose is properly set", (t) => {
-  //     assert(false)
-  //   })
-  //   test("kickstart.json is valid", (t) => {
-  //     assert(false)
-  //   })
-  //   test("kickstart.json has variables defined", (t) => {
-  //     assert(false)
-  //   })
-  //   test("kickstart.json has no extra variables", (t) => {
-  //     assert(false)
-  //   })
+    it("should write a kickstart.json file to the kickstart folder", (t) => {
+      assert.ok(t.newKickstart)
+    })
+    it("should write valid JSON", (t) => {
+      assert.equal(typeof t.newKickstart, "object")
+    })
 
-  // })
+    it("should properly write variables to the kickstart variables object", (t) => {
+      const {variables} = t.newKickstart
+      assert.ok(variables.adminEmail, "adminEmail")
+      assert.ok(variables.adminPassword, "adminPassword")
+      assert.ok(variables.applicationName, "applicationName")
+      assert.ok(variables.saltPassword, "saltPassword")
+      assert.ok(variables.apiKey, "apiKey")
+      assert.ok(variables.asymmetricKeyId, "asymmetricKeyId")
+      assert.ok(variables.applicationId, "applicationId")
+      assert.ok(variables.clientSecret, "clientSecret")
+      assert.ok(variables.defaultTenantId, "defaultTenantId")
+      assert.ok(variables.adminUserId, "adminUserId")
+    })
 
+  })
   describe("moveResources", () => {
     it("should throw error if target directory already exists", async () => {
       before(() => {
