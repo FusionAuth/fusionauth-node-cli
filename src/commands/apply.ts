@@ -139,9 +139,13 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
 
   const substituter = new VariableSubstitutor();
   const kickstartConfig = config as { variables?: Record<string, unknown> };
-  substituter.initialize(
+  
+  // Initialize with dynamic variable fetching (includes DEFAULT_TENANT_ID() support)
+  await substituter.initializeWithDynamicVariables(
     kickstartConfig.variables || {},
-    opts.file
+    opts.file,
+    key,
+    host
   );
 
   const resolved = substituter.resolveVariables(kickstartConfig as never);
@@ -189,6 +193,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
         : String(value).substring(0, 50);
       console.log(chalk.gray(`     ${key}: ${displayValue}`));
     }
+    console.log(chalk.gray(`   Checking for defaultTenantId: ${resolved.get('defaultTenantId')}`));
   }
 
   // Step 3: Check server connectivity

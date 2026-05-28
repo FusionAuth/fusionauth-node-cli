@@ -6,6 +6,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { FusionAuthClient } from '@fusionauth/typescript-client';
 import {
   KickstartConfig,
   KickstartRequest,
@@ -16,6 +17,7 @@ import {
  * Patterns for template substitution:
  * - #{variableName} or #{variableName?number}
  * - #{UUID()}
+ * - #{DEFAULT_TENANT_ID()} - fetches the tenant ID of the "FusionAuth" application
  * - #{ENV.VARNAME}
  * - #{PROMPT('message')} - prompt user for input
  * - #{PROMPT_HIDDEN('message')} - prompt user for input (hidden/masked)
@@ -57,6 +59,71 @@ export class VariableSubstitutor {
     // Add provided variables (these override defaults)
     for (const [key, value] of Object.entries(variables)) {
       this.variables.set(key, value);
+    }
+  }
+
+  /**
+   * Initialize with dynamic variable fetching from FusionAuth API
+   * Calls initialize() then fetches the DEFAULT_TENANT_ID from the "FusionAuth" application
+   * @param variables The variables map from kickstart config
+   * @param kickstartFilePath Path to the kickstart.json file
+   * @param apiKey API key for FusionAuth
+   * @param host Host URL of FusionAuth instance
+   */
+  public async initializeWithDynamicVariables(
+    variables: Record<string, unknown>,
+    kickstartFilePath: string,
+    apiKey: string,
+    host: string
+  ): Promise<void> {
+    // First, perform standard initialization
+    this.initialize(variables, kickstartFilePath);
+
+    // Fetch the DEFAULT_TENANT_ID if it's not already provided
+    if (!this.variables.has('DEFAULT_TENANT_ID')) {
+      try {
+        console.log('[VariableSubstitutor] Fetching DEFAULT_TENANT_ID from FusionAuth...');
+        const client = new FusionAuthClient(apiKey, host);
+        
+        // Fetch all applications and find the one named "FusionAuth"
+        const response = await client.retrieveApplications();
+        
+        if (!response.wasSuccessful() || !response.response.applications) {
+          throw new Error('Failed to retrieve applications from FusionAuth');
+        }
+
+        console.log(`[VariableSubstitutor] Found ${response.response.applications.length} applications`);
+
+        const fusionAuthApp = response.response.applications.find(
+          (app) => app.name === 'FusionAuth'
+        );
+
+        if (!fusionAuthApp) {
+          const appNames = response.response.applications.map((app) => app.name).join(', ');
+          console.log(`[VariableSubstitutor] Available applications: ${appNames}`);
+          throw new Error(
+            'Application named "FusionAuth" not found. Please ensure the application exists in your FusionAuth instance.'
+          );
+        }
+
+        if (!fusionAuthApp.tenantId) {
+          throw new Error(
+            'The "FusionAuth" application does not have an associated tenant ID'
+          );
+        }
+
+        // Store the tenant ID
+        console.log(`[VariableSubstitutor] Set DEFAULT_TENANT_ID to ${fusionAuthApp.tenantId}`);
+        this.variables.set('DEFAULT_TENANT_ID', fusionAuthApp.tenantId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[VariableSubstitutor] Error: ${message}`);
+        throw new Error(
+          `Failed to fetch DEFAULT_TENANT_ID from FusionAuth: ${message}`
+        );
+      }
+    } else {
+      console.log('[VariableSubstitutor] DEFAULT_TENANT_ID already provided in variables');
     }
   }
 
@@ -247,6 +314,9 @@ export class VariableSubstitutor {
   /**
    * Substitute patterns in a string
    * Handles: #{var}, #{var?number}, #{UUID()}, #{ENV.VAR}, @{file}, ${file}
+   * 
+   * Note: File inclusions are processed with placeholder tokens to prevent
+   * variable substitution within included file content.
    */
   private substituteString(
     str: string,
@@ -254,15 +324,22 @@ export class VariableSubstitutor {
     unresolvedVariables: string[]
   ): string {
     let result = str;
+    const fileInclusions: Map<string, string> = new Map();
+    let fileInclusionCounter = 0;
 
-    // File inclusion patterns must be processed first (they return strings)
+    // Step 1: Extract file inclusion patterns and replace with placeholders
+    // This prevents variable substitution from processing file content
+    
     // @{file} - unescaped inclusion
     result = result.replace(/@{([^}]+)}/g, (match, filePath) => {
       const content = this.includeFile(filePath, false);
       if (content === null) {
         throw new Error(`Cannot include file: ${filePath}`);
       }
-      return content;
+      const placeholder = `__FILE_INCLUDE_${fileInclusionCounter}__`;
+      fileInclusions.set(placeholder, content);
+      fileInclusionCounter++;
+      return placeholder;
     });
 
     // ${file} - JSON-escaped inclusion
@@ -271,9 +348,13 @@ export class VariableSubstitutor {
       if (content === null) {
         throw new Error(`Cannot include file: ${filePath}`);
       }
-      return content;
+      const placeholder = `__FILE_INCLUDE_${fileInclusionCounter}__`;
+      fileInclusions.set(placeholder, content);
+      fileInclusionCounter++;
+      return placeholder;
     });
 
+    // Step 2: Perform variable substitution (won't touch file inclusion placeholders)
     // Variable patterns: #{var} or #{var?number}
     result = result.replace(/#{([^}?]+)(\?[a-z]+)?}/g, (match, varName, typeHint) => {
       const value = this.resolveVariable(varName, resolved);
@@ -303,6 +384,12 @@ export class VariableSubstitutor {
       return String(value);
     });
 
+    // Step 3: Replace placeholders with actual file content
+    for (const [placeholder, content] of fileInclusions.entries()) {
+      // Simple replacement using split/join (works in all ES versions)
+      result = result.split(placeholder).join(content);
+    }
+
     return result;
   }
 
@@ -317,6 +404,16 @@ export class VariableSubstitutor {
     // Special pattern: UUID()
     if (varName === 'UUID()') {
       return this.generateUUID();
+    }
+
+    // Special pattern: DEFAULT_TENANT_ID()
+    if (varName === 'DEFAULT_TENANT_ID()') {
+      const value = resolved.get('DEFAULT_TENANT_ID');
+      if (value !== undefined) {
+        return value;
+      }
+      // Not found - will be handled as unresolved variable
+      return undefined;
     }
 
     // Special pattern: ENV.VARNAME
@@ -350,6 +447,25 @@ export class VariableSubstitutor {
       return {
         success: true,
         value: this.generateUUID(),
+        unresolvedVariables: [],
+        errors: [],
+      };
+    }
+
+    // DEFAULT_TENANT_ID() pattern
+    if (value === '#{DEFAULT_TENANT_ID()}') {
+      const tenantId = this.variables.get('DEFAULT_TENANT_ID');
+      if (tenantId === undefined) {
+        return {
+          success: false,
+          value,
+          unresolvedVariables: ['DEFAULT_TENANT_ID'],
+          errors: ['DEFAULT_TENANT_ID not initialized. Ensure you have access to FusionAuth API.'],
+        };
+      }
+      return {
+        success: true,
+        value: tenantId,
         unresolvedVariables: [],
         errors: [],
       };
