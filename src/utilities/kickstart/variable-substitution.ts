@@ -17,6 +17,8 @@ import {
  * - #{variableName} or #{variableName?number}
  * - #{UUID()}
  * - #{ENV.VARNAME}
+ * - #{PROMPT('message')} - prompt user for input
+ * - #{PROMPT_HIDDEN('message')} - prompt user for input (hidden/masked)
  * - @{filePath} - include file unescaped
  * - ${filePath} - include file JSON-escaped
  */
@@ -524,28 +526,31 @@ export class VariableSubstitutor {
   }
 
   /**
-   * Detect if a value is a prompt variable (starts with "prompt:")
+   * Detect if a value is a prompt variable (matches #{PROMPT(...)})
    * @param value The variable value
    * @returns true if value is a prompt variable
    */
   public isPromptVariable(value: unknown): boolean {
-    return typeof value === 'string' && value.startsWith('prompt:');
+    if (typeof value !== 'string') return false;
+    const promptMatch = value.match(/^#\{PROMPT\('(.*)'\)\}$/);
+    return promptMatch !== null;
   }
 
   /**
    * Extract prompt text from a prompt variable
-   * @param value The variable value (e.g., "prompt:Enter SMTP password:")
-   * @returns The prompt text without the "prompt:" prefix
+   * @param value The variable value (e.g., "#{PROMPT('Enter API key:')}")
+   * @returns The prompt text without the "#{PROMPT(...)}" wrapper
    */
   public extractPromptText(value: unknown): string {
     if (!this.isPromptVariable(value)) {
       return '';
     }
-    return (value as string).substring('prompt:'.length);
+    const promptMatch = (value as string).match(/^#\{PROMPT\('(.*)'\)\}$/);
+    return promptMatch ? promptMatch[1] : '';
   }
 
   /**
-   * Get all variables that require user input (marked with "prompt:" prefix)
+   * Get all variables that require user input (marked with #{PROMPT(...)} pattern)
    * @param variables The variables from kickstart config
    * @returns Map of variable name to prompt text
    */
@@ -563,28 +568,31 @@ export class VariableSubstitutor {
   }
 
   /**
-   * Detect if a value is a hidden prompt variable (starts with "prompt-hidden:")
+   * Detect if a value is a hidden prompt variable (matches #{PROMPT_HIDDEN(...)})
    * @param value The variable value
    * @returns true if value is a hidden prompt variable
    */
   public isHiddenPromptVariable(value: unknown): boolean {
-    return typeof value === 'string' && value.startsWith('prompt-hidden:');
+    if (typeof value !== 'string') return false;
+    const promptMatch = value.match(/^#\{PROMPT_HIDDEN\('(.*)'\)\}$/);
+    return promptMatch !== null;
   }
 
   /**
    * Extract prompt text from a hidden prompt variable
-   * @param value The variable value (e.g., "prompt-hidden:Enter password:")
-   * @returns The prompt text without the "prompt-hidden:" prefix
+   * @param value The variable value (e.g., "#{PROMPT_HIDDEN('Enter password:')}")
+   * @returns The prompt text without the "#{PROMPT_HIDDEN(...)}" wrapper
    */
   public extractHiddenPromptText(value: unknown): string {
     if (!this.isHiddenPromptVariable(value)) {
       return '';
     }
-    return (value as string).substring('prompt-hidden:'.length);
+    const promptMatch = (value as string).match(/^#\{PROMPT_HIDDEN\('(.*)'\)\}$/);
+    return promptMatch ? promptMatch[1] : '';
   }
 
   /**
-   * Get all variables that require hidden user input (marked with "prompt-hidden:" prefix)
+   * Get all variables that require hidden user input (marked with #{PROMPT_HIDDEN(...)} pattern)
    * @param variables The variables from kickstart config
    * @returns Map of variable name to prompt text
    */
