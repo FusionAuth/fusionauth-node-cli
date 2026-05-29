@@ -6,10 +6,7 @@ import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { __dirname, createEnv, createKickstart, installSetup, kickstartInstallAction, moveResources } from "../../dist/commands/kickstart-install.js"
 
-
-
 export function kickstartInstall() {
-  console.log('testing install')
   beforeEach(() => {
     mock({
       "./": {}
@@ -18,6 +15,7 @@ export function kickstartInstall() {
   afterEach(() => {
     mock.restore()
   })
+
 
   test("Install directory throws if occupied", async () => {
     before(() => {

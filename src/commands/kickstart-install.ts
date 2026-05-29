@@ -147,7 +147,7 @@ export const kickstartInstallAction = async function (dir: string) {
 
         }, 3500)
 
-      }).catch((err) => {
+      }).catch(() => {
         console.error(chalk.yellow('Cancelling kickstart installation...'))
       })
   } catch (e) {

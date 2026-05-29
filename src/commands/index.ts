@@ -7,7 +7,7 @@ export * from './email-upload.js';
 export * from './email-watch.js';
 export {kickstartInstall} from './kickstart-install.js'
 export * from './kickstart-kill.js'
-export * from './kickstart-start.js';
+export {kickstartStart} from './kickstart-start.js';
 export * from './kickstart-stop.js';
 export * from './lambda-update.js';
 export * from './lambda-delete.js';
