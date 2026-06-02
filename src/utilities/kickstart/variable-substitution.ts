@@ -82,7 +82,6 @@ export class VariableSubstitutor {
     // Fetch the DEFAULT_TENANT_ID if it's not already provided
     if (!this.variables.has('DEFAULT_TENANT_ID')) {
       try {
-        console.log('[VariableSubstitutor] Fetching DEFAULT_TENANT_ID from FusionAuth...');
         const client = new FusionAuthClient(apiKey, host);
         
         // Fetch all applications and find the one named "FusionAuth"
@@ -92,15 +91,11 @@ export class VariableSubstitutor {
           throw new Error('Failed to retrieve applications from FusionAuth');
         }
 
-        console.log(`[VariableSubstitutor] Found ${response.response.applications.length} applications`);
-
         const fusionAuthApp = response.response.applications.find(
           (app) => app.name === 'FusionAuth'
         );
 
         if (!fusionAuthApp) {
-          const appNames = response.response.applications.map((app) => app.name).join(', ');
-          console.log(`[VariableSubstitutor] Available applications: ${appNames}`);
           throw new Error(
             'Application named "FusionAuth" not found. Please ensure the application exists in your FusionAuth instance.'
           );
@@ -113,17 +108,13 @@ export class VariableSubstitutor {
         }
 
         // Store the tenant ID
-        console.log(`[VariableSubstitutor] Set DEFAULT_TENANT_ID to ${fusionAuthApp.tenantId}`);
         this.variables.set('DEFAULT_TENANT_ID', fusionAuthApp.tenantId);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error(`[VariableSubstitutor] Error: ${message}`);
         throw new Error(
           `Failed to fetch DEFAULT_TENANT_ID from FusionAuth: ${message}`
         );
       }
-    } else {
-      console.log('[VariableSubstitutor] DEFAULT_TENANT_ID already provided in variables');
     }
   }
 
