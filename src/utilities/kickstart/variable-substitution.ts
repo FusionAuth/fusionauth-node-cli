@@ -70,7 +70,7 @@ export class VariableSubstitutor {
    * @param apiKey API key for FusionAuth
    * @param host Host URL of FusionAuth instance
    */
-  public async initializeWithDynamicVariables(
+    public async initializeWithDynamicVariables(
     variables: Record<string, unknown>,
     kickstartFilePath: string,
     apiKey: string,
@@ -116,7 +116,7 @@ export class VariableSubstitutor {
         );
       }
     }
-  }
+  } 
 
   /**
    * Resolve all variables, expanding special patterns like #{UUID()} and #{ENV.VARNAME}

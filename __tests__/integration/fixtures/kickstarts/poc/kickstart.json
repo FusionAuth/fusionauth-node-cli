@@ -1,0 +1,44 @@
+{
+  "variables": {
+    "smtpPassword": "Test SMTP password",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password"
+  },
+  "requests": [
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{FUSIONAUTH_TENANT_ID}",
+      "body": {
+        "tenant": {
+          "issuer": "http://localhost:9011",
+          "emailConfiguration": {
+            "debug": true,
+            "defaultFromEmail": "poc@fusionauth.io",
+            "defaultFromName": "FusionAuth POC",
+            "host": "smtp.sendgrid.net",
+            "username": "apikey",
+            "password": "#{smtpPassword}",
+            "port": 587,
+            "security": "TLS"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    }
+  ]
+}

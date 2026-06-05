@@ -23,5 +23,10 @@ fusionString.forEach((line, i) => {
 });
 const program = new Command();
 program.name('@fusionauth/cli').description('CLI for FusionAuth');
-Object.values(commands).forEach((command) => program.addCommand(command as unknown as Command));
+Object.values(commands).forEach((command) => {
+  // Only add Command instances, skip other exports (like executeAction)
+  if (command instanceof Command) {
+    program.addCommand(command as unknown as Command);
+  }
+});
 program.parse();

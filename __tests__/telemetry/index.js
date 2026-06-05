@@ -1,4 +1,4 @@
-import test, { describe, after, before, beforeEach, afterEach } from "node:test"
+import test, { describe } from "node:test"
 import assert from "node:assert"
 import fs, { readFileSync } from "node:fs"
 import mock from "mock-fs"
@@ -20,66 +20,72 @@ export function telemetry() {
   }
   describe('telemetry runs properly', () => {
     test("Creates config if no config exists", (t) => {
-      before(() => {
-        mock({
-          "dist": {}
-        })
-      }) 
-
-      const updatedConfig = telemetryUpdate(true)
-      assert(fs.existsSync('dist/.fa/config.json'), "File wasn't created")
+      mock({
+        "dist": {}
+      })
+      try {
+        const updatedConfig = telemetryUpdate(true)
+        assert(fs.existsSync('dist/.fa/config.json'), "File wasn't created")
+      } finally {
+        mock.restore()
+      }
     })
     test("Only changes telemetry value", () => {
-      before(() => {
-        mock({
-          "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
-        })
+      mock({
+        "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
-      
-      const updatedConfig = telemetryUpdate(true)
-      assert.deepEqual(updatedConfig.globalConfig, mockedTrueConfig)
+      try {
+        const updatedConfig = telemetryUpdate(true)
+        assert.deepEqual(updatedConfig.globalConfig, mockedTrueConfig)
+      } finally {
+        mock.restore()
+      }
     })
     test("Enable works", (t) => {
-      before(() => {
-        mock({
-          "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
-        })
+      mock({
+        "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
-      const actualConfig = telemetryUpdate(true)
-      assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+      try {
+        const actualConfig = telemetryUpdate(true)
+        assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+      } finally {
+        mock.restore()
+      }
     })
     test("Disable works", (t) => {
-      before(() => {
-        mock({
-          "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
-        })
+      mock({
+        "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
-      const actualConfig = telemetryUpdate(true)
-      assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+      try {
+        const actualConfig = telemetryUpdate(true)
+        assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+      } finally {
+        mock.restore()
+      }
     })
     test("Disable full command runs properly", (t) => {
-      before(() => {
-        mock({
-          "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
-        })
+      mock({
+        "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
-
-      // TODO: Add quiet flag to remove outputs
-      telemetryDisable.parse()
-      const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
-      assert.equal(actualConfig.telemetry, false)
+      try {
+        telemetryDisable.parse()
+        const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
+        assert.equal(actualConfig.telemetry, false)
+      } finally {
+        mock.restore()
+      }
     })
     test("Enable full command runs properly", (t) => {
-      before(() => {
-        mock({
-          "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
-        })
+      mock({
+        "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
-
-      // TODO: Add quiet flag to remove outputs
-      telemetryEnable.parse()
-      const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
-      assert.equal(actualConfig.telemetry, true)
+      try {
+        telemetryEnable.parse()
+        const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
+        assert.equal(actualConfig.telemetry, true)
+      } finally {
+        mock.restore()
+      }
     })
   })
   describe('tests for logEvent', () => {

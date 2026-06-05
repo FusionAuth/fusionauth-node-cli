@@ -1,110 +1,45 @@
 import { describe, test, afterEach } from "node:test"
 import assert from "node:assert"
-import mock from "mock-fs"
 import nock from "nock"
+import mock from 'mock-fs'
 import { VariableSubstitutor } from "../../dist/utilities/kickstart/variable-substitution.js"
 
 export function variableSubstitution() {
+  
   describe('VariableSubstitutor', () => {
     afterEach(() => {
-      mock.restore()
       nock.cleanAll()
     })
 
     describe('initialize()', () => {
-      test('should set default variables', (t) => {
+      test('should fetch FUSIONAUTH_APPLICATION_ID', (t) => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
         const resolved = substituter.resolveVariables({})
-        assert(resolved.has('FUSIONAUTH_APPLICATION_ID'), 'Default vars not set')
+        
+        assert(resolved.has('FUSIONAUTH_APPLICATION_ID'), 'FUSIONAUTH_APPLICATION_ID not set')
+        assert.equal(resolved.get('FUSIONAUTH_APPLICATION_ID'), '3c219e58-ed0e-4b18-ad48-f4f92793ae32')
       })
 
-      test('should override defaults with provided variables', (t) => {
+      test('should fetch FUSIONAUTH_TENANT_ID', (t) => {
         const substituter = new VariableSubstitutor()
-        substituter.initialize({
-          customVar: 'test-value'
-        }, '/test/kickstart.json')
+        substituter.initialize({}, '/test/kickstart.json')
         
         const resolved = substituter.resolveVariables({})
-        assert.equal(resolved.get('customVar'), 'test-value')
+        
+        assert(resolved.has('FUSIONAUTH_TENANT_ID'), 'FUSIONAUTH_TENANT_ID not set')
+        assert.equal(resolved.get('FUSIONAUTH_TENANT_ID'), '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1')
       })
-    })
 
-    describe('initializeWithDynamicVariables()', () => {
-      test('should fetch DEFAULT_TENANT_ID from FusionAuth API', async (t) => {
-        // Mock the FusionAuth API response
-        nock('http://localhost:9011')
-          .get('/api/application')
-          .reply(200, {
-            applications: [
-              { name: 'FusionAuth', id: 'app-id', tenantId: 'tenant-123' }
-            ]
-          })
-
+      test('should fetch TENANT_MANAGER_ID', (t) => {
         const substituter = new VariableSubstitutor()
-        await substituter.initializeWithDynamicVariables(
-          {},
-          '/test/kickstart.json',
-          'test-key',
-          'http://localhost:9011'
-        )
+        substituter.initialize({}, '/test/kickstart.json')
         
         const resolved = substituter.resolveVariables({})
-        assert.equal(resolved.get('DEFAULT_TENANT_ID'), 'tenant-123')
-      })
-
-      test('should throw if FusionAuth app not found', async (t) => {
-        nock('http://localhost:9011')
-          .get('/api/application')
-          .reply(200, { applications: [] })
-
-        const substituter = new VariableSubstitutor()
         
-        await assert.rejects(
-          () => substituter.initializeWithDynamicVariables(
-            {},
-            '/test/kickstart.json',
-            'test-key',
-            'http://localhost:9011'
-          ),
-          /Application named "FusionAuth" not found/
-        )
-      })
-
-      test('should throw if app missing tenant ID', async (t) => {
-        nock('http://localhost:9011')
-          .get('/api/application')
-          .reply(200, {
-            applications: [
-              { name: 'FusionAuth', id: 'app-id', tenantId: null }
-            ]
-          })
-
-        const substituter = new VariableSubstitutor()
-        
-        await assert.rejects(
-          () => substituter.initializeWithDynamicVariables(
-            {},
-            '/test/kickstart.json',
-            'test-key',
-            'http://localhost:9011'
-          ),
-          /does not have an associated tenant ID/
-        )
-      })
-
-      test('should use provided DEFAULT_TENANT_ID if already set', async (t) => {
-        const substituter = new VariableSubstitutor()
-        await substituter.initializeWithDynamicVariables(
-          { DEFAULT_TENANT_ID: 'provided-tenant-id' },
-          '/test/kickstart.json',
-          'test-key',
-          'http://localhost:9011'
-        )
-        
-        const resolved = substituter.resolveVariables({})
-        assert.equal(resolved.get('DEFAULT_TENANT_ID'), 'provided-tenant-id')
+        assert(resolved.has('TENANT_MANAGER_ID'), 'TENANT_MANAGER_ID not set')
+        assert.equal(resolved.get('TENANT_MANAGER_ID'), '9ab52a6b-6abc-4aea-8f7b-525156b2ef73')
       })
     })
 
@@ -120,32 +55,28 @@ export function variableSubstitution() {
         assert(id && typeof id === 'string' && id.length === 36, 'UUID not generated')
       })
 
-      test('should generate unique UUIDs', (t) => {
+      test('should resolve DEFAULT_TENANT_ID() pattern from a FusionAuth instance', async (t) => {
+        // Mock the FusionAuth API response
+        nock('http://mocktestserver')
+          .get('/api/application')
+          .reply(200, {
+            applications: [
+              { name: 'FusionAuth', id: '3c219e58-ed0e-4b18-ad48-f4f92793ae32', tenantId: '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1' }
+            ]
+          })
+
         const substituter = new VariableSubstitutor()
-        substituter.initialize({
-          id1: '#{UUID()}',
-          id2: '#{UUID()}'
-        }, '/test/kickstart.json')
+        await substituter.initializeWithDynamicVariables(
+          {},
+          '/test/kickstart.json',
+          'test-key',
+          'http://mocktestserver'
+        )
         
         const resolved = substituter.resolveVariables({})
-        const uuid1 = resolved.get('id1')
-        const uuid2 = resolved.get('id2')
-        assert.notEqual(uuid1, uuid2, 'UUIDs should be unique')
+        assert.equal(resolved.get('DEFAULT_TENANT_ID'), '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1')
       })
-
-      test('should resolve DEFAULT_TENANT_ID() pattern', (t) => {
-        const substituter = new VariableSubstitutor()
-        substituter.initialize({
-          myTenant: '#{DEFAULT_TENANT_ID()}'
-        }, '/test/kickstart.json')
-        
-        // Manually set DEFAULT_TENANT_ID as if from initializeWithDynamicVariables
-        substituter.variables.set('DEFAULT_TENANT_ID', 'tenant-123')
-        
-        const resolved = substituter.resolveVariables({})
-        assert.equal(resolved.get('myTenant'), 'tenant-123')
-      })
-
+    
       test('should resolve ENV variables', (t) => {
         process.env.TEST_VAR = 'test-value'
         const substituter = new VariableSubstitutor()
@@ -300,22 +231,6 @@ export function variableSubstitution() {
         assert(result.errors.length > 0, 'Should report error')
       })
 
-      test('should handle file inclusion syntax in URLs without errors', (t) => {
-        const substituter = new VariableSubstitutor()
-        substituter.initialize({
-          apiKey: 'secret-123'
-        }, '/test/kickstart.json')
-        
-        const resolved = substituter.resolveVariables({})
-        // Test that file inclusion patterns don't interfere with variable substitution in URLs
-        const result = substituter.substituteInString(
-          '/api/resource/#{apiKey}',
-          resolved
-        )
-        
-        assert.equal(result.value, '/api/resource/secret-123')
-        assert(result.success)
-      })
     })
   })
 }

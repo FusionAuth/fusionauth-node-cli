@@ -21,20 +21,40 @@ import { collectPromptedValues } from '../utilities/apply/prompts.js';
 import { logEvent } from '../utils.js';
 import * as utils from '../utils.js';
 
-const action = async function (options: Record<string, unknown>): Promise<void> {
+export const executeAction = async function (options: Record<string, unknown>): Promise<{ success: boolean; error?: string; results?: any }> {
   try {
     logEvent('cli command apply');
-    await executeKickstart(options);
+    const kickstartResult = await executeKickstart(options);
+    if (kickstartResult.exitCode === 0) {
+      return { success: true, results: kickstartResult.results };
+    } else {
+      return { 
+        success: false, 
+        error: `Kickstart execution failed with exit code ${kickstartResult.exitCode}`,
+        results: kickstartResult.results
+      };
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    utils.errorAndExit(chalk.red(`✖ ${message}`));
+    if (process.env.NODE_ENV !== 'test') {
+      utils.errorAndExit(chalk.red(`✖ ${message}`));
+    }
+    return { success: false, error: message };
+  }
+};
+
+// Wrapper for CLI command that matches Commander.js action signature (returns void)
+const action = async function (options: Record<string, unknown>): Promise<void> {
+  const result = await executeAction(options);
+  if (!result.success) {
+    utils.errorAndExit(chalk.red(`✖ ${result.error}`), 1);
   }
 };
 
 /**
  * Execute the apply command
  */
-async function executeKickstart(commandOptions: Record<string, unknown>): Promise<void> {
+async function executeKickstart(commandOptions: Record<string, unknown>): Promise<{ exitCode: number; results: { steps: StepResult[]; metrics: ExecutionMetrics } }> {
   // Extract connection and behavior options from command
   const host = (commandOptions.host as string) || 'http://localhost:9011';
   const key = commandOptions.key as string;
@@ -45,11 +65,11 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
   
   // Validate required options
   if (!key) {
-    utils.errorAndExit(chalk.red(`Missing required options:\n  The apply command requires an existing API Key supplied in the command`));
+    throw new Error(`Missing required options:\n  The apply command requires an existing API Key supplied in the command`);
   }
 
   if (!(commandOptions.file as string)) {
-    utils.errorAndExit(chalk.red(`Missing required options:\n  --file is required`));
+    throw new Error(`Missing required options:\n  --file is required`);
   }
 
   const opts: ApplyOptions = {
@@ -93,13 +113,9 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
       errorList = ['Failed to parse errors'];
     }
     
-    utils.errorAndExit(
-      chalk.red(
-        `✖ Failed to load kickstart file: ${errorList.length > 0 ? errorList.join(', ') : 'Unknown error'}`
-      ),
-      2
+    throw new Error(
+      `Failed to load kickstart file: ${errorList.length > 0 ? errorList.join(', ') : 'Unknown error'}`
     );
-    return;
   }
 
   const { config, lineNumbers } = loadResult as { config: unknown; lineNumbers: Record<number, number> };
@@ -121,11 +137,9 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
     } catch {
       errorMessages = '  Failed to parse validation errors';
     }
-    utils.errorAndExit(
-      chalk.red(`✖ Invalid kickstart configuration:\n${errorMessages || '  Unknown error'}`),
-      2
+    throw new Error(
+      `Invalid kickstart configuration:\n${errorMessages || '  Unknown error'}`
     );
-    return;
   }
 
   if (!opts.quiet) {
@@ -172,8 +186,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      utils.errorAndExit(chalk.red(`✖ Failed to collect prompted values: ${message}`), 1);
-      return;
+      throw new Error(`Failed to collect prompted values: ${message}`);
     }
   }
 
@@ -210,10 +223,7 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    utils.errorAndExit(
-      chalk.red(`✖ Cannot connect to FusionAuth: ${message}`)
-    );
-    return;
+    throw new Error(`Cannot connect to FusionAuth: ${message}`);
   }
 
   // Step 4: Process requests
@@ -504,19 +514,23 @@ async function executeKickstart(commandOptions: Record<string, unknown>): Promis
     if (!opts.quiet) {
       console.log(chalk.green('✓ Kickstart applied successfully!'));
     }
-    process.exit(0);
   } else {
     if (!opts.quiet) {
-      utils.errorAndExit(
+      console.log(
         chalk.red(
           `✖ Kickstart failed (${metrics.stepsFailed} error(s))`
-        ),
-        exitCode
+        )
       );
-    } else {
-      process.exit(exitCode);
     }
   }
+
+  return {
+    exitCode,
+    results: {
+      steps: stepResults,
+      metrics,
+    }
+  };
 }
 
 /**

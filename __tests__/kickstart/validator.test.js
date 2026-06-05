@@ -1,13 +1,10 @@
-import { describe, test, afterEach } from "node:test"
+import { describe, test } from "node:test"
 import assert from "node:assert"
 import mock from "mock-fs"
 import { KickstartValidator } from "../../dist/utilities/kickstart/validator.js"
 
 export function validator() {
   describe('KickstartValidator', () => {
-    afterEach(() => {
-      mock.restore()
-    })
 
     describe('validateConfig()', () => {
       test('should reject non-object config', (t) => {
@@ -370,24 +367,30 @@ export function validator() {
         mock({
           '/test/kickstart.json': '{"requests": []}'
         })
-        
-        const validator = new KickstartValidator()
-        const result = validator.validateFileExists('/test/kickstart.json')
-        
-        assert.equal(result.valid, true)
-        assert.equal(result.errors.length, 0)
+        try {
+          const validator = new KickstartValidator()
+          const result = validator.validateFileExists('/test/kickstart.json')
+          
+          assert.equal(result.valid, true)
+          assert.equal(result.errors.length, 0)
+        } finally {
+          mock.restore()
+        }
       })
 
       test('should report error if path is directory', (t) => {
         mock({
           '/test/': {}
         })
-        
-        const validator = new KickstartValidator()
-        const result = validator.validateFileExists('/test')
-        
-        assert.equal(result.valid, false)
-        assert(result.errors.some(e => e.message.includes('not a file')))
+        try {
+          const validator = new KickstartValidator()
+          const result = validator.validateFileExists('/test')
+          
+          assert.equal(result.valid, false)
+          assert(result.errors.some(e => e.message.includes('not a file')))
+        } finally {
+          mock.restore()
+        }
       })
     })
 
@@ -404,12 +407,15 @@ export function validator() {
         mock({
           '/test/bad.json': '{ invalid json }'
         })
-        
-        const validator = new KickstartValidator()
-        const result = validator.loadAndValidateJSON('/test/bad.json')
-        
-        assert.equal(result.valid, false)
-        assert(result.errors.some(e => e.category === 'schema_invalid'))
+        try {
+          const validator = new KickstartValidator()
+          const result = validator.loadAndValidateJSON('/test/bad.json')
+          
+          assert.equal(result.valid, false)
+          assert(result.errors.some(e => e.category === 'schema_invalid'))
+        } finally {
+          mock.restore()
+        }
       })
 
       test('should load and parse valid JSON', (t) => {
@@ -421,13 +427,16 @@ export function validator() {
         mock({
           '/test/valid.json': JSON.stringify(config)
         })
-        
-        const validator = new KickstartValidator()
-        const result = validator.loadAndValidateJSON('/test/valid.json')
-        
-        assert('config' in result)
-        assert.equal(result.config.requests.length, 1)
-        assert('lineNumbers' in result)
+        try {
+          const validator = new KickstartValidator()
+          const result = validator.loadAndValidateJSON('/test/valid.json')
+          
+          assert('config' in result)
+          assert.equal(result.config.requests.length, 1)
+          assert('lineNumbers' in result)
+        } finally {
+          mock.restore()
+        }
       })
 
       test('should include line numbers in result', (t) => {
@@ -440,11 +449,14 @@ export function validator() {
         mock({
           '/test/valid.json': JSON.stringify(config)
         })
-        
-        const validator = new KickstartValidator()
-        const result = validator.loadAndValidateJSON('/test/valid.json')
-        
-        assert('lineNumbers' in result)
+        try {
+          const validator = new KickstartValidator()
+          const result = validator.loadAndValidateJSON('/test/valid.json')
+          
+          assert('lineNumbers' in result)
+        } finally {
+          mock.restore()
+        }
       })
     })
   })

@@ -1,12 +1,22 @@
-import { postInstall } from "./postInstall/index.js";
-import { telemetry } from "./telemetry/index.js";
-import { variableSubstitution } from "./kickstart/variable-substitution.test.js";
-import { validator } from "./kickstart/validator.test.js";
-import { apply } from "./apply/index.js";
+(async () => {
+  const { postInstall } = await import("./postInstall/index.js");
+  const { telemetry } = await import("./telemetry/index.js");
+  const { variableSubstitution } = await import("./kickstart/variable-substitution.test.js");
+  const { validator } = await import("./kickstart/validator.test.js");
+  const { apply } = await import("./apply/index.js");
 
+  if (process.env.SKIP_UNIT_TESTS !== 'true') {
+    postInstall()
+    telemetry()
+    variableSubstitution()
+    validator()
+    apply()
+  }
 
-postInstall()
-telemetry()
-variableSubstitution()
-validator()
-apply()
+  // Integration tests require Docker and FusionAuth instance
+  // Run with: npm run test:integration
+  if (process.env.RUN_INTEGRATION_TESTS === 'true') {
+    const { applyIntegration } = await import("./integration/apply/apply.integration.test.js");
+    applyIntegration()
+  }
+})()
