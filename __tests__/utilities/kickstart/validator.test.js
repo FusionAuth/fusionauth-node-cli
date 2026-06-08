@@ -1,7 +1,7 @@
 import { describe, test } from "node:test"
 import assert from "node:assert"
 import mock from "mock-fs"
-import { KickstartValidator } from "../../dist/utilities/kickstart/validator.js"
+import { KickstartValidator } from "../../../dist/utilities/kickstart/validator.js"
 
 export function validator() {
   describe('KickstartValidator', () => {

@@ -2,7 +2,7 @@ import { describe, test, afterEach } from "node:test"
 import assert from "node:assert"
 import nock from "nock"
 import mock from 'mock-fs'
-import { VariableSubstitutor } from "../../dist/utilities/kickstart/variable-substitution.js"
+import { VariableSubstitutor } from "../../../dist/utilities/kickstart/variable-substitution.js"
 
 export function variableSubstitution() {
   

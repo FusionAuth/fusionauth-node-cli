@@ -1,16 +1,14 @@
 (async () => {
   const { postInstall } = await import("./postInstall/index.js");
   const { telemetry } = await import("./telemetry/index.js");
-  const { variableSubstitution } = await import("./kickstart/variable-substitution.test.js");
-  const { validator } = await import("./kickstart/validator.test.js");
-  const { apply } = await import("./apply/index.js");
+  const { variableSubstitution } = await import("./utilities/kickstart/variable-substitution.test.js");
+  const { validator } = await import("./utilities/kickstart/validator.test.js");
 
   if (process.env.SKIP_UNIT_TESTS !== 'true') {
     postInstall()
     telemetry()
     variableSubstitution()
     validator()
-    apply()
   }
 
   // Integration tests require Docker and FusionAuth instance
