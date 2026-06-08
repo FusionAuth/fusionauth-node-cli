@@ -59,7 +59,6 @@ export function applyIntegration() {
   const pocExecuteActionOptionsStatic = {
     file: '__tests__/integration/fixtures/kickstarts/poc/kickstart.json',
     quiet: true,
-    logFile: 'kickstart-results-log.json',
     continueOnError: false
   }
 
