@@ -4,7 +4,7 @@ import { execSync, spawn } from 'node:child_process'
 
 /**
  * Container management for integration tests
- * Handles docker-compose lifecycle and FusionAuth readiness checks
+ * Handles docker compose lifecycle and FusionAuth readiness checks
  */
 
 const FUSIONAUTH_URL = 'http://localhost:9011'
@@ -16,7 +16,7 @@ const REQUEST_TIMEOUT = 10000 // 10 seconds
 let isContainerRunning = false
 
 /**
- * Start FusionAuth via docker-compose
+ * Start FusionAuth via docker compose
  * @returns {Promise<{url: string, apiKey: string}>}
  */
 export async function startFusionAuthContainer() {
@@ -25,7 +25,7 @@ export async function startFusionAuthContainer() {
     return { url: FUSIONAUTH_URL, apiKey: DEFAULT_API_KEY }
   }
 
-  console.log('↻ Starting FusionAuth container via docker-compose...')
+  console.log('↻ Starting FusionAuth container via docker compose...')
 
   const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
   const envFile = path.join(composeDir, '.env.test')
@@ -50,7 +50,7 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
   try {
     // Check for and tear down any existing containers first
     try {
-      const psOutput = execSync(`cd ${composeDir} && docker-compose ps -q`, { stdio: 'pipe' }).toString().trim()
+      const psOutput = execSync(`cd ${composeDir} && docker compose ps -q`, { stdio: 'pipe' }).toString().trim()
       if (psOutput) {
         console.log('⚠ Found existing FusionAuth containers, tearing them down...')
         execSync(`cd ${composeDir} && docker-compose down -v`, { stdio: 'pipe' })
@@ -61,7 +61,7 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
     }
 
     // Start containers
-    execSync(`cd ${composeDir} && docker-compose --env-file .env.test up -d`, { stdio: 'pipe' })
+    execSync(`cd ${composeDir} && docker compose --env-file .env.test up -d`, { stdio: 'pipe' })
 
     // Wait for FusionAuth to be healthy
     await waitForFusionAuthReady()
@@ -95,7 +95,7 @@ export async function stopFusionAuthContainer() {
   const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
 
   try {
-    execSync(`cd ${composeDir} && docker-compose down -v`, { stdio: 'pipe' })
+    execSync(`cd ${composeDir} && docker compose down -v`, { stdio: 'pipe' })
     isContainerRunning = false
     console.log('✓ FusionAuth container stopped')
   } catch (err) {
