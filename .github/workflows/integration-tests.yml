@@ -26,8 +26,8 @@ jobs:
       
       - name: Run integration tests
         env:
-          RUN_INTEGRATION_TESTS: false
-          SKIP_UNIT_TESTS: false
+          RUN_INTEGRATION_TESTS: true
+          SKIP_UNIT_TESTS: true
           SKIP_TEARDOWN: false
           REUSE_CONTAINER: false
           NODE_ENV: test
