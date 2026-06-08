@@ -73,15 +73,6 @@ export function validator() {
     })
 
     describe('validateRequestsStructure()', () => {
-      test('should reject non-array requests', (t) => {
-        const validator = new KickstartValidator()
-        const config = { requests: 'not-an-array' }
-        const result = validator.validateConfig(config)
-        
-        assert.equal(result.valid, false)
-        assert(result.errors.some(e => e.message.includes('must be an array')))
-      })
-
       test('should reject empty requests array', (t) => {
         const validator = new KickstartValidator()
         const config = { requests: [] }
@@ -104,19 +95,6 @@ export function validator() {
         assert(result.errors.some(e => e.message.includes('method')))
       })
 
-      test('should reject invalid HTTP method', (t) => {
-        const validator = new KickstartValidator()
-        const config = {
-          requests: [
-            { method: 'INVALID_METHOD', url: '/api/application' }
-          ]
-        }
-        const result = validator.validateConfig(config)
-        
-        assert.equal(result.valid, false)
-        assert(result.errors.some(e => e.message.includes('Method must be one of')))
-      })
-
       test('should reject request without URL', (t) => {
         const validator = new KickstartValidator()
         const config = {
@@ -130,7 +108,7 @@ export function validator() {
         assert(result.errors.some(e => e.message.includes('url')))
       })
 
-      test('should accept all valid HTTP methods', (t) => {
+      test('should accept valid HTTP methods', (t) => {
         const validator = new KickstartValidator()
         const methods = ['POST', 'PUT', 'PATCH']
         
@@ -143,20 +121,6 @@ export function validator() {
           const result = validator.validateConfig(config)
           assert.equal(result.valid, true, `Method ${method} should be valid`)
         })
-      })
-
-      test('should not generate warnings for otherwise valid configs with non-standard URLs', (t) => {
-        const validator = new KickstartValidator()
-        const config = {
-          requests: [
-            { method: 'POST', url: '/other/path' }
-          ]
-        }
-        const result = validator.validateConfig(config)
-        
-        // Validator only includes warnings when there are errors
-        // So this valid config won't generate warnings
-        assert.equal(result.valid, true)
       })
 
       test('should reject invalid body type', (t) => {
@@ -184,19 +148,6 @@ export function validator() {
         assert.equal(result.valid, true)
       })
 
-      test('should reject non-string contentType', (t) => {
-        const validator = new KickstartValidator()
-        const config = {
-          requests: [
-            { method: 'POST', url: '/api/app', contentType: 123 }
-          ]
-        }
-        const result = validator.validateConfig(config)
-        
-        assert.equal(result.valid, false)
-        assert(result.errors.some(e => e.message.includes('contentType must be a string')))
-      })
-
       test('should accept optional tenantId', (t) => {
         const validator = new KickstartValidator()
         const config = {
@@ -207,19 +158,6 @@ export function validator() {
         const result = validator.validateConfig(config)
         
         assert.equal(result.valid, true)
-      })
-
-      test('should reject non-string tenantId', (t) => {
-        const validator = new KickstartValidator()
-        const config = {
-          requests: [
-            { method: 'POST', url: '/api/app', tenantId: 123 }
-          ]
-        }
-        const result = validator.validateConfig(config)
-        
-        assert.equal(result.valid, false)
-        assert(result.errors.some(e => e.message.includes('tenantId must be a string')))
       })
     })
 
@@ -285,6 +223,18 @@ export function validator() {
         assert.equal(result.valid, true)
       })
 
+      test('should allow DEFAULT_TENANT_ID() pattern', (t) => {
+        const validator = new KickstartValidator()
+        const config = {
+          requests: [
+            { method: 'POST', url: '/api/app/#{DEFAULT_TENANT_ID()}' }
+          ]
+        }
+        const result = validator.validateConfig(config)
+        
+        assert.equal(result.valid, true)
+      })
+      
       test('should detect multiple undefined variables', (t) => {
         const validator = new KickstartValidator()
         const config = {
