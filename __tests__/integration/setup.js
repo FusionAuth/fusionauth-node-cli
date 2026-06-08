@@ -215,27 +215,6 @@ export async function makeApiRequest(method, path, data = null, apiKey = DEFAULT
 }
 
 /**
- * Get application by ID from FusionAuth
- * @param {string} appId - Application ID
- * @param {string} apiKey - API key
- * @returns {Promise<object>}
- */
-export async function getApplication(appId, apiKey = DEFAULT_API_KEY) {
-  const data = await makeApiRequest('GET', `/api/application/${appId}`, null, apiKey)
-  return data.application
-}
-
-/**
- * Get all applications from FusionAuth
- * @param {string} apiKey - API key
- * @returns {Promise<array>}
- */
-export async function getAllApplications(apiKey = DEFAULT_API_KEY) {
-  const data = await makeApiRequest('GET', '/api/application', null, apiKey)
-  return data.applications || []
-}
-
-/**
  * Get user by email from FusionAuth
  * @param {string} email - User email address
  * @param {string} apiKey - API key
@@ -264,15 +243,4 @@ export async function getTenant(tenantId, apiKey = DEFAULT_API_KEY) {
  */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-/**
- * Load kickstart fixture from file
- * @param {string} filename - Fixture filename (e.g., 'simple-app.json')
- * @returns {object}
- */
-export function loadFixture(filename) {
-  const fixturePath = new URL(`./fixtures/kickstarts/${filename}`, import.meta.url).pathname
-  const content = fs.readFileSync(fixturePath, 'utf-8')
-  return JSON.parse(content)
 }
