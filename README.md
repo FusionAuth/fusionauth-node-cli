@@ -38,6 +38,12 @@ Fake user generation
   - `fusionauth kickstart:start` - Run in the directory of a FusionAuth Docker image to run the image
   - `fusionauth kickstart:stop` - Run in the directory of a FusionAuth Docker image to stop the image
   - `fusionauth kickstart:kill` - Run in the directory of a FusionAuth Docker image to shutdown and wipe the FusionAuth instance
+- Apply Configuration
+  - `fusionauth apply <file>` - Apply a kickstart configuration file to a FusionAuth instance. Supports additional variable substitution with the following patterns:
+    - `#{DEFAULT_TENANT_ID()}` - Fetch the default tenant ID from the FusionAuth instance
+    - `#{ENV.VARIABLE_NAME}` - Access environment variables
+    - `#{PROMPT:message}` - Prompt user for input (displays value in console)
+    - `#{PROMPT_HIDDEN:message}` - Prompt user for input (hides value, suitable for passwords)
 - Lambdas
   - `fusionauth lambda:update` - Update a lambda on a FusionAuth server.
   - `fusionauth lambda:delete` - Delete a lambda from a FusionAuth server.
