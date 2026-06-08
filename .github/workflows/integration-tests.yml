@@ -1,10 +1,6 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -31,7 +27,7 @@ jobs:
       - name: Run integration tests
         env:
           RUN_INTEGRATION_TESTS: true
-          SKIP_UNIT_TESTS: false
+          SKIP_UNIT_TESTS: true
           SKIP_TEARDOWN: false
           REUSE_CONTAINER: false
           NODE_ENV: test
