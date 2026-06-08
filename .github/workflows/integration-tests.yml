@@ -1,0 +1,36 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Run integration tests
+        env:
+          RUN_INTEGRATION_TESTS: true
+          SKIP_UNIT_TESTS: false
+          SKIP_TEARDOWN: false
+          REUSE_CONTAINER: false
+          NODE_ENV: test
+          FUSIONAUTH_TELEMETRY: false
+        run: node ./__tests__/test.js
+        timeout-minutes: 15
