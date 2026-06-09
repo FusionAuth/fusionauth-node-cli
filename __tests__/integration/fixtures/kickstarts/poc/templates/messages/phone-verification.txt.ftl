@@ -1,0 +1,1 @@
+Verify your phone: ${verificationUrl}

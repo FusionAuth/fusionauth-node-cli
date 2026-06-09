@@ -5,7 +5,9 @@ import {
   startFusionAuthContainer, 
   stopFusionAuthContainer,
   getUser,
-  getTenant
+  getTenant,
+  getEmailTemplateByName,
+  getMessageTemplateByName
 } from "../setup.js"
 import { executeAction } from "../../../dist/commands/apply.js"
 
@@ -88,7 +90,7 @@ export function applyIntegration() {
   })
 
   describe('Apply Command Integration Tests', () => {
-    test('should properly configure SMTP server and create admin user from poc/kickstart.json test file.', async (t) => {
+    test('should properly process poc/kickstart.json test file.', async (t) => {
       // Merge static and dynamic options
       const pocExecuteActionOptions = {
         ...pocExecuteActionOptionsStatic,
@@ -122,6 +124,32 @@ export function applyIntegration() {
       const adminRegistration = retrievedUser.registrations.find(r => r.applicationId === appId)
       assert(adminRegistration, 'Admin user should be registered to the created application')
       assert(adminRegistration.roles && adminRegistration.roles.includes('admin'), 'Admin user should have admin role for the application')
+
+      // Verify email templates were created
+      const setupPasswordTemplate = await getEmailTemplateByName('Set up Password', apiKey)
+      assert(setupPasswordTemplate, 'Set up Password email template should exist')
+      assert(setupPasswordTemplate.defaultHtmlTemplate, 'Set up Password template should have HTML content')
+      assert(setupPasswordTemplate.defaultTextTemplate, 'Set up Password template should have text content')
+
+      const twoFactorTemplate = await getEmailTemplateByName('Two Factor Authentication', apiKey)
+      assert(twoFactorTemplate, 'Two Factor Authentication email template should exist')
+      assert(twoFactorTemplate.defaultHtmlTemplate, 'Two Factor Authentication template should have HTML content')
+      assert(twoFactorTemplate.defaultTextTemplate, 'Two Factor Authentication template should have text content')
+
+      // Verify message template was created
+      const voiceTwoFactorTemplate = await getMessageTemplateByName('Default Voice Two Factor Request', apiKey)
+      assert(voiceTwoFactorTemplate, 'Default Voice Two Factor Request message template should exist')
+      assert.equal(voiceTwoFactorTemplate.type, 'Voice', 'Voice template should have type Voice')
+      assert(voiceTwoFactorTemplate.defaultTemplate, 'Voice Two Factor Request template should have default content')
+
+      // Verify forgot password templates are configured in tenant
+      assert(tenant.emailConfiguration, 'Tenant should have email configuration')
+      assert(tenant.emailConfiguration.forgotPasswordEmailTemplateId, 'Tenant should have forgot password email template configured')
+      assert(tenant.emailConfiguration.verificationEmailTemplateId, 'Tenant should have verification email template configured')
+      
+      assert(tenant.phoneConfiguration, 'Tenant should have Phone configuration')
+      assert(tenant.phoneConfiguration.verificationTemplateId, 'Tenant should have forgot password Phone template configured')
+
     })
   })
 }

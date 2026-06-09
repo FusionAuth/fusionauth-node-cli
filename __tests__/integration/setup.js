@@ -237,6 +237,30 @@ export async function getTenant(tenantId, apiKey = DEFAULT_API_KEY) {
 }
 
 /**
+ * Get email template by name from FusionAuth
+ * @param {string} name - Template name
+ * @param {string} apiKey - API key
+ * @returns {Promise<object>}
+ */
+export async function getEmailTemplateByName(name, apiKey = DEFAULT_API_KEY) {
+  const data = await makeApiRequest('GET', '/api/email/template', null, apiKey)
+  const templates = data.emailTemplates || []
+  return templates.find(t => t.name === name)
+}
+
+/**
+ * Get message template by name from FusionAuth
+ * @param {string} name - Template name
+ * @param {string} apiKey - API key
+ * @returns {Promise<object>}
+ */
+export async function getMessageTemplateByName(name, apiKey = DEFAULT_API_KEY) {
+  const data = await makeApiRequest('GET', '/api/message/template', null, apiKey)
+  const templates = data.messageTemplates || []
+  return templates.find(t => t.name === name)
+}
+
+/**
  * Sleep for specified milliseconds
  * @param {number} ms - Milliseconds to sleep
  * @returns {Promise<void>}
