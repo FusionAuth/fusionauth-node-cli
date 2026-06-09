@@ -53,8 +53,9 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
       const psOutput = execSync(`cd ${composeDir} && docker compose ps -q`, { stdio: 'pipe' }).toString().trim()
       if (psOutput) {
         console.log('⚠ Found existing FusionAuth containers, tearing them down...')
-        execSync(`cd ${composeDir} && docker-compose down -v`, { stdio: 'pipe' })
+        execSync(`cd ${composeDir} && docker compose down -v`, { stdio: 'pipe' })
         console.log('✓ Existing containers removed')
+      }
       }
     } catch (e) {
       // Container may not exist, that's fine
