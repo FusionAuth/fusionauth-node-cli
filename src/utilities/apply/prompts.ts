@@ -29,9 +29,9 @@ async function promptHidden(prompt: string): Promise<string> {
     const onData = (char: Buffer) => {
       const code = char[0];
 
-      // Enter key (13) or line feed (10)
       if (code === 13 || code === 10) {
         stdin.removeListener('data', onData);
+        stdin.setRawMode(false);
         rl.close();
         stdout.write('\n');
         resolve(input.join(''));
