@@ -6,7 +6,7 @@ import { KickstartValidator } from "../../../src/utilities/kickstart/validator.j
 describe('KickstartValidator', () => {
 
     describe('validateConfig()', () => {
-      test('should reject non-object config', (t) => {
+      test('should reject non-object config', () => {
         const validator = new KickstartValidator()
         const result = validator.validateConfig(null)
         
@@ -15,7 +15,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.errors[0].category, 'schema_invalid')
       })
 
-      test('should reject config without requests', (t) => {
+      test('should reject config without requests', () => {
         const validator = new KickstartValidator()
         const config = { variables: { myVar: 'value' } }
         const result = validator.validateConfig(config)
@@ -24,7 +24,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.field === 'requests'))
       })
 
-      test('should accept minimal valid config', (t) => {
+      test('should accept minimal valid config', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -41,7 +41,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.errors.length, 0)
       })
 
-      test('should accept config with variables', (t) => {
+      test('should accept config with variables', () => {
         const validator = new KickstartValidator()
         const config = {
           variables: { appId: 'app-123', tenantId: 'tenant-456' },
@@ -58,7 +58,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.valid, true)
       })
 
-      test('should reject invalid variables structure', (t) => {
+      test('should reject invalid variables structure', () => {
         const validator = new KickstartValidator()
         const config = {
           variables: 'not-an-object',
@@ -72,7 +72,7 @@ describe('KickstartValidator', () => {
     })
 
     describe('validateRequestsStructure()', () => {
-      test('should reject empty requests array', (t) => {
+      test('should reject empty requests array', () => {
         const validator = new KickstartValidator()
         const config = { requests: [] }
         const result = validator.validateConfig(config)
@@ -81,7 +81,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.message.includes('cannot be empty')))
       })
 
-      test('should reject request without method', (t) => {
+      test('should reject request without method', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -94,7 +94,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.message.includes('method')))
       })
 
-      test('should reject request without URL', (t) => {
+      test('should reject request without URL', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -107,7 +107,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.message.includes('url')))
       })
 
-      test('should accept valid HTTP methods', (t) => {
+      test('should accept valid HTTP methods', () => {
         const validator = new KickstartValidator()
         const methods = ['POST', 'PUT', 'PATCH']
         
@@ -122,7 +122,7 @@ describe('KickstartValidator', () => {
         })
       })
 
-      test('should reject invalid body type', (t) => {
+      test('should reject invalid body type', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -135,7 +135,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.message.includes('Body must be an object')))
       })
 
-      test('should accept optional contentType', (t) => {
+      test('should accept optional contentType', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -147,7 +147,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.valid, true)
       })
 
-      test('should accept optional tenantId', (t) => {
+      test('should accept optional tenantId', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -161,7 +161,7 @@ describe('KickstartValidator', () => {
     })
 
     describe('validateVariableReferences()', () => {
-      test('should detect undefined variables in body', (t) => {
+      test('should detect undefined variables in body', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -178,7 +178,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.message.includes('missingName')))
       })
 
-      test('should allow defined variables', (t) => {
+      test('should allow defined variables', () => {
         const validator = new KickstartValidator()
         const config = {
           variables: { appId: 'app-123' },
@@ -191,7 +191,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.valid, true)
       })
 
-      test('should allow default variables', (t) => {
+      test('should allow default variables', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -210,7 +210,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.valid, true)
       })
 
-      test('should allow UUID() pattern', (t) => {
+      test('should allow UUID() pattern', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -222,7 +222,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.valid, true)
       })
 
-      test('should allow DEFAULT_TENANT_ID() pattern', (t) => {
+      test('should allow DEFAULT_TENANT_ID() pattern', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -234,7 +234,7 @@ describe('KickstartValidator', () => {
         assert.equal(result.valid, true)
       })
       
-      test('should detect multiple undefined variables', (t) => {
+      test('should detect multiple undefined variables', () => {
         const validator = new KickstartValidator()
         const config = {
           requests: [
@@ -254,7 +254,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.filter(e => e.category === 'variable_not_defined').length >= 2)
       })
 
-      test('should extract variables from nested objects', (t) => {
+      test('should extract variables from nested objects', () => {
         const validator = new KickstartValidator()
         const config = {
           variables: { userId: 'user-123' },
@@ -279,7 +279,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.message.includes('undefinedVar')))
       })
 
-      test('should extract variables from arrays in body', (t) => {
+      test('should extract variables from arrays in body', () => {
         const validator = new KickstartValidator()
         const config = {
           variables: { id1: 'val1' },
@@ -304,7 +304,7 @@ describe('KickstartValidator', () => {
     })
 
     describe('validateFileExists()', () => {
-      test('should report error for missing file', (t) => {
+      test('should report error for missing file', () => {
         const validator = new KickstartValidator()
         const result = validator.validateFileExists('/nonexistent/file.json')
         
@@ -312,7 +312,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.category === 'file_not_found'))
       })
 
-      test('should accept existing file', (t) => {
+      test('should accept existing file', () => {
         mock({
           '/test/kickstart.json': '{"requests": []}'
         })
@@ -327,7 +327,7 @@ describe('KickstartValidator', () => {
         }
       })
 
-      test('should report error if path is directory', (t) => {
+      test('should report error if path is directory', () => {
         mock({
           '/test/': {}
         })
@@ -344,7 +344,7 @@ describe('KickstartValidator', () => {
     })
 
     describe('loadAndValidateJSON()', () => {
-      test('should return error if file not found', (t) => {
+      test('should return error if file not found', () => {
         const validator = new KickstartValidator()
         const result = validator.loadAndValidateJSON('/nonexistent.json')
         
@@ -352,7 +352,7 @@ describe('KickstartValidator', () => {
         assert(result.errors.some(e => e.category === 'file_not_found'))
       })
 
-      test('should return error if JSON is invalid', (t) => {
+      test('should return error if JSON is invalid', () => {
         mock({
           '/test/bad.json': '{ invalid json }'
         })
@@ -367,7 +367,7 @@ describe('KickstartValidator', () => {
         }
       })
 
-      test('should load and parse valid JSON', (t) => {
+      test('should load and parse valid JSON', () => {
         const config = {
           requests: [
             { method: 'POST', url: '/api/app' }
@@ -388,7 +388,7 @@ describe('KickstartValidator', () => {
         }
       })
 
-      test('should include line numbers in result', (t) => {
+      test('should include line numbers in result', () => {
         const config = {
           requests: [
             { method: 'POST', url: '/api/app1' },

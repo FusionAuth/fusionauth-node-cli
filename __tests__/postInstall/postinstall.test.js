@@ -7,7 +7,7 @@ import mock from 'mock-fs'
 import fs, { readdirSync, readFileSync } from 'node:fs'
 
 describe('postInstall runs properly', () => {
-    test('No config creates dir', (t) => {
+    test('No config creates dir', () => {
       mock({
         'dist': {},
       })
@@ -18,7 +18,7 @@ describe('postInstall runs properly', () => {
         mock.restore()
       }
     })
-    test('No dist directory, still create the directory and file', (t) => {
+    test('No dist directory, still create the directory and file', () => {
       mock({
         "./": {}
       })
@@ -29,7 +29,7 @@ describe('postInstall runs properly', () => {
         mock.restore()
       }
     })
-    test('No config creates full config file with expected types', (t) => {
+    test('No config creates full config file with expected types', () => {
       mock({
         'dist': {},
       })
@@ -43,7 +43,7 @@ describe('postInstall runs properly', () => {
       }
     })
 
-    test('Complete config returns false', (t) => {
+    test('Complete config returns false', () => {
       mock({
         dist: {
           '.fa': {
@@ -57,7 +57,7 @@ describe('postInstall runs properly', () => {
         mock.restore()
       }
     })
-    test('No ID in config, but telemetry false', (t) => {
+    test('No ID in config, but telemetry false', () => {
       mock({
         dist: {
           '.fa': {
@@ -74,7 +74,7 @@ describe('postInstall runs properly', () => {
         mock.restore()
       }
     })
-    test('No telemetry in config, but ID', (t) => {
+    test('No telemetry in config, but ID', () => {
       mock({
         dist: {
           '.fa': {

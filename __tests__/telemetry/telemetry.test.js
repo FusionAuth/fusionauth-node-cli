@@ -21,7 +21,7 @@ const mockedFalseConfig = {
 }
 
 describe('telemetry runs properly', () => {
-    test("Creates config if no config exists", (t) => {
+    test("Creates config if no config exists", () => {
       mock({
         "src": {}
       })
@@ -43,7 +43,7 @@ describe('telemetry runs properly', () => {
         mock.restore()
       }
     })
-    test("Enable works", (t) => {
+    test("Enable works", () => {
       mock({
         "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
@@ -54,7 +54,7 @@ describe('telemetry runs properly', () => {
         mock.restore()
       }
     })
-    test("Disable works", (t) => {
+    test("Disable works", () => {
       mock({
         "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
@@ -65,7 +65,7 @@ describe('telemetry runs properly', () => {
         mock.restore()
       }
     })
-    test("Disable full command runs properly", (t) => {
+    test("Disable full command runs properly", () => {
       mock({
         "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
@@ -77,7 +77,7 @@ describe('telemetry runs properly', () => {
         mock.restore()
       }
     })
-    test("Enable full command runs properly", (t) => {
+    test("Enable full command runs properly", () => {
       mock({
         "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })

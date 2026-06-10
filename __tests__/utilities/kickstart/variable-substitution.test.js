@@ -10,7 +10,7 @@ describe('VariableSubstitutor', () => {
     })
 
     describe('initialize()', () => {
-      test('should fetch FUSIONAUTH_APPLICATION_ID', (t) => {
+      test('should fetch FUSIONAUTH_APPLICATION_ID', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
@@ -20,7 +20,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(resolved.get('FUSIONAUTH_APPLICATION_ID'), '3c219e58-ed0e-4b18-ad48-f4f92793ae32')
       })
 
-      test('should fetch FUSIONAUTH_TENANT_ID', (t) => {
+      test('should fetch FUSIONAUTH_TENANT_ID', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
@@ -30,7 +30,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(resolved.get('FUSIONAUTH_TENANT_ID'), '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1')
       })
 
-      test('should fetch TENANT_MANAGER_ID', (t) => {
+      test('should fetch TENANT_MANAGER_ID', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
@@ -42,7 +42,7 @@ describe('VariableSubstitutor', () => {
     })
 
     describe('resolveVariables()', () => {
-      test('should resolve UUID() pattern', (t) => {
+      test('should resolve UUID() pattern', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           myId: '#{UUID()}'
@@ -53,7 +53,7 @@ describe('VariableSubstitutor', () => {
         assert(id && typeof id === 'string' && id.length === 36, 'UUID not generated')
       })
 
-      test('should resolve DEFAULT_TENANT_ID() pattern from a FusionAuth instance', async (t) => {
+      test('should resolve DEFAULT_TENANT_ID() pattern from a FusionAuth instance', async () => {
         // Mock the FusionAuth API response
         nock('http://mocktestserver')
           .get('/api/application')
@@ -75,7 +75,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(resolved.get('DEFAULT_TENANT_ID'), '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1')
       })
     
-      test('should resolve ENV variables', (t) => {
+      test('should resolve ENV variables', () => {
         process.env.TEST_VAR = 'test-value'
         try {
           const substituter = new VariableSubstitutor()
@@ -90,7 +90,7 @@ describe('VariableSubstitutor', () => {
         }
       })
 
-      test('should handle missing ENV variables', (t) => {
+      test('should handle missing ENV variables', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           envVar: '#{ENV.NONEXISTENT_VAR_XYZ}'
@@ -102,7 +102,7 @@ describe('VariableSubstitutor', () => {
     })
 
     describe('substituteInString()', () => {
-      test('should substitute simple variables', (t) => {
+      test('should substitute simple variables', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           apiKey: 'secret-123'
@@ -115,7 +115,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(result.success, true)
       })
 
-      test('should substitute multiple variables in one string', (t) => {
+      test('should substitute multiple variables in one string', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           tenant: 'tenant-123',
@@ -131,7 +131,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(result.value, '/api/tenant/tenant-123/users')
       })
 
-      test('should handle unresolved variables', (t) => {
+      test('should handle unresolved variables', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
@@ -142,7 +142,7 @@ describe('VariableSubstitutor', () => {
         assert(result.errors.length > 0, 'No error reported for missing var')
       })
 
-      test('should handle numeric type hints', (t) => {
+      test('should handle numeric type hints', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           port: 9011
@@ -159,7 +159,7 @@ describe('VariableSubstitutor', () => {
     })
 
     describe('substituteRequest()', () => {
-      test('should substitute URL and body', (t) => {
+      test('should substitute URL and body', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           tenantId: 'tenant-123',
@@ -178,7 +178,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(result.request.body.tenant.admin, 'test@example.com')
       })
 
-      test('should handle JSON body substitution', (t) => {
+      test('should handle JSON body substitution', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({
           templateId: 'tpl-456'
@@ -201,7 +201,7 @@ describe('VariableSubstitutor', () => {
         assert.equal(result.request.body.template.name, 'Test Template')
       })
 
-      test('should report errors for unresolved variables in requests', (t) => {
+      test('should report errors for unresolved variables in requests', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
@@ -218,7 +218,7 @@ describe('VariableSubstitutor', () => {
     })
 
     describe('File inclusions (@{} and ${})', () => {
-      test('should report error for missing included file', (t) => {
+      test('should report error for missing included file', () => {
         const substituter = new VariableSubstitutor()
         substituter.initialize({}, '/test/kickstart.json')
         
