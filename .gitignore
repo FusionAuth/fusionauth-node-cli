@@ -202,6 +202,9 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Integration test generated files
+__tests__/integration/fixtures/kickstarts/fusionauth-integration-test-base/.env.test
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged
