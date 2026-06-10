@@ -9,7 +9,7 @@ import {
   getEmailTemplateByName,
   getMessageTemplateByName
 } from "../setup.js"
-import { executeAction } from "../../../dist/commands/apply.js"
+import { executeAction } from "../../../src/commands/apply.js"
 
 /**
  * Display kickstart execution errors and warnings to console

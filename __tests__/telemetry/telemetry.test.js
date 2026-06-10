@@ -2,11 +2,11 @@ import test, { describe, before, after } from "node:test"
 import assert from "node:assert"
 import fs, { readFileSync } from "node:fs"
 import mock from "mock-fs"
-import { telemetryUpdate } from "../../dist/commands/telemetry/telemetry-utils.js"
-import { telemetryDisable } from "../../dist/commands/telemetry/telemetry-disable.js"
-import { telemetryEnable } from "../../dist/commands/telemetry/telemetry-enable.js"
+import { telemetryUpdate } from "../../src/commands/telemetry/telemetry-utils.js"
+import { telemetryDisable } from "../../src/commands/telemetry/telemetry-disable.js"
+import { telemetryEnable } from "../../src/commands/telemetry/telemetry-enable.js"
 import path from "node:path"
-import { logEvent } from "../../dist/utils.js"
+import { logEvent } from "../../src/utils.js"
 import nock from 'nock'
 
 const mockedTrueConfig = {
@@ -23,18 +23,18 @@ const mockedFalseConfig = {
 describe('telemetry runs properly', () => {
     test("Creates config if no config exists", (t) => {
       mock({
-        "dist": {}
+        "src": {}
       })
       try {
         const updatedConfig = telemetryUpdate(true)
-        assert(fs.existsSync('dist/.fa/config.json'), "File wasn't created")
+        assert(fs.existsSync('src/.fa/config.json'), "File wasn't created")
       } finally {
         mock.restore()
       }
     })
     test("Only changes telemetry value", () => {
       mock({
-        "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
+        "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
       try {
         const updatedConfig = telemetryUpdate(true)
@@ -45,7 +45,7 @@ describe('telemetry runs properly', () => {
     })
     test("Enable works", (t) => {
       mock({
-        "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
+        "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
       try {
         const actualConfig = telemetryUpdate(true)
@@ -56,7 +56,7 @@ describe('telemetry runs properly', () => {
     })
     test("Disable works", (t) => {
       mock({
-        "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
+        "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
       try {
         const actualConfig = telemetryUpdate(true)
@@ -67,11 +67,11 @@ describe('telemetry runs properly', () => {
     })
     test("Disable full command runs properly", (t) => {
       mock({
-        "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
+        "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
       try {
         telemetryDisable.parse()
-        const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
+        const actualConfig = JSON.parse(fs.readFileSync('src/.fa/config.json').toString())
         assert.equal(actualConfig.telemetry, false)
       } finally {
         mock.restore()
@@ -79,11 +79,11 @@ describe('telemetry runs properly', () => {
     })
     test("Enable full command runs properly", (t) => {
       mock({
-        "dist/.fa/config.json": JSON.stringify(mockedFalseConfig)
+        "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })
       try {
         telemetryEnable.parse()
-        const actualConfig = JSON.parse(fs.readFileSync('dist/.fa/config.json').toString())
+        const actualConfig = JSON.parse(fs.readFileSync('src/.fa/config.json').toString())
         assert.equal(actualConfig.telemetry, true)
       } finally {
         mock.restore()

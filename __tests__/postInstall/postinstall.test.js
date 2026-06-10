@@ -1,7 +1,7 @@
 import { describe, test } from "node:test"
 import assert from "node:assert"
 
-import { createConfig } from '../../dist/utils.js'
+import { createConfig } from '../../src/utils.js'
 
 import mock from 'mock-fs'
 import fs, { readdirSync, readFileSync } from 'node:fs'
