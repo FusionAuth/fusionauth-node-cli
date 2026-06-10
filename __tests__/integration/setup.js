@@ -1,6 +1,9 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { execSync, spawn } from 'node:child_process'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const execAsync = promisify(exec)
 
 /**
  * Container management for integration tests
@@ -50,10 +53,10 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
   try {
     // Check for and tear down any existing containers first
     try {
-      const psOutput = execSync(`cd ${composeDir} && docker compose ps -q`, { stdio: 'pipe' }).toString().trim()
-      if (psOutput) {
+      const { stdout: psOutput } = await execAsync(`cd ${composeDir} && docker compose ps -q`)
+      if (psOutput.trim()) {
         console.log('⚠ Found existing FusionAuth containers, tearing them down...')
-        execSync(`cd ${composeDir} && docker compose down -v`, { stdio: 'pipe' })
+        await execAsync(`cd ${composeDir} && docker compose down -v`)
         console.log('✓ Existing containers removed')
       }
     } catch (e) {
@@ -61,7 +64,7 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
     }
 
     // Start containers
-    execSync(`cd ${composeDir} && docker compose --env-file .env.test up -d`, { stdio: 'pipe' })
+    await execAsync(`cd ${composeDir} && docker compose --env-file .env.test up -d`)
 
     // Wait for FusionAuth to be healthy
     await waitForFusionAuthReady()
@@ -95,7 +98,7 @@ export async function stopFusionAuthContainer() {
   const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
 
   try {
-    execSync(`cd ${composeDir} && docker compose down -v`, { stdio: 'pipe' })
+    await execAsync(`cd ${composeDir} && docker compose down -v`)
     isContainerRunning = false
     console.log('✓ FusionAuth container stopped')
   } catch (err) {
