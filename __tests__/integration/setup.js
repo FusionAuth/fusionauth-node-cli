@@ -56,7 +56,6 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
         execSync(`cd ${composeDir} && docker compose down -v`, { stdio: 'pipe' })
         console.log('✓ Existing containers removed')
       }
-      }
     } catch (e) {
       // Container may not exist, that's fine
     }
