@@ -353,16 +353,19 @@ export class StepExecutor {
     // Try to extract error message from response body
     if (typeof response.body === 'object' && response.body !== null) {
       const body = response.body as Record<string, unknown>;
-      if (body.generalErrors && Array.isArray(body.generalErrors)) {
-        const errors = body.generalErrors as string[];
-        if (errors.length > 0) {
-          message = errors[0];
-        }
-      } else if (body.fieldErrors && typeof body.fieldErrors === 'object') {
-        const fieldErrors = body.fieldErrors as Record<string, string[]>;
+      if (Array.isArray(body.generalErrors) && body.generalErrors.length > 0) {
+         const first = body.generalErrors[0] as unknown;
+         message =
+           typeof first === 'string'
+             ? first
+             : String((first as Record<string, unknown>)?.message ?? first);
+      } else if (body.fieldErrors && typeof body.fieldErrors === 'object' && body.fieldErrors !== null) {
+        const fieldErrors = body.fieldErrors as Record<string, unknown>;
         const firstField = Object.keys(fieldErrors)[0];
-        if (firstField && fieldErrors[firstField]) {
-          message = `${firstField}: ${fieldErrors[firstField][0]}`;
+        const errs = firstField ? (fieldErrors[firstField] as unknown) : undefined;
+         const firstErr = Array.isArray(errs) ? errs[0] : undefined;
+         if (firstField) {
+           message = `${firstField}: ${typeof firstErr === 'string' ? firstErr : String((firstErr as Record<string, unknown>)?.message ?? firstErr)}`;
         }
       } else if (body.message && typeof body.message === 'string') {
         message = body.message;
