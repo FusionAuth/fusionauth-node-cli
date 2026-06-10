@@ -13,7 +13,9 @@
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
     "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test": "node --test"
+    "test": "NODE_ENV=test node --test __tests__/postInstall/index.js __tests__/telemetry/index.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/integration/apply/apply.integration.test.js",
+    "test:integration": "NODE_ENV=test node --test __tests__/integration/apply/apply.integration.test.js",
+    "test:unit": "NODE_ENV=test node --test __tests__/postInstall/index.js __tests__/telemetry/index.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js"
   },
   "keywords": [
     "fusionauth",

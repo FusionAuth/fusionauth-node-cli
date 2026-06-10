@@ -8,29 +8,29 @@ This directory contains integration tests that verify the `apply` command works 
 - Node.js 18+
 - Port 9011 must be available (FusionAuth default port)
 
-## Running Integration Tests
+## Running Tests
+
+### Run All Tests (unit + integration)
+
+```bash
+npm test
+```
+
+### Run Unit Tests Only (excludes integration)
+
+```bash
+npm run test:unit
+```
+
+### Run Integration Tests Only
 
 ```bash
 npm run test:integration
 ```
 
-### Run Only Unit Tests (excludes integration)
-
-```bash
-RUN_INTEGRATION_TESTS=false SKIP_UNIT_TESTS=false NODE_ENV=test npm test
-```
-
-### Run Only Integration Tests
-
-```bash
-RUN_INTEGRATION_TESTS=true SKIP_UNIT_TESTS=true NODE_ENV=test node __tests__/test.js
-```
-
 ### Environment Variables
 
 - `NODE_ENV=test` — Required for test mode (prevents `process.exit()` calls in executeAction)
-- `RUN_INTEGRATION_TESTS=true` — Enable integration tests
-- `SKIP_UNIT_TESTS=true|false` — Control whether unit tests run
 - `SKIP_TEARDOWN=true` — Keep FusionAuth container running after tests (useful for debugging)
 - `REUSE_CONTAINER=true` — Reuse existing FusionAuth container instead of creating new one
 - `FUSIONAUTH_TELEMETRY=false` — Disable telemetry in tests
@@ -120,7 +120,7 @@ FusionAuth container can take 30-60 seconds to start. Increase the `HEALTH_CHECK
 
 Always set `NODE_ENV=test` when running tests. This prevents `executeAction()` from calling `process.exit()`:
 ```bash
-NODE_ENV=test RUN_INTEGRATION_TESTS=true npm test
+npm run test:integration
 ```
 
 ### API requests fail with 401 or authentication errors
