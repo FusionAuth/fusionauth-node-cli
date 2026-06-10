@@ -1,5 +1,5 @@
 import { describe, test, afterEach } from "node:test"
-import assert from "node:assert"
+import assert from "node:assert/strict"
 import nock from "nock"
 import mock from 'mock-fs'
 import { VariableSubstitutor } from "../../../src/utilities/kickstart/variable-substitution.js"

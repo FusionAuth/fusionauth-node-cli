@@ -1,5 +1,5 @@
 import { describe, test } from "node:test"
-import assert from "node:assert"
+import assert from "node:assert/strict"
 import fs, { readFileSync } from "node:fs"
 import mock from "mock-fs"
 import { telemetryUpdate } from "../../src/commands/telemetry/telemetry-utils.js"

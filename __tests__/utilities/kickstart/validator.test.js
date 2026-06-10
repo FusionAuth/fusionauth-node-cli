@@ -1,5 +1,5 @@
 import { describe, test } from "node:test"
-import assert from "node:assert"
+import assert from "node:assert/strict"
 import mock from "mock-fs"
 import { KickstartValidator } from "../../../src/utilities/kickstart/validator.js"
 
