@@ -3,6 +3,12 @@ import * as path from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 
+/**
+ * Async version of exec used in place of execSync to avoid blocking the
+ * Node.js event loop during docker compose operations. Blocking the event
+ * loop (e.g. while images are pulled) causes the test runner to cancel
+ * pending tests with ERR_TEST_FAILURE.
+ */
 const execAsync = promisify(exec)
 
 /**
