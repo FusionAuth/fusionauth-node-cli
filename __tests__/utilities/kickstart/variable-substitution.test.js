@@ -77,14 +77,17 @@ describe('VariableSubstitutor', () => {
     
       test('should resolve ENV variables', (t) => {
         process.env.TEST_VAR = 'test-value'
-        const substituter = new VariableSubstitutor()
-        substituter.initialize({
-          envVar: '#{ENV.TEST_VAR}'
-        }, '/test/kickstart.json')
-        
-        const resolved = substituter.resolveVariables({})
-        assert.equal(resolved.get('envVar'), 'test-value')
-        delete process.env.TEST_VAR
+        try {
+          const substituter = new VariableSubstitutor()
+          substituter.initialize({
+            envVar: '#{ENV.TEST_VAR}'
+          }, '/test/kickstart.json')
+          
+          const resolved = substituter.resolveVariables({})
+          assert.equal(resolved.get('envVar'), 'test-value')
+        } finally {
+          delete process.env.TEST_VAR
+        }
       })
 
       test('should handle missing ENV variables', (t) => {
