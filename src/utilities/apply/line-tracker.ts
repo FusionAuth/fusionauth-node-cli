@@ -28,55 +28,78 @@ export class LineTracker {
     const lines = content.split('\n');
     const lineMap: LineNumberMap = {};
 
-    // Find the "requests" property and track array element positions
-    let inRequestsArray = false;
-    let arrayDepth = 0;
+    type State = 'seekingProperty' | 'seekingArrayOpen' | 'inArray';
+    let state: State = 'seekingProperty';
+    let bracketDepth = 0; // tracks [ ] — array container boundary
+    let objectDepth = 0;  // tracks { } — element boundaries
     let elementIndex = 0;
     let elementStartLine = 0;
+    let inString = false;
+    let escapeNext = false;
+
+    // Process one character within the array; returns false when the array closes
+    const processChar = (char: string, lineNumber: number): boolean => {
+      if (escapeNext) { escapeNext = false; return true; }
+      if (char === '\\' && inString) { escapeNext = true; return true; }
+      if (char === '"') { inString = !inString; return true; }
+      if (inString) return true;
+
+      if (char === '[') {
+        bracketDepth++;
+      } else if (char === ']') {
+        bracketDepth--;
+        if (bracketDepth === 0) return false; // closing ] of the target array
+      } else if (char === '{') {
+        if (objectDepth === 0) elementStartLine = lineNumber;
+        objectDepth++;
+      } else if (char === '}') {
+        objectDepth--;
+        if (objectDepth === 0) {
+          lineMap[elementIndex] = elementStartLine;
+          elementIndex++;
+          elementStartLine = 0;
+        }
+      }
+      return true;
+    };
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const lineNumber = i + 1; // 1-indexed
+      const lineNumber = i + 1;
 
-      // Look for the "requests" array start
-      if (!inRequestsArray) {
-        if (line.includes(`"${arrayPath}"`) && line.includes('[')) {
-          inRequestsArray = true;
-          arrayDepth = 1;
-          // Check if there's content after the [
-          const afterBracket = line.substring(line.indexOf('[') + 1).trim();
-          if (afterBracket.startsWith('{')) {
-            elementStartLine = lineNumber;
+      if (state === 'seekingProperty') {
+        const propIdx = line.indexOf(`"${arrayPath}"`);
+        if (propIdx !== -1) {
+          // Property found — look for [ on the same line first
+          const bracketIdx = line.indexOf('[', propIdx);
+          if (bracketIdx !== -1) {
+            state = 'inArray';
+            bracketDepth = 1;
+            for (let j = bracketIdx + 1; j < line.length; j++) {
+              if (!processChar(line[j], lineNumber)) return lineMap;
+            }
+          } else {
+            state = 'seekingArrayOpen';
           }
         }
         continue;
       }
 
-      // Process lines within the requests array
-      if (inRequestsArray) {
-        // Track bracket nesting
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-
-          if (char === '{') {
-            if (arrayDepth === 1) {
-              // Start of a new array element
-              elementStartLine = lineNumber;
-            }
-            arrayDepth++;
-          } else if (char === '}') {
-            arrayDepth--;
-            if (arrayDepth === 1) {
-              // End of array element
-              lineMap[elementIndex] = elementStartLine;
-              elementIndex++;
-              elementStartLine = 0;
-            } else if (arrayDepth === 0) {
-              // End of array
-              return lineMap;
-            }
+      if (state === 'seekingArrayOpen') {
+        const bracketIdx = line.indexOf('[');
+        if (bracketIdx !== -1) {
+          state = 'inArray';
+          bracketDepth = 1;
+          for (let j = bracketIdx + 1; j < line.length; j++) {
+            if (!processChar(line[j], lineNumber)) return lineMap;
           }
         }
+        continue;
+      }
+
+      // state === 'inArray'
+      for (let j = 0; j < line.length; j++) {
+        if (!processChar(line[j], lineNumber)) return lineMap;
       }
     }
 
