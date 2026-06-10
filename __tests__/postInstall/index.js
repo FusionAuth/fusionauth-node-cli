@@ -5,15 +5,8 @@ import { createConfig } from '../../dist/utils.js'
 
 import mock from 'mock-fs'
 import fs, { readdirSync, readFileSync } from 'node:fs'
-import { json } from "node:stream/consumers"
-import { config } from "node:process"
-import { randomUUID } from "node:crypto"
 
-
-export function postInstall() {
-  
-
-  describe('postInstall runs properly', () => {
+describe('postInstall runs properly', () => {
     test('No config creates dir', (t) => {
       mock({
         'dist': {},
@@ -100,7 +93,4 @@ export function postInstall() {
     })
 
 
-  })
-
-
-} 
+})

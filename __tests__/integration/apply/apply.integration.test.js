@@ -49,9 +49,8 @@ function displayKickstartErrors(result) {
   }
 }
 
-export function applyIntegration() {
-  let fusionAuthUrl
-  let apiKey
+let fusionAuthUrl
+let apiKey
 
   // Test configuration
   const appId = '3c219e58-ed0e-4b18-ad48-f4f92793ae32'
@@ -152,4 +151,3 @@ export function applyIntegration() {
 
     })
   })
-}

@@ -4,9 +4,7 @@ import nock from "nock"
 import mock from 'mock-fs'
 import { VariableSubstitutor } from "../../../dist/utilities/kickstart/variable-substitution.js"
 
-export function variableSubstitution() {
-  
-  describe('VariableSubstitutor', () => {
+describe('VariableSubstitutor', () => {
     afterEach(() => {
       nock.cleanAll()
     })
@@ -233,4 +231,3 @@ export function variableSubstitution() {
 
     })
   })
-}

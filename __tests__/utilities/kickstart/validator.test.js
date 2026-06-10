@@ -3,8 +3,7 @@ import assert from "node:assert"
 import mock from "mock-fs"
 import { KickstartValidator } from "../../../dist/utilities/kickstart/validator.js"
 
-export function validator() {
-  describe('KickstartValidator', () => {
+describe('KickstartValidator', () => {
 
     describe('validateConfig()', () => {
       test('should reject non-object config', (t) => {
@@ -410,4 +409,3 @@ export function validator() {
       })
     })
   })
-}
