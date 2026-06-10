@@ -59,8 +59,8 @@ describe('telemetry runs properly', () => {
         "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
       try {
-        const actualConfig = telemetryUpdate(true)
-        assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+        const actualConfig = telemetryUpdate(false)
+        assert.equal(actualConfig.globalConfig.telemetry, false, "Telemetry not set to false")
       } finally {
         mock.restore()
       }
