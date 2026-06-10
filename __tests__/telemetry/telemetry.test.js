@@ -1,4 +1,4 @@
-import test, { describe, before, after } from "node:test"
+import { describe, test } from "node:test"
 import assert from "node:assert"
 import fs, { readFileSync } from "node:fs"
 import mock from "mock-fs"
@@ -91,46 +91,40 @@ describe('telemetry runs properly', () => {
     })
   })
   describe('tests for logEvent', () => {
-    test("If FUSIONAUTH_TELEMETRY === false don't run", async (t) => {
-      before(() => {
-        process.env.FUSIONAUTH_TELEMETRY = false
-      })
-      after(() => {
+    test("If FUSIONAUTH_TELEMETRY === false don't run", async () => {
+      process.env.FUSIONAUTH_TELEMETRY = 'false'
+      try {
+        const response = await logEvent('test event')
+        assert.equal(response, false, "logEvent still fired")
+      } finally {
         delete process.env.FUSIONAUTH_TELEMETRY
-      })
-
-      const response = await logEvent('test event')
-      assert.equal(response, false, "logEvent still fired")
+      }
     })
 
-    test("If FUSIONAUTH_TELEMETRY === true DO run", async (t) => {
-      before(() => {
-        process.env.FUSIONAUTH_TELEMETRY = true
-        nock('https://us.i.posthog.com')
-          .post('/batch/')
-          .reply(200)
-      })
-      after(() => {
-        nock.cleanAll();
+    test("If FUSIONAUTH_TELEMETRY === true DO run", async () => {
+      process.env.FUSIONAUTH_TELEMETRY = 'true'
+      nock('https://us.i.posthog.com')
+        .post('/batch/')
+        .reply(200)
+      try {
+        const response = await logEvent('test event')
+        assert.equal(response, true, "logEvent didn't fire")
+      } finally {
+        nock.cleanAll()
         delete process.env.FUSIONAUTH_TELEMETRY
-      })
-
-      const response = await logEvent('test event')
-      assert.equal(response, true, "logEvent didn't fire")
+      }
     })
-    test("If no .env, event submits", async (t) => {
-      before(() => {
-        nock('https://us.i.posthog.com')
-          .post('/batch/')
-          .reply(200)
-      })
-      after(() => {
-        nock.cleanAll();
-      })
-
-      assert.equal(process.env.FUSIONAUTH_TELEMETRY, undefined, 'Env variable FUSIONAUTH_TELEMETRY is defined')
-      const response = await logEvent('test event')
-      assert.equal(response, true, "logEvent didn't fire")
+    test("If no .env, event submits", async () => {
+      nock('https://us.i.posthog.com')
+        .post('/batch/')
+        .reply(200)
+      try {
+        assert.equal(process.env.FUSIONAUTH_TELEMETRY, undefined, 'Env variable FUSIONAUTH_TELEMETRY is defined')
+        const response = await logEvent('test event')
+        assert.equal(response, true, "logEvent didn't fire")
+      } finally {
+        nock.cleanAll()
+      }
     })
     
   })
