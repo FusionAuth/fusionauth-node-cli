@@ -513,8 +513,9 @@ export class VariableSubstitutor {
     // Security: prevent directory traversal attacks
     const resolvedPath = path.resolve(fullPath);
     const kickstartDirResolved = path.resolve(this.kickstartDir);
+    const relativePath = path.relative(kickstartDirResolved, resolvedPath);
 
-    if (!resolvedPath.startsWith(kickstartDirResolved)) {
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
       throw new Error(
         `Invalid file path: ${filePath} (directory traversal not allowed)`
       );
