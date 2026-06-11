@@ -233,7 +233,7 @@ export class KickstartValidator {
       }
 
       // Validate body (optional but should be object if present)
-      if (req.body !== undefined && typeof req.body !== 'object') {
+      if (req.body !== undefined && (typeof req.body !== 'object' || Array.isArray(req.body) || req.body === null)) {
         errors.push({
           field: `requests[${index + 1}].body`,
           message: 'Body must be an object if provided',
