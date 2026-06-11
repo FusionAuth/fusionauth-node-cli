@@ -64,7 +64,7 @@ const expectedSmtp = {
   host: 'smtp.sendgrid.net',
   port: 587,
   security: 'TLS',
-  defaultFromEmail: 'poc@fusionauth.io'
+  defaultFromEmail: 'testfromemail@example.com'
 }
 
 // Expected admin user properties
