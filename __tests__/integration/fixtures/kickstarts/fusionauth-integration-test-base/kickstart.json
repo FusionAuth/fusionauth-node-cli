@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "apiKey": "90dd6b25-d1ef-4175-9656-159dd994932e",
+    "defaultTenantId": "886a57e0-f2ac-440a-9a9d-d10c17b6f1a1",
+    "adminEmail": "ia@example.com",
+    "adminPassword": "password"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Integration Test API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/user/registration",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    }
+  ]
+}

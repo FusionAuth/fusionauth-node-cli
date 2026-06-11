@@ -4,6 +4,18 @@ import { Command } from '@commander-js/extra-typings';
 import chalk from 'chalk';
 import figlet from 'figlet';
 import * as commands from './commands/index.js';
+
+// Handle unhandled promise rejections gracefully
+process.on('unhandledRejection', (reason) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  // Suppress known telemetry shutdown timeouts
+  if (message.includes('PostHog') || message.includes('telemetry')) {
+    process.exit(0);
+  }
+  console.error(chalk.red(`✖ Error: ${message}`));
+  process.exit(1);
+});
+
 const fusionString = figlet.textSync('Fusion').split('\n');
 const authString = figlet.textSync('Auth').split('\n');
 fusionString.forEach((line, i) => {
@@ -11,5 +23,10 @@ fusionString.forEach((line, i) => {
 });
 const program = new Command();
 program.name('@fusionauth/cli').description('CLI for FusionAuth');
-Object.values(commands).forEach((command) => program.addCommand(command));
+Object.values(commands).forEach((command) => {
+  // Only add Command instances, skip other exports (like executeAction)
+  if (command instanceof Command) {
+    program.addCommand(command as unknown as Command);
+  }
+});
 program.parse();

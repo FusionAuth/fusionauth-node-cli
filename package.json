@@ -12,8 +12,10 @@
     "copy-files": "cp -r ./src/resources/ ./dist/commands/resources/",
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
-    "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test": "node --test"
+    "start": "node --import=tsx src/index.ts",
+    "test": "NODE_ENV=test node --import=tsx --test __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/integration/apply/apply.integration.test.js",
+    "test:integration": "NODE_ENV=test node --import=tsx --test __tests__/integration/apply/apply.integration.test.js",
+    "test:unit": "NODE_ENV=test node --import=tsx --test __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js"
   },
   "keywords": [
     "fusionauth",
@@ -63,8 +65,7 @@
     "@types/mock-fs": "^4.13.4",
     "@types/node": "20.4.5",
     "@types/uuid": "9.0.2",
-    "jest": "^30.3.0",
-    "ts-node": "10.9.1",
+    "tsx": "^4.19.4",
     "mock-fs": "^5.5.0",
     "nock": "^14.0.15",
     "type-fest": "3.13.0",
