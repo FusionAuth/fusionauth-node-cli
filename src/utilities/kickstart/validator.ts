@@ -286,8 +286,8 @@ export class KickstartValidator {
       const variableRefs = this.extractVariableReferences(request);
 
       variableRefs.forEach((varRef) => {
-        // UUID() is a special pattern
-        if (varRef === 'UUID()') {
+        // special patterns
+        if (varRef === 'UUID()' || varRef === 'DEFAULT_TENANT_ID()' || varRef.startsWith('ENV.')) {
           return;
         }
 
@@ -314,11 +314,9 @@ export class KickstartValidator {
     const refs = new Set<string>();
 
     // Check URL
-    refs.forEach((ref) => {
-      this.extractVariableReferencesFromString(request.url).forEach((r) =>
-        refs.add(r)
-      );
-    });
+    this.extractVariableReferencesFromString(request.url).forEach((r) =>
+      refs.add(r)
+    );
 
     // Check tenantId
     if (request.tenantId) {
