@@ -169,8 +169,7 @@ export interface HTTPResponse {
  * Configuration for HTTP client timeouts
  */
 export interface TimeoutConfig {
-  connectTimeoutMs: number;
-  readTimeoutMs: number;
+  timeoutMs: number;
 }
 
 /**

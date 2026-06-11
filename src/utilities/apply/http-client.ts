@@ -9,8 +9,7 @@ import { HTTPResponse, ParsedStep, TimeoutConfig } from './types.js';
  * Default timeout configuration
  */
 const DEFAULT_TIMEOUTS: TimeoutConfig = {
-  connectTimeoutMs: 5000,
-  readTimeoutMs: 30000,
+  timeoutMs: 30000,
 };
 
 /**
@@ -59,7 +58,7 @@ export class HTTPClient {
           undefined,
           undefined,
           undefined,
-          { connectTimeoutMs: 5000, readTimeoutMs: 5000 }
+          { timeoutMs: 5000 }
         );
 
         // Check if response is JSON (not maintenance mode or proxy error)
@@ -115,7 +114,7 @@ export class HTTPClient {
       const controller = new AbortController();
       const timeoutId = setTimeout(
         () => controller.abort(),
-        timeouts.readTimeoutMs
+        timeouts.timeoutMs
       );
 
       const response = await fetch(url, {
@@ -143,7 +142,7 @@ export class HTTPClient {
       if (err instanceof Error) {
         if (err.name === 'AbortError') {
           throw new Error(
-            `Request timeout after ${timeouts.readTimeoutMs}ms: ${method} ${path}`
+            `Request timeout after ${timeouts.timeoutMs}ms: ${method} ${path}`
           );
         }
         throw new Error(`Request failed: ${err.message}`);
@@ -182,7 +181,7 @@ export class HTTPClient {
         undefined,
         tenantId,
         undefined,
-        { readTimeoutMs: 5000 }
+        { timeoutMs: 5000 }
       );
       return response.status >= 200 && response.status < 400;
     } catch {
