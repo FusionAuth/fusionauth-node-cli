@@ -13,7 +13,7 @@ import {
   HTTPMethod,
   RequestLineNumbers,
 } from '../apply/types.js';
-import { LineTracker } from '../apply/line-tracker.js';
+import { LineTracker, LineNumberMap } from '../apply/line-tracker.js';
 
 /**
  * Validates kickstart.json configuration files
@@ -24,7 +24,7 @@ export class KickstartValidator {
    * @param config The kickstart configuration to validate
    * @returns ValidationResult with errors if invalid
    */
-  public validateConfig(config: unknown): ValidationResult {
+  public validateConfig(config: unknown, lineMap: LineNumberMap = {}): ValidationResult {
     const errors: ValidationError[] = [];
     const warnings: string[] = [];
 
@@ -66,7 +66,8 @@ export class KickstartValidator {
     // If requests are valid, check for variable references
     if (errors.length === 0) {
       const variableRefErrors = this.validateVariableReferences(
-        cfg as unknown as KickstartConfig
+        cfg as unknown as KickstartConfig,
+        lineMap
       );
       errors.push(...variableRefErrors);
     }
@@ -269,7 +270,8 @@ export class KickstartValidator {
    * Validate that all variable references are defined
    */
   private validateVariableReferences(
-    config: KickstartConfig
+    config: KickstartConfig,
+    lineMap: LineNumberMap = {}
   ): ValidationError[] {
     const errors: ValidationError[] = [];
     const definedVariables = new Set<string>(
@@ -295,7 +297,7 @@ export class KickstartValidator {
           errors.push({
             field: `requests[${index + 1}]`,
             stepId: `step-${String(index + 1).padStart(5, '0')}`,
-            lineNumber: index,
+            lineNumber: lineMap[index] ?? index + 1,
             message: `Undefined variable: #{${varRef}}`,
             category: ErrorCategory.VARIABLE_NOT_DEFINED,
           });
