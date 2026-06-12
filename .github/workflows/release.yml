@@ -1,8 +1,11 @@
 name: Release
 
 on:
+  
   push:
     branches: [main, next, next-release]
+  pull_request: 
+    branches: [main, next]
 
 jobs:
   release:
