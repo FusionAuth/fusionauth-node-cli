@@ -3,7 +3,7 @@ name: Release
 on:
   
   push:
-    branches: [main, next, next-setup]
+    branches: [next-setup]
 
 jobs:
   release:
