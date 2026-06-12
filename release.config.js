@@ -4,6 +4,10 @@ module.exports = {
     {
       name: 'next',
       prerelease: true
+    },
+    {
+      name: 'next-setup',
+      prerelease: true
     }
   ],
   plugins: [
