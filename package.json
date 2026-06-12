@@ -13,7 +13,8 @@
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
     "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test": "node --test"
+    "test": "node --test",
+    "prepare": "husky"
   },
   "keywords": [
     "fusionauth",
@@ -64,6 +65,9 @@
     "@types/node": "20.4.5",
     "@types/uuid": "9.0.2",
     "commitlint": "^21.0.2",
+    "@commitlint/cli": "18.0.0",
+    "@commitlint/config-conventional": "18.0.0",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
     "mock-fs": "^5.5.0",
     "nock": "^14.0.15",
@@ -73,6 +77,11 @@
   },
   "bin": {
     "fusionauth": "dist/index.js"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "type": "module"
 }
