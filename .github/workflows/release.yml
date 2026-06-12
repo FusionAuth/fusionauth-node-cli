@@ -3,9 +3,7 @@ name: Release
 on:
   
   push:
-    branches: [main, next, next-release]
-  pull_request: 
-    branches: [next]
+    branches: [main, next, next-setup]
 
 jobs:
   release:
