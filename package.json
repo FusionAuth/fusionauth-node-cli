@@ -13,7 +13,8 @@
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
     "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test": "node --test"
+    "test": "node --test",
+    "prepare": "husky"
   },
   "keywords": [
     "fusionauth",
@@ -63,10 +64,11 @@
     "@types/mock-fs": "^4.13.4",
     "@types/node": "20.4.5",
     "@types/uuid": "9.0.2",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
-    "ts-node": "10.9.1",
     "mock-fs": "^5.5.0",
     "nock": "^14.0.15",
+    "ts-node": "10.9.1",
     "type-fest": "3.13.0",
     "typescript": "5.1.6"
   },
