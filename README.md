@@ -60,7 +60,7 @@ The `download` and `retrieve` commands will succeed even if there are no templat
 
 ## Telemetry and data collection
 
-By default, the FusionAuth CLI collects data about your usage. We use this to judge effectiveness of the CLI, check performance and reliability, and help drive new features and improvements.
+By default, the FusionAuth CLI collects data about your usage. We use this to judge effectiveness of the CLI, check performance and reliability, and help drive new features and improvements. An anonymized unique ID is generated, and function usage information is stored by PostHog.
 
 If you'd prefer not to send usage data, run the following command:
 
