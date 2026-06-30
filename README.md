@@ -49,11 +49,32 @@ Fake user generation
   - `fusionauth theme:download` - Download a theme from a FusionAuth server.
   - `fusionauth theme:upload` - Upload a theme to a FusionAuth server.
   - `fusionauth theme:watch` - Watch a theme directory and upload changes to a FusionAuth server.
+- Telemetry
+  - `fusionauth telemetry:enable` - Enables telemetry collection
+  - `fusionauth telemetry:disable` - Disables telemetry collection
 
 Instead of supplying the API key with the `-k` option on every command, you can set the `FUSIONAUTH_API_KEY` environment variable.
 The same goes for the host URL option `-h`, which can be set with the `FUSIONAUTH_HOST` environment variable.
 
 The `download` and `retrieve` commands will succeed even if there are no templates or lambdas to retrieve.
+
+## Telemetry and data collection
+
+By default, the FusionAuth CLI collects data about your usage. We use this to judge effectiveness of the CLI, check performance and reliability, and help drive new features and improvements. An anonymized unique ID is generated, and function usage information is stored by PostHog.
+
+The CLI never transmits your payloads or command parameters.
+
+If you'd prefer not to send usage data, run the following command:
+
+```sh
+npx fusionauth telemetry:disable
+```
+
+If you change your mind and decide to share usage data with us, run this command:
+
+```sh
+npx fusionauth telemetry:enable
+```
 
 ## Questions and support
 
