@@ -16,7 +16,7 @@ export const emailDownload = new Command('email:download')
     .addOption(hostOption)
     .option('-c, --clean', 'Clean the output directory before downloading', false)
     .action(async (emailTemplateId, {output, key: apiKey, host, clean}) => {
-        logEvent('cli command email:download')
+        await logEvent('cli command email:download')
 
         let clientResponse;
         const errorMessage = getEmailErrorMessage('download', emailTemplateId);

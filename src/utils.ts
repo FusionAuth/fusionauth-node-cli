@@ -236,13 +236,17 @@ export async function logEvent(eventName:string, eventDetails:any = {}) {
     const config = loadConfig()
     
     if (config.globalConfig.telemetry) {
-        const capture = await posthogClient.capture({
-            distinctId: config.globalConfig.id,
-            event: eventName,
-            properties: eventDetails
-        })
-        await posthogClient.shutdown()
-        return true
+        try {
+            posthogClient.capture({
+                distinctId: config.globalConfig.id,
+                event: eventName,
+                properties: eventDetails
+            })
+            await posthogClient.flush()
+            return true
+        } catch (e) {
+            return false
+        }
     } else {
         return false
     }
