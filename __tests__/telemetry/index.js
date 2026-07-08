@@ -11,12 +11,14 @@ import nock from 'nock'
 
 export function telemetry() {
   const mockedTrueConfig = {
-      id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', 
-      telemetry: true
+      id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb',
+      telemetry: true,
+      version: '1.0'
   }
   const mockedFalseConfig = {
-      id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', 
-      telemetry: false
+      id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb',
+      telemetry: false,
+      version: '1.0'
   }
   describe('telemetry runs properly', () => {
     test("Creates config if no config exists", (t) => {
