@@ -15,7 +15,7 @@ export const themeDownload = new Command('theme:download')
     .addOption(hostOption)
     .addOption(themeTypeOption)
     .action(async (themeId: string, {output, key: apiKey, host, types}) => {
-        logEvent('cli command theme:download')
+        await logEvent('cli command theme:download')
         
         console.log(`Downloading theme ${themeId} to ${output}`);
 

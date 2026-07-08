@@ -6,7 +6,7 @@ import { telemetryUpdate } from "../../dist/commands/telemetry/telemetry-utils.j
 import { telemetryDisable } from "../../dist/commands/telemetry/telemetry-disable.js"
 import { telemetryEnable } from "../../dist/commands/telemetry/telemetry-enable.js"
 import path from "node:path"
-import { logEvent } from "../../dist/utils.js"
+import { loadConfig, logEvent } from "../../dist/utils.js"
 import nock from 'nock'
 
 export function telemetry() {
@@ -41,6 +41,7 @@ export function telemetry() {
       const updatedConfig = telemetryUpdate(true)
       assert.deepEqual(updatedConfig.globalConfig, mockedTrueConfig)
     })
+
     test("Enable works", (t) => {
       before(() => {
         mock({
@@ -125,6 +126,22 @@ export function telemetry() {
       assert.equal(process.env.FUSIONAUTH_TELEMETRY, undefined, 'Env variable FUSIONAUTH_TELEMETRY is defined')
       const response = await logEvent('test event')
       assert.equal(response, true, "logEvent didn't fire")
+    })
+
+    test("Disables warning after first log", async (t) => {
+      before(() => {
+        process.env.FUSIONAUTH_TELEMETRY = true
+        mock({
+          "dist/.fa/config.json": JSON.stringify(mockedTrueConfig)
+        })
+      })
+      after(() => {
+        delete process.env.FUSIONAUTH_TELEMETRY
+        mock.restore()
+      })
+      await logEvent('cli test')
+      const newConfig = await loadConfig()
+      assert.equal(newConfig.globalConfig.telemetryNoWarn, true)
     })
     
   })

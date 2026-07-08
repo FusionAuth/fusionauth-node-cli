@@ -235,14 +235,34 @@ export async function logEvent(eventName:string, eventDetails:any = {}) {
     }
     const config = loadConfig()
     
-    if (config.globalConfig.telemetry) {
-        const capture = await posthogClient.capture({
-            distinctId: config.globalConfig.id,
-            event: eventName,
-            properties: eventDetails
-        })
-        await posthogClient.shutdown()
-        return true
+    // If this is the first run of logEvent, warn about logging
+    if (!config.globalConfig.telemetryNoWarn) {
+        // Add global config that turns warning off
+        updateGlobalConfig({telemetryNoWarn: true})
+        console.log(boxen(
+            chalk.greenBright.bold('By default, we collect a small amount of anonymous data around CLI usage\n\nYou can disable telemetry by running ') 
+            + chalk.magentaBright.bold("npx fusionauth telemetry:disable"), 
+        {
+            borderColor: 'green',
+            title: '*',
+            titleAlignment: 'center',
+            padding: 1
+        }
+    ))
+    }
+
+    if (config.globalConfig.telemetry) {    
+        try {
+            posthogClient.capture({
+                distinctId: config.globalConfig.id,
+                event: eventName,
+                properties: eventDetails
+            })
+            await posthogClient.flush()
+            return true
+        } catch (e) {
+            return false
+        }
     } else {
         return false
     }
@@ -281,3 +301,27 @@ export function createConfig(dir: string, configObject: ConfigObject = { id: ran
         return false
     }
 }
+type PropertyToAdd = {[key:string]: any}
+async function updateGlobalConfig(propertiesToAdd: PropertyToAdd | PropertyToAdd[]) {
+    const config = loadConfig()
+    const configPath = __dirname + '/.fa/config.json'
+    let newConfig: any;
+    
+    if (Array.isArray(propertiesToAdd)) {
+        newConfig = {
+            ...config.globalConfig
+        }
+        propertiesToAdd.forEach((property: PropertyToAdd) => {
+            const firstKey = Object.keys(property)[0]
+            newConfig[firstKey] = property[firstKey]
+        })
+    } else {
+        newConfig = {
+            ...config.globalConfig,
+            ...propertiesToAdd
+        }
+   
+    }
+   
+    fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2))
+} 

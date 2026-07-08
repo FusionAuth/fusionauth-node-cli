@@ -16,7 +16,7 @@ export const messageDownload = new Command('message:download')
     .addOption(hostOption)
     .option('-c, --clean', 'Clean the output directory before downloading', false)
     .action(async (messageTemplateId, {output, key: apiKey, host, clean}) => {
-        logEvent('cli command message:download')
+        await logEvent('cli command message:download')
         
         let clientResponse;
         const errorMessage = getMessageErrorMessage('download', messageTemplateId);

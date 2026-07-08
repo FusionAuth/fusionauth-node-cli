@@ -1,0 +1,335 @@
+{
+  "variables": {
+    "defaultTenantId": "#{DEFAULT_TENANT_ID()}",
+    "smtpPassword": "Test SMTP password",
+    "phoneMessengerId": "#{UUID()}",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "fromEmail": "testfromemail@example.com",
+    "forgotPasswordTemplateId": "#{UUID()}",
+    "setupPasswordTemplateId": "#{UUID()}",
+    "emailVerificationTemplateId": "#{UUID()}",
+    "registrationVerificationTemplateId": "#{UUID()}",
+    "passwordlessLoginTemplateId": "#{UUID()}",
+    "coppaNoticeTemplateId": "#{UUID()}",
+    "coppaNoticeReminderTemplateId": "#{UUID()}",
+    "breachedPasswordNotificationTemplateId": "#{UUID()}",
+    "twoFactorAuthenticationTemplateId": "#{UUID()}",
+    "twoFactorAuthenticationMethodAddedTemplateId": "#{UUID()}",
+    "twoFactorAuthenticationMethodRemovedTemplateId": "#{UUID()}",
+    "phoneForgotPasswordTemplateId": "#{UUID()}",
+    "phonePasswordlessLoginTemplateId": "#{UUID()}",
+    "phoneSetupPasswordTemplateId": "#{UUID()}",
+    "phoneThreatDetectedTemplateId": "#{UUID()}",
+    "phoneTwoFactorAddTemplateId": "#{UUID()}",
+    "phoneTwoFactorRemoveTemplateId": "#{UUID()}",
+    "phoneVerificationTemplateId": "#{UUID()}",
+    "voiceTwoFactorRequestTemplateId": "#{UUID()}"
+  },
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{forgotPasswordTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Reset your password",
+          "defaultHtmlTemplate": "@{templates/emails/change-password.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/change-password.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Forgot Password"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{setupPasswordTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Set up your password",
+          "defaultHtmlTemplate": "@{templates/emails/setup-password.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/setup-password.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Set up Password"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{emailVerificationTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Verify your FusionAuth email address",
+          "defaultHtmlTemplate": "@{templates/emails/email-verification.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/email-verification.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Email Verification"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{registrationVerificationTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Verify your Registration",
+          "defaultHtmlTemplate": "@{templates/emails/registration-verification.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/registration-verification.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Registration Verification"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{passwordlessLoginTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Log into FusionAuth",
+          "defaultHtmlTemplate": "@{templates/emails/passwordless-login.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/passwordless-login.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Passwordless Login"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{coppaNoticeTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Notice of your consent",
+          "defaultHtmlTemplate": "@{templates/emails/coppa-notice.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/coppa-notice.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "COPPA Notice"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{coppaNoticeReminderTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Reminder: Notice of your consent",
+          "defaultHtmlTemplate": "@{templates/emails/coppa-email-plus-notice.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/coppa-email-plus-notice.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "COPPA Notice Reminder"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{breachedPasswordNotificationTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Your password is not secure",
+          "defaultHtmlTemplate": "@{templates/emails/breached-password.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/breached-password.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Breached Password Notification"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{twoFactorAuthenticationTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "Your second factor code",
+          "defaultHtmlTemplate": "@{templates/emails/two-factor-login.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/two-factor-login.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Two Factor Authentication"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{twoFactorAuthenticationMethodAddedTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "A second factor method was added",
+          "defaultHtmlTemplate": "@{templates/emails/two-factor-add.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/two-factor-add.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Two Factor Authentication Method Added"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{twoFactorAuthenticationMethodRemovedTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "defaultFromName": "FusionAuth POC",
+          "defaultSubject": "A second factor method was removed",
+          "defaultHtmlTemplate": "@{templates/emails/two-factor-remove.html.ftl}",
+          "defaultTextTemplate": "@{templates/emails/two-factor-remove.txt.ftl}",
+          "fromEmail": "#{fromEmail}",
+          "name": "Two Factor Authentication Method Removed"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phoneForgotPasswordTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-forgot-password.txt.ftl}",
+          "name": "Default Phone Forgot Password",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phonePasswordlessLoginTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-passwordless-login.txt.ftl}",
+          "name": "Default Phone Passwordless Login",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phoneSetupPasswordTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-setup-password.txt.ftl}",
+          "name": "Default Phone Set up your password",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phoneThreatDetectedTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-threat-detected.txt.ftl}",
+          "name": "Default Phone Threat Detected",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phoneTwoFactorAddTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-two-factor-add.txt.ftl}",
+          "name": "Default Phone Two Factor Add",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phoneTwoFactorRemoveTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-two-factor-remove.txt.ftl}",
+          "name": "Default Phone Two Factor Remove",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{phoneVerificationTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/phone-verification.txt.ftl}",
+          "name": "Default Phone Verification",
+          "type": "SMS"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/message/template/#{voiceTwoFactorRequestTemplateId}",
+      "body": {
+        "messageTemplate": {
+          "defaultTemplate": "@{templates/messages/voice-two-factor-request.txt.ftl}",
+          "name": "Default Voice Two Factor Request",
+          "type": "Voice"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/messenger/#{phoneMessengerId}",
+      "body": {
+        "messenger": {
+          "accountSID": "TEST98348D793893885857DD967A9DD7",
+          "authToken": "TEST184C735CA720EBAA0BA147A61B6A9",
+          "debug": false,
+          "fromPhoneNumber": "555-555-5555",
+          "messageTypes": ["SMS"],
+          "name": "My Messenger",
+          "type": "Twilio",
+          "url": "https://test.messenger.com"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "issuer": "http://localhost:9011",
+          "emailConfiguration": {
+            "debug": true,
+            "defaultFromEmail": "#{fromEmail}",
+            "defaultFromName": "FusionAuth POC",
+            "host": "smtp.sendgrid.net",
+            "username": "apikey",
+            "password": "#{smtpPassword}",
+            "port": 587,
+            "security": "TLS",
+            "verifyEmail": true,
+            "verificationEmailTemplateId": "#{emailVerificationTemplateId}",
+            "forgotPasswordEmailTemplateId": "#{forgotPasswordTemplateId}"
+          },
+          "phoneConfiguration": {
+            "implicitPhoneVerificationAllowed": true,
+            "messengerId": "#{phoneMessengerId}",
+            "verificationTemplateId": "#{phoneForgotPasswordTemplateId}",
+            "verifyPhoneNumber": true
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}",
+          "skipVerification": true,
+          "firstName": "Test"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    }
+  ]
+}

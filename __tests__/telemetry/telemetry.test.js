@@ -1,0 +1,130 @@
+import { describe, test } from "node:test"
+import assert from "node:assert/strict"
+import fs, { readFileSync } from "node:fs"
+import mock from "mock-fs"
+import { telemetryUpdate } from "../../src/commands/telemetry/telemetry-utils.js"
+import { telemetryDisable } from "../../src/commands/telemetry/telemetry-disable.js"
+import { telemetryEnable } from "../../src/commands/telemetry/telemetry-enable.js"
+import path from "node:path"
+import { logEvent } from "../../src/utils.js"
+import nock from 'nock'
+
+const mockedTrueConfig = {
+    id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', 
+    telemetry: true,
+    version: '1.0'
+}
+const mockedFalseConfig = {
+    id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', 
+    telemetry: false,
+    version: '1.0'
+}
+
+describe('telemetry runs properly', () => {
+    test("Creates config if no config exists", () => {
+      mock({
+        "src": {}
+      })
+      try {
+        const updatedConfig = telemetryUpdate(true)
+        assert(fs.existsSync('src/.fa/config.json'), "File wasn't created")
+      } finally {
+        mock.restore()
+      }
+    })
+    test("Only changes telemetry value", () => {
+      mock({
+        "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
+      })
+      try {
+        const updatedConfig = telemetryUpdate(true)
+        assert.deepEqual(updatedConfig.globalConfig, mockedTrueConfig)
+      } finally {
+        mock.restore()
+      }
+    })
+    test("Enable works", () => {
+      mock({
+        "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
+      })
+      try {
+        const actualConfig = telemetryUpdate(true)
+        assert.equal(actualConfig.globalConfig.telemetry, true, "Telemetry not set to true")
+      } finally {
+        mock.restore()
+      }
+    })
+    test("Disable works", () => {
+      mock({
+        "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
+      })
+      try {
+        const actualConfig = telemetryUpdate(false)
+        assert.equal(actualConfig.globalConfig.telemetry, false, "Telemetry not set to false")
+      } finally {
+        mock.restore()
+      }
+    })
+    test("Disable full command runs properly", () => {
+      mock({
+        "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
+      })
+      try {
+        telemetryDisable.parse()
+        const actualConfig = JSON.parse(fs.readFileSync('src/.fa/config.json').toString())
+        assert.equal(actualConfig.telemetry, false)
+      } finally {
+        mock.restore()
+      }
+    })
+    test("Enable full command runs properly", () => {
+      mock({
+        "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
+      })
+      try {
+        telemetryEnable.parse()
+        const actualConfig = JSON.parse(fs.readFileSync('src/.fa/config.json').toString())
+        assert.equal(actualConfig.telemetry, true)
+      } finally {
+        mock.restore()
+      }
+    })
+  })
+  describe('tests for logEvent', () => {
+    test("If FUSIONAUTH_TELEMETRY === false don't run", async () => {
+      process.env.FUSIONAUTH_TELEMETRY = 'false'
+      try {
+        const response = await logEvent('test event')
+        assert.equal(response, false, "logEvent still fired")
+      } finally {
+        delete process.env.FUSIONAUTH_TELEMETRY
+      }
+    })
+
+    test("If FUSIONAUTH_TELEMETRY === true DO run", async () => {
+      process.env.FUSIONAUTH_TELEMETRY = 'true'
+      nock('https://us.i.posthog.com')
+        .post('/batch/')
+        .reply(200)
+      try {
+        const response = await logEvent('test event')
+        assert.equal(response, true, "logEvent didn't fire")
+      } finally {
+        nock.cleanAll()
+        delete process.env.FUSIONAUTH_TELEMETRY
+      }
+    })
+    test("If no .env, event submits", async () => {
+      nock('https://us.i.posthog.com')
+        .post('/batch/')
+        .reply(200)
+      try {
+        assert.equal(process.env.FUSIONAUTH_TELEMETRY, undefined, 'Env variable FUSIONAUTH_TELEMETRY is defined')
+        const response = await logEvent('test event')
+        assert.equal(response, true, "logEvent didn't fire")
+      } finally {
+        nock.cleanAll()
+      }
+    })
+    
+  })
