@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v4
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
         with:
@@ -29,5 +32,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Run tests
+      - name: Run integration tests
+        env:
+          SKIP_TEARDOWN: false
+          REUSE_CONTAINER: false
+          NODE_ENV: test
+          FUSIONAUTH_TELEMETRY: false
         run: npm test
+        timeout-minutes: 15

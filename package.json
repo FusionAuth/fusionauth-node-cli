@@ -15,8 +15,8 @@
     "copy-files": "cp -r ./src/resources/ ./dist/commands/resources/",
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
-    "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test": "node --test",
+    "start": "npm run build && node dist/index.js",
+    "test": "node --import tsx --test",
     "prepare": "husky"
   },
   "keywords": [
@@ -59,17 +59,17 @@
     "yocto-spinner": "^1.2.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "21.2.1",
+    "@commitlint/config-conventional": "21.2.0",
     "@types/figlet": "1.7.0",
     "@types/fs-extra": "11.0.4",
     "@types/html-to-text": "9.0.4",
     "@types/mock-fs": "^4.13.4",
     "@types/node": "26.1.1",
-    "@commitlint/cli": "21.2.1",
-    "@commitlint/config-conventional": "21.2.0",
     "husky": "^9.1.7",
     "mock-fs": "^5.5.0",
     "nock": "^14.0.16",
-    "ts-node": "10.9.2",
+    "tsx": "^4.23.0",
     "type-fest": "5.8.0",
     "typescript": "7.0.2"
   },
