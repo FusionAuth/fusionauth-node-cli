@@ -36,7 +36,6 @@
   },
   "homepage": "https://github.com/FusionAuth/fusionauth-node-cli#readme",
   "dependencies": {
-    "@comandeer/cli-spinner": "^1.0.2",
     "@commander-js/extra-typings": "15.0.0",
     "@faker-js/faker": "^10.5.0",
     "@fusionauth/typescript-client": "1.68.0",
@@ -44,7 +43,6 @@
     "boxen": "^8.0.1",
     "chalk": "5.6.2",
     "chokidar": "5.0.0",
-    "command-exists": "^1.2.9",
     "commander": "15.0.0",
     "dotenv": "^17.4.2",
     "figlet": "1.11.0",
@@ -66,7 +64,6 @@
     "@types/html-to-text": "9.0.4",
     "@types/mock-fs": "^4.13.4",
     "@types/node": "26.1.1",
-    "commitlint": "^21.2.1",
     "@commitlint/cli": "21.2.1",
     "@commitlint/config-conventional": "21.2.0",
     "husky": "^9.1.7",
