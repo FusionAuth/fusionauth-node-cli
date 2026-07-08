@@ -1,3 +1,10 @@
+## [1.8.3-next-setup.2](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.8.3-next-setup.1...v1.8.3-next-setup.2) (2026-07-08)
+
+
+### Bug Fixes
+
+* **release:** stop committing build output and drop unused deps ([d64ac2c](https://github.com/FusionAuth/fusionauth-node-cli/commit/d64ac2c3b37c3a260e3f9e5f31464a2b873a8bfd)), closes [#45](https://github.com/FusionAuth/fusionauth-node-cli/issues/45)
+
 ## [1.8.3-next-setup.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.8.2...v1.8.3-next-setup.1) (2026-07-08)
 
 
