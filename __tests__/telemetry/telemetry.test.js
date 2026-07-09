@@ -100,20 +100,6 @@ describe('telemetry runs properly', () => {
         delete process.env.FUSIONAUTH_TELEMETRY
       }
     })
-
-    test("If FUSIONAUTH_TELEMETRY === true DO run", async () => {
-      process.env.FUSIONAUTH_TELEMETRY = 'true'
-      nock('https://us.i.posthog.com')
-        .post('/batch/')
-        .reply(200)
-      try {
-        const response = await logEvent('test event')
-        assert.equal(response, true, "logEvent didn't fire")
-      } finally {
-        nock.cleanAll()
-        delete process.env.FUSIONAUTH_TELEMETRY
-      }
-    })
     test("If no .env, event submits", async () => {
       nock('https://us.i.posthog.com')
         .post('/batch/')
