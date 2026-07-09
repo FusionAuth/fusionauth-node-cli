@@ -1,3 +1,10 @@
+## [1.9.1-next-setup.2](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next-setup.1...v1.9.1-next-setup.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* **release:** adds dependency of test job ([3cd41cf](https://github.com/FusionAuth/fusionauth-node-cli/commit/3cd41cf2465965658abb6d07ce5e116da402fedd))
+
 ## [1.9.1-next-setup.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.0...v1.9.1-next-setup.1) (2026-07-09)
 
 
