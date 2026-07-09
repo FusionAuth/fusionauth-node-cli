@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [next-setup]
+    branches: [next-setup, next, main]
 
 permissions:
   id-token: write
