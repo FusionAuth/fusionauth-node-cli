@@ -3,7 +3,7 @@ name: Release
 on:
   workflow_run:
     branches: [next-setup, next, main]
-    workflows: ["Test"]
+    workflows: ["Tests"]
     types:
       - completed
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Build
         run: npm run build
-        
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
