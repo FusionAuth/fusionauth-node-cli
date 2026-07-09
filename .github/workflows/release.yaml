@@ -3,9 +3,8 @@ name: Release
 on:
   workflow_run:
     branches: [next-setup, next, main]
-    workflows: ["Tests"]
-    types:
-      - completed
+    workflows: [Tests]
+    types: [completed]
 
 permissions:
   id-token: write
