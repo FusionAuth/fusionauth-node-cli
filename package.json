@@ -3,6 +3,9 @@
   "version": "1.9.0",
   "description": "FusionAuth CLI",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "files": [
     "dist",
     "resources/*"
@@ -12,10 +15,9 @@
     "copy-files": "cp -r ./src/resources/ ./dist/commands/resources/",
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
-    "start": "node --import=tsx src/index.ts",
-    "test": "NODE_ENV=test node --import=tsx --test __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/integration/apply/apply.integration.test.js",
-    "test:integration": "NODE_ENV=test node --import=tsx --test __tests__/integration/apply/apply.integration.test.js",
-    "test:unit": "NODE_ENV=test node --import=tsx --test __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js"
+    "start": "npm run build && node dist/index.js",
+    "test": "node --import tsx --test",
+    "prepare": "husky"
   },
   "keywords": [
     "fusionauth",
@@ -34,45 +36,50 @@
   },
   "homepage": "https://github.com/FusionAuth/fusionauth-node-cli#readme",
   "dependencies": {
-    "@comandeer/cli-spinner": "^1.0.2",
-    "@commander-js/extra-typings": "11.0.0",
-    "@faker-js/faker": "^8.4.1",
-    "@fusionauth/typescript-client": "1.47.0",
+    "@commander-js/extra-typings": "15.0.0",
+    "@faker-js/faker": "^10.5.0",
+    "@fusionauth/typescript-client": "1.68.0",
     "bcryptjs": "^3.0.3",
     "boxen": "^8.0.1",
-    "chalk": "5.3.0",
-    "chokidar": "3.5.3",
-    "command-exists": "^1.2.9",
-    "commander": "11.0.0",
+    "chalk": "5.6.2",
+    "chokidar": "5.0.0",
+    "commander": "15.0.0",
     "dotenv": "^17.4.2",
-    "figlet": "1.6.0",
-    "fs-extra": "11.1.1",
-    "html-to-text": "9.0.5",
-    "inquirer": "^13.3.0",
-    "log-symbols": "5.1.0",
-    "log-update": "5.0.1",
+    "figlet": "1.11.0",
+    "fs-extra": "11.3.6",
+    "html-to-text": "10.0.0",
+    "inquirer": "^14.0.2",
+    "log-symbols": "7.0.1",
+    "log-update": "8.0.0",
     "merge": "2.1.1",
-    "posthog-node": "^5.21.2",
+    "posthog-node": "^5.40.0",
     "queue": "7.0.0",
-    "remove-undefined-objects": "3.0.0",
-    "uuid": "9.0.0",
-    "yocto-spinner": "^1.1.0"
+    "remove-undefined-objects": "9.0.0",
+    "uuid": "14.0.1",
+    "yocto-spinner": "^1.2.1"
   },
   "devDependencies": {
-    "@types/figlet": "1.5.6",
-    "@types/fs-extra": "11.0.1",
-    "@types/html-to-text": "9.0.1",
+    "@commitlint/cli": "21.2.1",
+    "@commitlint/config-conventional": "21.2.0",
+    "@types/figlet": "1.7.0",
+    "@types/fs-extra": "11.0.4",
+    "@types/html-to-text": "9.0.4",
     "@types/mock-fs": "^4.13.4",
-    "@types/node": "20.4.5",
-    "@types/uuid": "9.0.2",
-    "tsx": "^4.19.4",
+    "@types/node": "26.1.1",
+    "husky": "^9.1.7",
     "mock-fs": "^5.5.0",
-    "nock": "^14.0.15",
-    "type-fest": "3.13.0",
-    "typescript": "5.1.6"
+    "nock": "^14.0.16",
+    "tsx": "^4.23.0",
+    "type-fest": "5.8.0",
+    "typescript": "7.0.2"
   },
   "bin": {
     "fusionauth": "dist/index.js"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "type": "module"
 }
