@@ -14,7 +14,7 @@ export const themeUpload = new Command('theme:upload')
     .addOption(hostOption)
     .addOption(themeTypeOption)
     .action(async (themeId: string, {input, key: apiKey, host, types}) => {
-        logEvent('cli command theme:upload')
+        await logEvent('cli command theme:upload')
         
         console.log(`Uploading theme ${themeId} from ${input}`);
 

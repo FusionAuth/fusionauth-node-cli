@@ -1,12 +1,17 @@
 import {Errors} from '@fusionauth/typescript-client';
-import fs from 'node:fs'
+import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
 import { PostHog } from 'posthog-node'
+
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 /** Shape of a FusionAuth ClientResponse — used for duck-type checking without importing internals. */
 interface ClientResponseLike {
@@ -211,13 +216,15 @@ export function isDirEmpty(path: string) {
 
 export function loadConfig() {
     const defaultConfig = {
-        telemetry: false,
-        id: 'id-unavailable'
+        telemetry: true,
+        id: randomUUID(),
+        version: "1.0"
+
     }
     const configPath = __dirname + '/.fa/config.json'
     try {
         if (!fs.existsSync(configPath)) {
-            return {globalConfig: defaultConfig}
+            createConfig(__dirname + '/.fa', defaultConfig)
         }
         const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
         // TODO: Combine this with a local-project config
@@ -228,13 +235,98 @@ export function loadConfig() {
 }
 
 export async function logEvent(eventName:string, eventDetails:any = {}) {
+    if (process.env.FUSIONAUTH_TELEMETRY === "false") {
+        return false
+    }
     const config = loadConfig()
-    if (config.globalConfig.telemetry) {
-        posthogClient.capture({
-            distinctId: config.globalConfig.id,
-            event: eventName,
-            properties: eventDetails
-        })
-        await posthogClient.shutdown()
-    } 
+    
+    // If this is the first run of logEvent, warn about logging
+    if (!config.globalConfig.telemetryNoWarn) {
+        // Add global config that turns warning off
+        updateGlobalConfig({telemetryNoWarn: true})
+        console.log(boxen(
+            chalk.greenBright.bold('By default, we collect a small amount of anonymous data around CLI usage\n\nYou can disable telemetry by running ') 
+            + chalk.magentaBright.bold("npx fusionauth telemetry:disable"), 
+        {
+            borderColor: 'green',
+            title: '*',
+            titleAlignment: 'center',
+            padding: 1
+        }
+    ))
+    }
+
+    if (config.globalConfig.telemetry) {    
+        try {
+            posthogClient.capture({
+                distinctId: config.globalConfig.id,
+                event: eventName,
+                properties: eventDetails
+            })
+            await posthogClient.flush()
+            return true
+        } catch (e) {
+            return false
+        }
+    } else {
+        return false
+    }
 }
+
+type ConfigObject = {
+    id?: string,
+    telemetry?: boolean
+
+}
+
+export function createConfig(dir: string, configObject: ConfigObject = { id: randomUUID(), telemetry: true}) {
+    const configPath = dir + '/config.json'
+
+    if (!fs.existsSync(configPath)) {
+        // If no config, write a new config
+        fs.mkdirSync(dir, { recursive: true })
+
+        fs.writeFileSync(configPath, JSON.stringify(configObject, null, 2))  
+        return fs.existsSync(configPath)
+    } else {
+        // If config exists, check for data to write or not
+        const config = JSON.parse(readFileSync(dir + '/config.json').toString())
+
+        if (!config.id || !config.telemetry) {
+            // If no id OR telemetry, 
+            // still write the file with a new ID and/or telemetry
+            fs.writeFileSync(configPath, JSON.stringify({
+                id: config.id || randomUUID(), 
+                telemetry: config.telemetry === false ? false : true,
+                ...config
+            }))
+            return fs.existsSync(configPath)
+        }
+        // If data is complete, return false to not write
+        return false
+    }
+}
+type PropertyToAdd = {[key:string]: any}
+async function updateGlobalConfig(propertiesToAdd: PropertyToAdd | PropertyToAdd[]) {
+    const config = loadConfig()
+    const configPath = __dirname + '/.fa/config.json'
+    let newConfig: any;
+    
+    if (Array.isArray(propertiesToAdd)) {
+        newConfig = {
+            ...config.globalConfig
+        }
+        propertiesToAdd.forEach((property: PropertyToAdd) => {
+            const firstKey = Object.keys(property)[0]
+            newConfig[firstKey] = property[firstKey]
+        })
+    } else {
+        newConfig = {
+            ...config.globalConfig,
+            ...propertiesToAdd
+        }
+   
+    }
+   
+    fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2))
+} 
