@@ -1,3 +1,10 @@
+## [1.9.1-next-setup.3](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next-setup.2...v1.9.1-next-setup.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* merges current into old branch ([58fd424](https://github.com/FusionAuth/fusionauth-node-cli/commit/58fd42463995387711e3838e7722fca1443996da))
+
 ## [1.9.1-next-setup.2](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next-setup.1...v1.9.1-next-setup.2) (2026-07-09)
 
 
