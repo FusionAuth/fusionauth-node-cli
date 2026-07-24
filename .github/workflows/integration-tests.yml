@@ -5,7 +5,6 @@ on:
   pull_request:
     branches:
       - main
-      - mcr/add-test-to-commit
 
 jobs:
   integration-tests:
