@@ -13,7 +13,7 @@ import { PostHog } from 'posthog-node'
 
 import * as dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config({ quiet: true });
 
 export const posthogClient = new PostHog(
     'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
