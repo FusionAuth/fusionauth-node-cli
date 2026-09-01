@@ -1,4 +1,7 @@
-# FusionAuth CLI - Agent Guidelines
+# FusionAuth CLI 
+FusionAuth CLI is a command-line tool for working with the FusionAuth CIAM platform.
+
+# Guidelines
 
 ## Build Commands
 - Build: `npm run build` (compiles TypeScript to `./dist/`)
