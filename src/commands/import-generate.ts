@@ -29,7 +29,7 @@ const action = async function ({numberOfFiles, countPerFile, applicationId, grou
     for (const [old, replacement] of Object.entries(DEPRECATED_FLAGS)) {
         if (process.argv.includes(old)) {
             console.warn(chalk.yellow(
-                `DEPRECATION WARNING: please start using ${replacement} going forward. ` +
+                `DEPRECATION WARNING: please use ${replacement} going forward. ` +
                 `${old} will be deprecated in a future release.`
             ));
         }
