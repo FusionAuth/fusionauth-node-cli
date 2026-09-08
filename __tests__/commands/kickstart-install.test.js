@@ -15,10 +15,19 @@ describe('validateEmail()', () => {
     assert.equal(validateEmail('admin@example.com'), true)
   })
 
+  test('accepts an email with subdomain', () => {
+    assert.equal(validateEmail('user@mail.example.co.uk'), true)
+  })
+
   test('rejects an address with no @', () => {
     const result = validateEmail('notanemail')
     assert.notEqual(result, true)
     assert.match(result, /valid email/)
+  })
+
+  test('rejects an address with no domain', () => {
+    const result = validateEmail('user@')
+    assert.notEqual(result, true)
   })
 
   test('rejects an empty string', () => {
@@ -34,6 +43,10 @@ describe('validateEmail()', () => {
 describe('validatePassword()', () => {
   test('accepts a password of exactly 8 characters', () => {
     assert.equal(validatePassword('abcdefgh'), true)
+  })
+
+  test('accepts a long password', () => {
+    assert.equal(validatePassword('supersecretpassword123'), true)
   })
 
   test('rejects an empty password', () => {

@@ -27,7 +27,7 @@ function warnDeprecatedFlags(argv: string[] = process.argv): void {
   for (const [old, replacement] of getDeprecatedFlagUsage(argv)) {
     console.warn(chalk.yellow(
       `DEPRECATION WARNING: please use ${replacement} going forward. ` +
-      `${old} will be deprecated in a future release.`
+      `${old} will be removed in a future release.`
     ));
   }
 }
@@ -105,7 +105,7 @@ function generateData(numObjects: number, appId: string, groupId: string, startN
       birthDate: faker.date.past().toISOString().split('T')[0],
       data: {
         displayName: faker.person.firstName() + ' ' + faker.person.lastName(),
-        favoriteColors: [faker.color.rgb(), faker.color.rgb()]
+        favoriteColors: [faker.internet.color(), faker.internet.color()]
       },
       email: `example${i + 1 + startNumber}@example.com`,
       encryptionScheme: 'salted-pbkdf2-hmac-sha256',
@@ -137,7 +137,7 @@ function generateData(numObjects: number, appId: string, groupId: string, startN
           },
           insertInstant: faker.date.past().getTime(),
           preferredLanguages: ['en_US'],
-          username: faker.internet.username(),
+          username: faker.internet.userName(),
           verified: faker.datatype.boolean()
         }
       ],
