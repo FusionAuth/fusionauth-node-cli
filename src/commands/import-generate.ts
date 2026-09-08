@@ -1,4 +1,4 @@
-import {Command} from '@commander-js/extra-typings';
+import {Command, Option} from '@commander-js/extra-typings';
 import {FusionAuthClient} from '@fusionauth/typescript-client';
 import {readFile} from 'fs/promises';
 import chalk from 'chalk';
@@ -6,6 +6,15 @@ import {join} from 'path';
 import {errorAndExit, logEvent} from '../utils.js';
 import { faker } from '@faker-js/faker';
 import * as fs from 'fs';
+
+const DEPRECATED_FLAGS: Record<string, string> = {
+  '--numberOfFiles':  '--number-of-files',
+  '--countPerFile':   '--count-per-file',
+  '--applicationId':  '--application-id',
+  '--groupId':        '--group-id',
+  '--tmpDir':         '--tmp-dir',
+  '--filePrefix':     '--file-prefix',
+};
 
 const action = async function ({numberOfFiles, countPerFile, applicationId, groupId, tmpDir, filePrefix}
 : {
@@ -17,6 +26,15 @@ const action = async function ({numberOfFiles, countPerFile, applicationId, grou
     filePrefix?: string | undefined;
 }
 ): Promise<void> {
+    for (const [old, replacement] of Object.entries(DEPRECATED_FLAGS)) {
+        if (process.argv.includes(old)) {
+            console.warn(chalk.yellow(
+                `DEPRECATION WARNING: please start using ${replacement} going forward. ` +
+                `${old} will be deprecated in a future release.`
+            ));
+        }
+    }
+
     logEvent('cli command import:generate')
     
     console.log(`Generating users`);
@@ -54,12 +72,19 @@ const action = async function ({numberOfFiles, countPerFile, applicationId, grou
 // noinspection JSUnusedGlobalSymbols
 export const importGenerate = new Command('import:generate')
     .description('Generate sample import data')
-    .option('-n, --numberOfFiles <numberOfFiles>', 'The number of files.')
-    .option('-c, --countPerFile <countPerFile>', 'The count of records per file.')
-    .option('-a, --applicationId <applicationId>', 'The application to register users to.')
-    .option('-g, --groupId <groupId>', 'The group id to add users to.')
-    .option('-d, --tmpDir <tmpDir>', 'The directory to write files to.', 'tmp')
-    .option('-f, --filePrefix <filePrefix>', 'The file prefix for output files.', 'output')
+    .option('-n, --number-of-files <numberOfFiles>', 'The number of files.')
+    .option('-c, --count-per-file <countPerFile>', 'The count of records per file.')
+    .option('-a, --application-id <applicationId>', 'The application to register users to.')
+    .option('-g, --group-id <groupId>', 'The group id to add users to.')
+    .option('-d, --tmp-dir <tmpDir>', 'The directory to write files to.', 'tmp')
+    .option('-f, --file-prefix <filePrefix>', 'The file prefix for output files.', 'output')
+    // Deprecated camelCase aliases — hidden from help, kept for backward compatibility
+    .addOption(new Option('--numberOfFiles <numberOfFiles>', 'Deprecated: use --number-of-files').hideHelp())
+    .addOption(new Option('--countPerFile <countPerFile>', 'Deprecated: use --count-per-file').hideHelp())
+    .addOption(new Option('--applicationId <applicationId>', 'Deprecated: use --application-id').hideHelp())
+    .addOption(new Option('--groupId <groupId>', 'Deprecated: use --group-id').hideHelp())
+    .addOption(new Option('--tmpDir <tmpDir>', 'Deprecated: use --tmp-dir').hideHelp())
+    .addOption(new Option('--filePrefix <filePrefix>', 'Deprecated: use --file-prefix').hideHelp())
     .action(action);
 
 
