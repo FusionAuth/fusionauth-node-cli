@@ -66,6 +66,10 @@ describe('telemetry runs properly', () => {
       }
     })
     test("Disable full command runs properly", () => {
+      nock('https://us.i.posthog.com')
+        .persist()
+        .post('/batch/')
+        .reply(200)
       mock({
         "src/.fa/config.json": JSON.stringify(mockedTrueConfig)
       })
@@ -78,6 +82,10 @@ describe('telemetry runs properly', () => {
       }
     })
     test("Enable full command runs properly", () => {
+      nock('https://us.i.posthog.com')
+        .persist()
+        .post('/batch/')
+        .reply(200)
       mock({
         "src/.fa/config.json": JSON.stringify(mockedFalseConfig)
       })

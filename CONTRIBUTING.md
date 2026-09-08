@@ -1,41 +1,43 @@
 # Contributing
 
+## Command Structure
+Commands generally follow the form:
+
+fusionauth namespace:command [--command-option] ...
+
+Where
+* Commands are grouped into a functional or domain namespace
+* Option names use kebab-case (e.g. `--admin-email`, `--number-of-files`)
+* Sensitive items can be passed via environment variable. In this case use `--option-name-env ENV_VAR` to indicate that the value is coming from the specified environment variable
+
 ## Risky Operations Policy
 
 Commands that perform risky operations must gate execution behind user confirmation using `confirmOrExit()` from `src/utils.ts`. All such commands must expose a `--yes` flag.
 
-### Risk Tiers
+## Testing
 
-**Tier 1 — Irreversible**
-Operations that cannot be undone (e.g. deleting an application, deleting a lambda). Recovery requires significant manual effort.
+### Running the tests
 
-**Tier 2 — Potentially locking out users**
-Operations that are reversible but could immediately break authentication if the client application is not updated in sync (e.g. enabling PKCE on an existing application, changing grant types, rotating a client secret).
+```bash
+# Unit tests (run these before every commit)
+npm run test:unit
 
-Tier 3 operations (creation, non-breaking reads/updates) require no confirmation.
+# Integration tests (requires a live FusionAuth instance)
+npm run test:integration
 
-### Implementation
-
-Add `--yes` to the command's options:
-
-```typescript
-.option('--yes', 'Skip confirmation prompt', false)
+# Full suite
+npm run test
 ```
 
-Call `confirmOrExit()` before the destructive action:
+The integration tests manage a Docker container automatically. Several environment variables control their behaviour:
 
-```typescript
-await confirmOrExit('This will permanently delete the application. This cannot be undone.', yes);
-```
+| Variable | Effect |
+|---|---|
+| `VERBOSE_CONTAINER=true` | Print each health-check attempt, elapsed time, and error reason; dump `docker compose logs` on failure |
+| `REUSE_CONTAINER=true` | Skip container startup and use a FusionAuth instance already running on `localhost:9011` |
+| `SKIP_TEARDOWN=true` | Leave the container running after the tests finish (useful for manual inspection) |
 
-For Tier 1, the message must describe what will be permanently lost. For Tier 2, use a specific message describing what could break and for whom. A placeholder is acceptable during initial implementation but should be replaced before release:
+### Requirements
 
-```typescript
-// TODO: replace with specific message describing what could break
-await confirmOrExit('This change may prevent users from authenticating.', yes);
-```
-
-### Rules
-
-- Always use `--yes`. Do not use `--force` or `--confirm`.
-- Do not add `--yes` to Tier 3 operations.
+- **All new functionality must be covered by tests.** This includes new commands, new options on existing commands, and new utility functions.
+- **All existing tests must pass cleanly before a PR is submitted.** A clean run means zero failures — `# fail 0` in the test output.
