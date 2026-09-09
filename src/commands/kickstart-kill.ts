@@ -5,24 +5,34 @@ import { spawn } from 'node:child_process';
 import { betaWarning, confirmOrExit, isDockerInstalled, logEvent } from "../utils.js";
 import boxen from "boxen";
 
+// Dependencies below are injectable for testing — avoids real docker/confirm/exit calls
+export interface KillDeps {
+  isDockerInstalled?: typeof isDockerInstalled;
+  confirmOrExit?: typeof confirmOrExit;
+  spawn?: typeof spawn;
+}
 
-const action = async function ({ yes }: { yes: boolean }) {
+export const action = async function ({ yes }: { yes: boolean }, deps: KillDeps = {}) {
+  const checkDocker = deps.isDockerInstalled ?? isDockerInstalled;
+  const confirm = deps.confirmOrExit ?? confirmOrExit;
+  const spawnFn = deps.spawn ?? spawn;
+
   betaWarning();
 
   try {
-    if (!isDockerInstalled()) throw (chalk.red('Error: You need Docker to run.'))
+    if (!checkDocker()) throw (chalk.red('Error: You need Docker to run.'))
 
     if (process.cwd() != process.env.CLI_DIR) throw(chalk.red('Error: Current directory was not kickstarted.'))
     logEvent('cli command kickstart:kill')
 
-    await confirmOrExit(
+    await confirm(
       "This will run 'docker compose down -v', destroying the container and all database data. This cannot be undone.",
       yes
     );
 
     console.log(chalk.yellow('Killing FusionAuth...\n'))
     try {
-      const starting = spawn('docker compose down -v', { shell: true, stdio: 'inherit' })
+      const starting = spawnFn('docker compose down -v', { shell: true, stdio: 'inherit' })
       starting.on('error', e => {
         console.error(e)
       })
@@ -50,4 +60,4 @@ export const kickstartKill = new Command()
   .command('kickstart:kill')
   .description('Runs docker compose down in current directory')
   .option('--yes', 'Skip confirmation prompt', false)
-  .action(action)
+  .action((options) => action(options))
