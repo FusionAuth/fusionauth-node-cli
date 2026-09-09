@@ -80,7 +80,7 @@ describe('confirmOrExit()', () => {
     assert.equal(exitMock.mock.calls.length, 0, 'process.exit should not be called')
   })
 
-  test('non-interactive (stdin not a TTY) exits with code 1', async (t) => {
+  test('non-interactive (stdin not a TTY) exits with code 1 and rejects (does not let caller proceed) when exit is mocked', async (t) => {
     const exitMock = t.mock.method(process, 'exit', () => {})
     const originalStdinTTY = process.stdin.isTTY
     const originalStdoutTTY = process.stdout.isTTY
@@ -89,7 +89,7 @@ describe('confirmOrExit()', () => {
     process.stdout.isTTY = true
 
     try {
-      await confirmOrExit('This is risky', false)
+      await assert.rejects(() => confirmOrExit('This is risky', false))
     } finally {
       process.stdin.isTTY = originalStdinTTY
       process.stdout.isTTY = originalStdoutTTY
@@ -99,7 +99,7 @@ describe('confirmOrExit()', () => {
     assert.equal(exitMock.mock.calls[0].arguments[0], 1)
   })
 
-  test('non-interactive (stdout not a TTY) exits with code 1', async (t) => {
+  test('non-interactive (stdout not a TTY) exits with code 1 and rejects (does not let caller proceed) when exit is mocked', async (t) => {
     const exitMock = t.mock.method(process, 'exit', () => {})
     const originalStdinTTY = process.stdin.isTTY
     const originalStdoutTTY = process.stdout.isTTY
@@ -108,7 +108,7 @@ describe('confirmOrExit()', () => {
     process.stdout.isTTY = false
 
     try {
-      await confirmOrExit('This is risky', false)
+      await assert.rejects(() => confirmOrExit('This is risky', false))
     } finally {
       process.stdin.isTTY = originalStdinTTY
       process.stdout.isTTY = originalStdoutTTY
@@ -118,7 +118,7 @@ describe('confirmOrExit()', () => {
     assert.equal(exitMock.mock.calls[0].arguments[0], 1)
   })
 
-  test('non-interactive (both not TTYs) exits with code 1', async (t) => {
+  test('non-interactive (both not TTYs) exits with code 1 and rejects (does not let caller proceed) when exit is mocked', async (t) => {
     const exitMock = t.mock.method(process, 'exit', () => {})
     const originalStdinTTY = process.stdin.isTTY
     const originalStdoutTTY = process.stdout.isTTY
@@ -127,7 +127,7 @@ describe('confirmOrExit()', () => {
     process.stdout.isTTY = false
 
     try {
-      await confirmOrExit('This is risky', false)
+      await assert.rejects(() => confirmOrExit('This is risky', false))
     } finally {
       process.stdin.isTTY = originalStdinTTY
       process.stdout.isTTY = originalStdoutTTY

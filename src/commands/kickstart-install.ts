@@ -8,6 +8,7 @@ import fs from 'node:fs'
 import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { betaWarning, errorAndExit, isDirEmpty, isDockerInstalled, logEvent } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -216,8 +217,8 @@ const action = async function (dir: string, options: InstallOptions) {
     if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
     await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
 
-    const postgresPass = crypto.randomUUID()
-    const dbPass = crypto.randomUUID()
+    const postgresPass = randomUUID()
+    const dbPass = randomUUID()
 
     console.log(chalk.green(`Transferring environment variables`))
     fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
