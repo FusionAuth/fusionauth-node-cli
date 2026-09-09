@@ -181,6 +181,24 @@ export function isConfirmationAccepted(answer: string): boolean {
     return normalized === 'y' || normalized === 'yes';
 }
 
+// Exported for testability — settles the prompt's Promise without needing a real TTY/readline round-trip.
+export function handleConfirmationAnswer(
+    answer: string,
+    resolve: () => void,
+    reject: (reason?: any) => void
+): void {
+    if (isConfirmationAccepted(answer)) {
+        resolve();
+        return;
+    }
+    console.log('Aborted.');
+    process.exit(0);
+    // Only reached if process.exit was mocked/deferred (e.g. in tests) — reject rather
+    // than falling through to resolve(), which would incorrectly treat a decline as
+    // confirmation.
+    reject(new Error('Aborted by user.'));
+}
+
 /**
  * Prompts the user for confirmation before proceeding with a risky operation.
  *
@@ -208,14 +226,10 @@ export async function confirmOrExit(message: string, yes: boolean): Promise<void
     const { createInterface } = await import('node:readline');
     const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
         rl.question('Proceed? [y/N] ', (answer) => {
             rl.close();
-            if (!isConfirmationAccepted(answer)) {
-                console.log('Aborted.');
-                process.exit(0);
-            }
-            resolve();
+            handleConfirmationAnswer(answer, resolve, reject);
         });
     });
 }
