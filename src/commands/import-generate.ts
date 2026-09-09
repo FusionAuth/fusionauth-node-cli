@@ -105,7 +105,7 @@ function generateData(numObjects: number, appId: string, groupId: string, startN
       birthDate: faker.date.past().toISOString().split('T')[0],
       data: {
         displayName: faker.person.firstName() + ' ' + faker.person.lastName(),
-        favoriteColors: [faker.internet.color(), faker.internet.color()]
+        favoriteColors: [faker.color.rgb(), faker.color.rgb()]
       },
       email: `example${i + 1 + startNumber}@example.com`,
       encryptionScheme: 'salted-pbkdf2-hmac-sha256',
@@ -137,7 +137,7 @@ function generateData(numObjects: number, appId: string, groupId: string, startN
           },
           insertInstant: faker.date.past().getTime(),
           preferredLanguages: ['en_US'],
-          username: faker.internet.userName(),
+          username: faker.internet.username(),
           verified: faker.datatype.boolean()
         }
       ],
