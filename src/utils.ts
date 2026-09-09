@@ -13,7 +13,7 @@ import { PostHog } from 'posthog-node'
 
 import * as dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config({ quiet: true });
 
 export const posthogClient = new PostHog(
     'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
@@ -173,6 +173,67 @@ export function toJson(item: unknown): string {
 export function errorAndExit(message: string, error?: any) {
     reportError(message, error);
     process.exit(1);
+}
+
+// Exported for testability — pure logic, no I/O, easy to unit test directly.
+export function isConfirmationAccepted(answer: string): boolean {
+    const normalized = answer.trim().toLowerCase();
+    return normalized === 'y' || normalized === 'yes';
+}
+
+// Exported for testability — settles the prompt's Promise without needing a real TTY/readline round-trip.
+export function handleConfirmationAnswer(
+    answer: string,
+    resolve: () => void,
+    reject: (reason?: any) => void
+): void {
+    if (isConfirmationAccepted(answer)) {
+        resolve();
+        return;
+    }
+    console.log('Aborted.');
+    process.exit(0);
+    // Only reached if process.exit was mocked/deferred (e.g. in tests) — reject rather
+    // than falling through to resolve(), which would incorrectly treat a decline as
+    // confirmation.
+    reject(new Error('Aborted by user.'));
+}
+
+/**
+ * Prompts the user for confirmation before proceeding with a risky operation.
+ *
+ * - If `yes` is true, returns immediately (caller has pre-confirmed).
+ * - If running interactively (both stdin and stdout are TTYs), prints the message
+ *   and prompts [y/N]. Accepts "y" or "yes" (case-insensitive, whitespace trimmed)
+ *   as confirmation; anything else aborts.
+ * - If not running interactively (agent/script/pipe — e.g. stdin is piped even if
+ *   stdout is a TTY), prints the message and exits with an error instructing the
+ *   caller to pass --yes.
+ *
+ * @param message A description of what will happen and why it is risky.
+ * @param yes     The value of the --yes flag from the command options.
+ */
+export async function confirmOrExit(message: string, yes: boolean): Promise<void> {
+    if (yes) return;
+
+    console.warn(chalk.yellow(message));
+
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
+        errorAndExit('Pass --yes to confirm this operation non-interactively.');
+        // Only reached if process.exit was mocked/deferred (e.g. in tests) — throw rather
+        // than returning normally, which would incorrectly let the caller proceed.
+        throw new Error('Confirmation required: pass --yes to confirm this operation non-interactively.');
+    }
+
+    const { createInterface } = await import('node:readline');
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+
+    await new Promise<void>((resolve, reject) => {
+        rl.question('Proceed? [y/N] ', (answer) => {
+            rl.close();
+            handleConfirmationAnswer(answer, resolve, reject);
+        });
+    });
 }
 
 /**
