@@ -7,7 +7,7 @@ import {errorAndExit, logEvent} from '../utils.js';
 import { faker } from '@faker-js/faker';
 import * as fs from 'fs';
 
-const DEPRECATED_FLAGS: Record<string, string> = {
+export const DEPRECATED_FLAGS: Record<string, string> = {
   '--numberOfFiles':  '--number-of-files',
   '--countPerFile':   '--count-per-file',
   '--applicationId':  '--application-id',
@@ -15,6 +15,22 @@ const DEPRECATED_FLAGS: Record<string, string> = {
   '--tmpDir':         '--tmp-dir',
   '--filePrefix':     '--file-prefix',
 };
+
+// Exported for testability — pure function, no I/O; returns [oldFlag, replacement] pairs found in argv.
+export function getDeprecatedFlagUsage(argv: string[]): Array<[string, string]> {
+  return Object.entries(DEPRECATED_FLAGS).filter(([old]) =>
+    argv.some((arg) => arg === old || arg.startsWith(`${old}=`))
+  );
+}
+
+function warnDeprecatedFlags(argv: string[] = process.argv): void {
+  for (const [old, replacement] of getDeprecatedFlagUsage(argv)) {
+    console.warn(chalk.yellow(
+      `DEPRECATION WARNING: please use ${replacement} going forward. ` +
+      `${old} will be deprecated in a future release.`
+    ));
+  }
+}
 
 const action = async function ({numberOfFiles, countPerFile, applicationId, groupId, tmpDir, filePrefix}
 : {
@@ -26,15 +42,7 @@ const action = async function ({numberOfFiles, countPerFile, applicationId, grou
     filePrefix?: string | undefined;
 }
 ): Promise<void> {
-    for (const [old, replacement] of Object.entries(DEPRECATED_FLAGS)) {
-        const wasUsed = process.argv.some((arg) => arg === old || arg.startsWith(`${old}=`));
-        if (wasUsed) {
-            console.warn(chalk.yellow(
-                `DEPRECATION WARNING: please use ${replacement} going forward. ` +
-                `${old} will be deprecated in a future release.`
-            ));
-        }
-    }
+    warnDeprecatedFlags();
 
     logEvent('cli command import:generate')
     
