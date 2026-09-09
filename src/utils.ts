@@ -175,6 +175,12 @@ export function errorAndExit(message: string, error?: any) {
     process.exit(1);
 }
 
+// Exported for testability — pure logic, no I/O, easy to unit test directly.
+export function isConfirmationAccepted(answer: string): boolean {
+    const normalized = answer.trim().toLowerCase();
+    return normalized === 'y' || normalized === 'yes';
+}
+
 /**
  * Prompts the user for confirmation before proceeding with a risky operation.
  *
@@ -205,8 +211,7 @@ export async function confirmOrExit(message: string, yes: boolean): Promise<void
     await new Promise<void>((resolve) => {
         rl.question('Proceed? [y/N] ', (answer) => {
             rl.close();
-            const normalized = answer.trim().toLowerCase();
-            if (normalized !== 'y' && normalized !== 'yes') {
+            if (!isConfirmationAccepted(answer)) {
                 console.log('Aborted.');
                 process.exit(0);
             }

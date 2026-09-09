@@ -13,9 +13,9 @@
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
     "start": "node --import=tsx src/index.ts",
-    "test": "NODE_ENV=test node --import=tsx --test __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/commands/kickstart-install.test.js __tests__/integration/apply/apply.integration.test.js",
+    "test": "NODE_ENV=test node --import=tsx --test __tests__/utils.test.js __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/commands/kickstart-install.test.js __tests__/commands/kickstart-kill.test.js __tests__/integration/apply/apply.integration.test.js",
     "test:integration": "NODE_ENV=test node --import=tsx --test __tests__/integration/apply/apply.integration.test.js",
-    "test:unit": "NODE_ENV=test node --import=tsx --test __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/commands/kickstart-install.test.js"
+    "test:unit": "NODE_ENV=test node --import=tsx --test __tests__/utils.test.js __tests__/postInstall/postinstall.test.js __tests__/telemetry/telemetry.test.js __tests__/utilities/kickstart/validator.test.js __tests__/utilities/kickstart/variable-substitution.test.js __tests__/commands/kickstart-install.test.js __tests__/commands/kickstart-kill.test.js"
   },
   "keywords": [
     "fusionauth",
