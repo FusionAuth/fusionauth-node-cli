@@ -179,9 +179,12 @@ export function errorAndExit(message: string, error?: any) {
  * Prompts the user for confirmation before proceeding with a risky operation.
  *
  * - If `yes` is true, returns immediately (caller has pre-confirmed).
- * - If running interactively (TTY), prints the message and prompts [y/N].
- * - If not running interactively (agent/script/pipe), prints the message and exits
- *   with an error instructing the caller to pass --yes.
+ * - If running interactively (both stdin and stdout are TTYs), prints the message
+ *   and prompts [y/N]. Accepts "y" or "yes" (case-insensitive, whitespace trimmed)
+ *   as confirmation; anything else aborts.
+ * - If not running interactively (agent/script/pipe — e.g. stdin is piped even if
+ *   stdout is a TTY), prints the message and exits with an error instructing the
+ *   caller to pass --yes.
  *
  * @param message A description of what will happen and why it is risky.
  * @param yes     The value of the --yes flag from the command options.
@@ -191,7 +194,7 @@ export async function confirmOrExit(message: string, yes: boolean): Promise<void
 
     console.warn(chalk.yellow(message));
 
-    if (!process.stdout.isTTY) {
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
         errorAndExit('Pass --yes to confirm this operation non-interactively.');
         return;
     }
@@ -202,7 +205,8 @@ export async function confirmOrExit(message: string, yes: boolean): Promise<void
     await new Promise<void>((resolve) => {
         rl.question('Proceed? [y/N] ', (answer) => {
             rl.close();
-            if (answer.toLowerCase() !== 'y') {
+            const normalized = answer.trim().toLowerCase();
+            if (normalized !== 'y' && normalized !== 'yes') {
                 console.log('Aborted.');
                 process.exit(0);
             }

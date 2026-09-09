@@ -205,29 +205,26 @@ const action = async function (dir: string, options: InstallOptions) {
     }
 
     const spinner = yoctoSpinner({ text: "Building..." }).start()
-    setTimeout(() => {
-      console.log(chalk.green(`\nTransferring files to ${dir}`))
-      fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
-    }, 500)
-    setTimeout(() => {
-      console.log(chalk.green(`Creating Kickstart file`))
-      if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
-      createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
-    }, 1500)
 
-    setTimeout(() => {
-      const postgresPass = crypto.randomUUID()
-      const dbPass = crypto.randomUUID()
+    // Sequential, awaited steps (rather than setTimeout-chained callbacks) so that:
+    //  - exceptions propagate through the surrounding try/catch
+    //  - step ordering is deterministic regardless of machine speed
+    console.log(chalk.green(`\nTransferring files to ${dir}`))
+    fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
 
-      console.log(chalk.green(`Transferring environment variables`))
-      fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
-      fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
-    }, 2500)
+    console.log(chalk.green(`Creating Kickstart file`))
+    if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
+    await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
 
-    setTimeout(() => {
-      spinner.success("Done building!\n")
-      console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
-    }, 3500)
+    const postgresPass = crypto.randomUUID()
+    const dbPass = crypto.randomUUID()
+
+    console.log(chalk.green(`Transferring environment variables`))
+    fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
+    fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
+
+    spinner.success("Done building!\n")
+    console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
 
   } catch (e) {
     console.error(e)

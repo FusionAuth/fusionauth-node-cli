@@ -27,7 +27,8 @@ const action = async function ({numberOfFiles, countPerFile, applicationId, grou
 }
 ): Promise<void> {
     for (const [old, replacement] of Object.entries(DEPRECATED_FLAGS)) {
-        if (process.argv.includes(old)) {
+        const wasUsed = process.argv.some((arg) => arg === old || arg.startsWith(`${old}=`));
+        if (wasUsed) {
             console.warn(chalk.yellow(
                 `DEPRECATION WARNING: please use ${replacement} going forward. ` +
                 `${old} will be deprecated in a future release.`
