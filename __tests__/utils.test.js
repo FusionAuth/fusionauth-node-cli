@@ -1,6 +1,6 @@
 import { describe, test } from "node:test"
 import assert from "node:assert/strict"
-import { isConfirmationAccepted, confirmOrExit } from "../src/utils.js"
+import { isConfirmationAccepted, handleConfirmationAnswer, confirmOrExit } from "../src/utils.js"
 
 describe('isConfirmationAccepted()', () => {
   test('accepts "y"', () => {
@@ -34,6 +34,40 @@ describe('isConfirmationAccepted()', () => {
     assert.equal(isConfirmationAccepted('nope'), false)
     assert.equal(isConfirmationAccepted('ye'), false)
     assert.equal(isConfirmationAccepted('sure'), false)
+  })
+})
+
+describe('handleConfirmationAnswer()', () => {
+  test('accepted answer calls resolve, not reject or process.exit', (t) => {
+    const exitMock = t.mock.method(process, 'exit', () => {})
+    let resolved = false
+    let rejected = false
+
+    handleConfirmationAnswer('y', () => { resolved = true }, () => { rejected = true })
+
+    assert.equal(resolved, true)
+    assert.equal(rejected, false)
+    assert.equal(exitMock.mock.calls.length, 0)
+  })
+
+  test('declined answer calls process.exit(0)', (t) => {
+    const exitMock = t.mock.method(process, 'exit', () => {})
+
+    handleConfirmationAnswer('n', () => {}, () => {})
+
+    assert.equal(exitMock.mock.calls.length, 1)
+    assert.equal(exitMock.mock.calls[0].arguments[0], 0)
+  })
+
+  test('declined answer rejects rather than resolving when process.exit is mocked (does not actually exit)', (t) => {
+    t.mock.method(process, 'exit', () => {})
+    let resolved = false
+    let rejectedWith
+
+    handleConfirmationAnswer('n', () => { resolved = true }, (err) => { rejectedWith = err })
+
+    assert.equal(resolved, false, 'resolve should never be called on decline')
+    assert.ok(rejectedWith instanceof Error, 'reject should be called with an Error')
   })
 })
 
