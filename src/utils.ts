@@ -220,7 +220,9 @@ export async function confirmOrExit(message: string, yes: boolean): Promise<void
 
     if (!process.stdin.isTTY || !process.stdout.isTTY) {
         errorAndExit('Pass --yes to confirm this operation non-interactively.');
-        return;
+        // Only reached if process.exit was mocked/deferred (e.g. in tests) — throw rather
+        // than returning normally, which would incorrectly let the caller proceed.
+        throw new Error('Confirmation required: pass --yes to confirm this operation non-interactively.');
     }
 
     const { createInterface } = await import('node:readline');
