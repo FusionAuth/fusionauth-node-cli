@@ -16,13 +16,62 @@ const execAsync = promisify(exec)
  * Handles docker compose lifecycle and FusionAuth readiness checks
  */
 
-const FUSIONAUTH_URL = 'http://localhost:9011'
+const DEFAULT_FUSIONAUTH_URL = 'http://localhost:9011'
 const DEFAULT_API_KEY = '90dd6b25-d1ef-4175-9656-159dd994932e'
-const HEALTH_CHECK_TIMEOUT = 120000 // 2 minutes
+const HEALTH_CHECK_TIMEOUT = 240000 // 4 minutes
 const HEALTH_CHECK_INTERVAL = 5000 // 5 seconds
 const REQUEST_TIMEOUT = 10000 // 10 seconds
+const CONTAINER_NAME = 'fusionauth-integration-test-base-fusionauth-1'
 
 let isContainerRunning = false
+let resolvedFusionAuthUrl = DEFAULT_FUSIONAUTH_URL
+
+/**
+ * Resolves the FusionAuth URL. On environments where localhost port-mapping
+ * behaves differently (e.g. macOS Docker Desktop), falls back to the
+ * container's direct bridge IP to ensure authenticated requests succeed.
+ * @returns {Promise<string>}
+ */
+async function resolveFusionAuthUrl() {
+  // First try localhost — if an authenticated request succeeds, use it.
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000)
+    const response = await fetch(`${DEFAULT_FUSIONAUTH_URL}/api/tenant`, {
+      headers: { Authorization: DEFAULT_API_KEY },
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+    if (response.ok) return DEFAULT_FUSIONAUTH_URL
+  } catch (_) {}
+
+  // Fall back to the container's direct bridge IP (works on macOS Docker Desktop
+  // where localhost port-mapping doesn't forward API-key auth correctly).
+  try {
+    const { stdout } = await execAsync(
+      `docker inspect ${CONTAINER_NAME} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+    )
+    const ips = stdout.trim().split(/\s+/).filter(Boolean)
+    for (const ip of ips) {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000)
+        const response = await fetch(`http://${ip}:9011/api/tenant`, {
+          headers: { Authorization: DEFAULT_API_KEY },
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (response.ok) {
+          console.log(`ℹ Using container IP ${ip}:9011 (localhost port-mapping not compatible)`)
+          return `http://${ip}:9011`
+        }
+      } catch (_) {}
+    }
+  } catch (_) {}
+
+  // Return localhost as a last resort — health check will catch startup failures.
+  return DEFAULT_FUSIONAUTH_URL
+}
 
 /**
  * Start FusionAuth via docker compose
@@ -31,7 +80,8 @@ let isContainerRunning = false
 export async function startFusionAuthContainer() {
   if (isContainerRunning || process.env.REUSE_CONTAINER === 'true') {
     console.log('ℹ Using existing FusionAuth container')
-    return { url: FUSIONAUTH_URL, apiKey: DEFAULT_API_KEY }
+    resolvedFusionAuthUrl = await resolveFusionAuthUrl()
+    return { url: resolvedFusionAuthUrl, apiKey: DEFAULT_API_KEY }
   }
 
   console.log('↻ Starting FusionAuth container via docker compose...')
@@ -75,10 +125,13 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
     // Wait for FusionAuth to be healthy
     await waitForFusionAuthReady()
 
+    // Resolve the URL that actually works for authenticated requests
+    resolvedFusionAuthUrl = await resolveFusionAuthUrl()
+
     isContainerRunning = true
     console.log('✓ FusionAuth container started and ready')
 
-    return { url: FUSIONAUTH_URL, apiKey: DEFAULT_API_KEY }
+    return { url: resolvedFusionAuthUrl, apiKey: DEFAULT_API_KEY }
   } catch (err) {
     throw new Error(`Failed to start FusionAuth container: ${err.message}`)
   }
@@ -124,13 +177,15 @@ async function waitForFusionAuthReady() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000)
       
-      const response = await fetch(`${FUSIONAUTH_URL}/api/status`, {
+      const response = await fetch(`${DEFAULT_FUSIONAUTH_URL}/api/status`, {
         signal: controller.signal
       })
       clearTimeout(timeoutId)
 
       if (response.ok) {
-        // Verify authenticated API requests work by fetching tenants, there was a problem with the status returning OK but the Key did not work
+        // Verify the kickstart has run and the container is fully initialized.
+        // We check using the container IP directly (more reliable than localhost
+        // on macOS Docker Desktop where port-mapping affects auth behavior).
         let authReady = false
         const authStartTime = Date.now()
         
@@ -138,8 +193,18 @@ async function waitForFusionAuthReady() {
           try {
             const authController = new AbortController()
             const authTimeoutId = setTimeout(() => authController.abort(), 5000)
+
+            // Try localhost first, fall back to container IP check via Docker inspect
+            let checkUrl = DEFAULT_FUSIONAUTH_URL
+            try {
+              const { stdout } = await execAsync(
+                `docker inspect ${CONTAINER_NAME} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+              )
+              const ip = stdout.trim().split(/\s+/).filter(Boolean)[0]
+              if (ip) checkUrl = `http://${ip}:9011`
+            } catch (_) {}
             
-            const tenantsResponse = await fetch(`${FUSIONAUTH_URL}/api/tenant`, {
+            const tenantsResponse = await fetch(`${checkUrl}/api/tenant`, {
               method: 'GET',
               headers: { Authorization: DEFAULT_API_KEY },
               signal: authController.signal
@@ -182,7 +247,7 @@ async function waitForFusionAuthReady() {
  * @returns {Promise<any>}
  */
 export async function makeApiRequest(method, path, data = null, apiKey = DEFAULT_API_KEY) {
-  const url = `${FUSIONAUTH_URL}${path}`
+  const url = `${resolvedFusionAuthUrl}${path}`
   const headers = {
     Authorization: apiKey,
     'Content-Type': 'application/json'
@@ -267,6 +332,57 @@ export async function getMessageTemplateByName(name, apiKey = DEFAULT_API_KEY) {
   const data = await makeApiRequest('GET', '/api/message/template', null, apiKey)
   const templates = data.messageTemplates || []
   return templates.find(t => t.name === name)
+}
+
+/**
+ * Get application by ID from FusionAuth
+ * @param {string} applicationId - Application ID
+ * @param {string} apiKey - API key
+ * @returns {Promise<object>}
+ */
+export async function getApplication(applicationId, apiKey = DEFAULT_API_KEY) {
+  const data = await makeApiRequest('GET', `/api/application/${applicationId}`, null, apiKey)
+  return data.application
+}
+
+/**
+ * Delete application by ID from FusionAuth
+ * @param {string} applicationId - Application ID
+ * @param {string} apiKey - API key
+ * @returns {Promise<void>}
+ */
+export async function deleteApplication(applicationId, apiKey = DEFAULT_API_KEY) {
+  // First deactivate, then hard-delete
+  await makeApiRequest('DELETE', `/api/application/${applicationId}`, null, apiKey)
+  await makeApiRequest('DELETE', `/api/application/${applicationId}?hardDelete=true`, null, apiKey)
+}
+
+let baselineSystemConfiguration = null
+
+/**
+ * Captures the current system configuration as the baseline to restore to
+ * after CORS-mutating tests. Must be called once before any test that
+ * modifies system configuration (e.g. application:create --profile spa/native).
+ * @param {string} apiKey - API key
+ * @returns {Promise<object>}
+ */
+export async function captureSystemConfigurationBaseline(apiKey = DEFAULT_API_KEY) {
+  const data = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
+  baselineSystemConfiguration = data.systemConfiguration
+  return baselineSystemConfiguration
+}
+
+/**
+ * Restores system configuration to the captured baseline. Uses PUT (full
+ * overwrite) rather than PATCH so the restore is exact, not merged.
+ * @param {string} apiKey - API key
+ * @returns {Promise<void>}
+ */
+export async function resetSystemConfiguration(apiKey = DEFAULT_API_KEY) {
+  if (!baselineSystemConfiguration) {
+    throw new Error('captureSystemConfigurationBaseline() must be called before resetSystemConfiguration()')
+  }
+  await makeApiRequest('PUT', '/api/system-configuration', { systemConfiguration: baselineSystemConfiguration }, apiKey)
 }
 
 /**

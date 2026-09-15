@@ -3,6 +3,7 @@ import {Command, Option} from '@commander-js/extra-typings';
 import {
     Application,
     ClientAuthenticationPolicy,
+    CORSConfiguration,
     FusionAuthClient,
     GrantType,
     ProofKeyForCodeExchangePolicy,
@@ -12,8 +13,31 @@ import {
 import chalk from 'chalk';
 import {errorAndExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from '../options.js';
+import * as utils from '../utils.js';
 
 type Profile = 'spa' | 'native' | 'webapp';
+
+export interface ApplicationCreateOptions {
+    name: string;
+    profile?: string;
+    redirectUri?: string[];
+    logoutUrl?: string;
+    authorizedOriginUrl?: string[];
+    applicationId?: string;
+    tenantId?: string;
+    data?: string;
+    key: string;
+    host: string;
+}
+
+export interface ApplicationCreateResult {
+    success: boolean;
+    error?: string;
+    applicationId?: string;
+    clientId?: string;
+    clientSecret?: string;
+    name?: string;
+}
 
 const publicClientDefaults: Application = {
     oauthConfiguration: {
@@ -51,9 +75,80 @@ const profileDefaults: Record<Profile, Application> = {
     },
 };
 
+const REQUIRED_CORS_HEADERS = ['dpop', 'Authorization', 'Accept'];
+
+/**
+ * Ensures that the required DPoP-related CORS headers are present in the
+ * FusionAuth system configuration. Also enables CORS if it is currently
+ * disabled. Should be called for spa and native profiles before creating
+ * the application.
+ *
+ * CORS is a prerequisite for spa/native DPoP flows. If this call fails the
+ * entire command is aborted — no application will be created.
+ *
+ * Note: /api/system-configuration does not accept a tenant ID. The tenant
+ * header is cleared for these calls and restored afterward.
+ */
+async function ensureCorsHeaders(client: FusionAuthClient): Promise<void> {
+    const originalTenantId = client.tenantId ?? null;
+    client.setTenantId(null);
+
+    try {
+        let retrieveResponse;
+        try {
+            retrieveResponse = await client.retrieveSystemConfiguration();
+        } catch (e: unknown) {
+            throw new Error(`Error retrieving system configuration: ${e instanceof Error ? e.message : String(e)}`);
+        }
+
+        const systemConfig = retrieveResponse.response.systemConfiguration!;
+        const cors: CORSConfiguration = systemConfig.corsConfiguration ?? {};
+        const existing: string[] = cors.allowedHeaders ?? [];
+        const existingLower = existing.map((h) => h.toLowerCase());
+
+        const missing = REQUIRED_CORS_HEADERS.filter(
+            (h) => !existingLower.includes(h.toLowerCase())
+        );
+
+        const needsEnable = cors.enabled !== true;
+
+        if (missing.length === 0 && !needsEnable) {
+            return;
+        }
+
+        if (needsEnable) {
+            console.warn(chalk.yellow(
+                'Warning: CORS was disabled and has been enabled to support this application. ' +
+                'This may allow cross-domain requests that were previously blocked.'
+            ));
+        }
+
+        try {
+            await client.patchSystemConfiguration({
+                systemConfiguration: {
+                    corsConfiguration: {
+                        ...cors,
+                        enabled: true,
+                        allowedHeaders: [...existing, ...missing],
+                    },
+                },
+            });
+
+            if (missing.length > 0) {
+                console.log(`  CORS headers added:         ${missing.join(', ')}`);
+            }
+        } catch (e: unknown) {
+            throw new Error(`Error updating CORS configuration: ${e instanceof Error ? e.message : String(e)}`);
+        }
+    } finally {
+        client.setTenantId(originalTenantId);
+    }
+}
+
 /**
  * Parses the --data value. If it begins with '@', reads the referenced file.
  * Otherwise parses the value as inline JSON.
+ * Throws an Error on parse or file-read failure (caught by executeApplicationCreate).
  */
 function parseData(data: string): Application {
     let json: string;
@@ -63,9 +158,7 @@ function parseData(data: string): Application {
             json = fs.readFileSync(filePath, 'utf-8');
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e);
-            errorAndExit(`Error reading --data file "${filePath}": ${message}`);
-            // unreachable — errorAndExit calls process.exit, but satisfies TS
-            throw e;
+            throw new Error(`Error reading --data file "${filePath}": ${message}`);
         }
     } else {
         json = data;
@@ -74,14 +167,17 @@ function parseData(data: string): Application {
         return JSON.parse(json) as Application;
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
-        errorAndExit(`Error parsing --data JSON: ${message}`);
-        throw e;
+        throw new Error(`Error parsing --data JSON: ${message}`);
     }
 }
 
-const action = async function (
-    name: string,
-    {
+/**
+ * Core logic for application:create. Returns a result object rather than
+ * calling process.exit(), allowing tests to import and invoke this directly.
+ */
+export async function executeApplicationCreate(options: ApplicationCreateOptions): Promise<ApplicationCreateResult> {
+    const {
+        name,
         profile,
         redirectUri,
         logoutUrl,
@@ -91,96 +187,109 @@ const action = async function (
         data,
         key: apiKey,
         host,
-    }: {
-        profile?: string;
-        redirectUri?: string[];
-        logoutUrl?: string;
-        authorizedOriginUrl?: string[];
-        applicationId?: string;
-        tenantId?: string;
-        data?: string;
-        key: string;
-        host: string;
-    }
-) {
-    await logEvent('cli command application:create');
+    } = options;
 
-    // --- Mode validation ---
-    if (profile && data) {
-        errorAndExit('--profile and --data are mutually exclusive. Provide one or the other.');
-        return;
-    }
-    if (!profile && !data) {
-        errorAndExit('Either --profile <spa|native|webapp> or --data <json|@file.json> is required.');
-        return;
-    }
+    try {
+        await logEvent('cli command application:create');
 
-    let application: Application;
-
-    if (profile) {
-        // --- Profile mode ---
-        if (redirectUri === undefined || redirectUri.length === 0) {
-            errorAndExit('--redirect-uri is required when using --profile.');
-            return;
+        // --- Mode validation ---
+        if (profile && data) {
+            return { success: false, error: '--profile and --data are mutually exclusive. Provide one or the other.' };
+        }
+        if (!profile && !data) {
+            return { success: false, error: 'Either --profile <spa|native|webapp> or --data <json|@file.json> is required.' };
         }
 
-        const defaults = profileDefaults[profile as Profile];
-        application = {...defaults};
-        application.name = name;
-        application.oauthConfiguration = {
-            ...application.oauthConfiguration,
-            authorizedRedirectURLs: redirectUri,
-            ...(logoutUrl ? {logoutURL: logoutUrl} : {}),
-            ...(authorizedOriginUrl && authorizedOriginUrl.length > 0
-                ? {authorizedOriginURLs: authorizedOriginUrl}
-                : {}),
-        };
-    } else {
-        // --- Custom mode ---
-        application = parseData(data!);
-        application.name = name;
-    }
+        let application: Application;
 
-    // --- ID overrides (applied last in both modes) ---
-    if (applicationId) {
-        application.id = applicationId;
-    }
-    if (tenantId) {
-        application.tenantId = tenantId;
-    }
+        if (profile) {
+            // --- Profile mode ---
+            if (redirectUri === undefined || redirectUri.length === 0) {
+                return { success: false, error: '--redirect-uri is required when using --profile.' };
+            }
 
-    // --- API call ---
-    try {
-        const fusionAuthClient = new FusionAuthClient(apiKey, host);
+            const defaults = profileDefaults[profile as Profile];
+            application = {...defaults};
+            application.name = name;
+            application.oauthConfiguration = {
+                ...application.oauthConfiguration,
+                authorizedRedirectURLs: redirectUri,
+                ...(logoutUrl ? {logoutURL: logoutUrl} : {}),
+                ...(authorizedOriginUrl && authorizedOriginUrl.length > 0
+                    ? {authorizedOriginURLs: authorizedOriginUrl}
+                    : {}),
+            };
+        } else {
+            // --- Custom mode ---
+            application = parseData(data!);
+            application.name = name;
+        }
+
+        // --- ID overrides (applied last in both modes) ---
+        if (applicationId) {
+            application.id = applicationId;
+        }
+        if (tenantId) {
+            application.tenantId = tenantId;
+        }
+
+        const fusionAuthClient = new FusionAuthClient(apiKey, host, tenantId);
+
+        // For spa/native profiles, enforce DPoP-required CORS headers first.
+        // If this fails the command aborts — createApplication is never called.
+        if (profile === 'spa' || profile === 'native') {
+            await ensureCorsHeaders(fusionAuthClient);
+        }
+
         const clientResponse = await fusionAuthClient.createApplication(
             application.id ?? '',
             {application}
         );
 
-        if (!clientResponse.wasSuccessful()) {
-            errorAndExit('Error creating application: ', clientResponse);
-            return;
-        }
-
         const created = clientResponse.response.application!;
         const clientId = created.oauthConfiguration?.clientId ?? created.id ?? '';
         const clientSecret = created.oauthConfiguration?.clientSecret;
 
-        console.log(chalk.green('Application created.'));
-        console.log(`  Name:                       ${created.name}`);
-        console.log(`  Application ID / client_id: ${clientId}`);
-        if (clientSecret) {
-            console.log(`  Client Secret:              ${clientSecret}`);
-        }
+        return {
+            success: true,
+            applicationId: created.id,
+            clientId,
+            clientSecret,
+            name: created.name,
+        };
+
     } catch (e: unknown) {
-        errorAndExit('Error creating application: ', e);
+        const message = e instanceof Error ? e.message : String(e);
+        if (process.env.NODE_ENV !== 'test') {
+            utils.errorAndExit('Error creating application: ', e);
+        }
+        return { success: false, error: message };
+    }
+}
+
+/**
+ * CLI action wrapper — calls executeAction and handles output/exit.
+ */
+const action = async function (options: ApplicationCreateOptions) {
+    const result = await executeApplicationCreate(options);
+
+    if (!result.success) {
+        utils.errorAndExit(result.error ?? 'Error creating application.');
+        return;
+    }
+
+    console.log(chalk.green('Application created.'));
+    console.log(`  Name:                       ${result.name}`);
+    console.log(`  Application ID / client_id: ${result.clientId}`);
+    if (result.clientSecret) {
+        console.log(`  Client Secret:              ${result.clientSecret}`);
     }
 };
 
 // noinspection JSUnusedGlobalSymbols
 export const applicationCreate = new Command('application:create')
     .description('Create an application in FusionAuth')
-    .argument('<name>', 'The name of the application')
+    .requiredOption('--name <name>', 'The name of the application')
     .addOption(
         new Option('--profile <profile>', 'Security profile to apply (mutually exclusive with --data)')
             .choices(['spa', 'native', 'webapp'] as const)
