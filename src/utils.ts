@@ -325,3 +325,198 @@ async function updateGlobalConfig(propertiesToAdd: PropertyToAdd | PropertyToAdd
    
     fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2))
 } 
+
+export const exampleApplicationBody = {
+  "accessControlConfiguration": {},
+  "active": true,
+  "authenticationTokenConfiguration": {
+    "enabled": false
+  },
+  "data": {},
+  "emailConfiguration": {},
+  "externalIdentifierConfiguration": {},
+  "formConfiguration": {
+    "adminRegistrationFormId": "UUID",
+    "selfServiceFormConfiguration": {
+      "requireCurrentPasswordOnPasswordChange": false
+    }
+  },
+  "id": "UUID",
+  "insertInstant": 1234,
+  "jwtConfiguration": {
+    "accessTokenKeyId": "UUID",
+    "enabled": true,
+    "idTokenKeyId": "e73fe48a-1527-43cf-9b66-9eaa4c44d909",
+    "refreshTokenExpirationPolicy": "Fixed",
+    "refreshTokenOneTimeUseConfiguration": {
+      "gracePeriodInSeconds": 0
+    },
+    "refreshTokenSlidingWindowConfiguration": {
+      "maximumTimeToLiveInMinutes": 43200
+    },
+    "refreshTokenTimeToLiveInMinutes": 43200,
+    "refreshTokenUsagePolicy": "Reusable",
+    "timeToLiveInSeconds": 3600
+  },
+  "lambdaConfiguration": {},
+  "lastUpdateInstant": 1789396293195,
+  "loginConfiguration": {
+    "allowTokenRefresh": false,
+    "generateRefreshTokens": false,
+    "requireAuthentication": true
+  },
+  "multiFactorConfiguration": {
+    "email": {},
+    "sms": {},
+    "voice": {}
+  },
+  "name": "Name string",
+  "oauthConfiguration": {
+    "authorizedOriginURLs": [
+      "http://localhost:3000"
+    ],
+    "authorizedRedirectURLs": [
+      "http://localhost:1002"
+    ],
+    "authorizedResourceUris": [
+      "http://localhost:3000"
+    ],
+    "authorizedURLValidationPolicy": "ExactMatch",
+    "clientAuthenticationPolicy": "NotRequiredWhenUsingPKCE",
+    "clientId": "UUID",
+    "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
+    "consentMode": "AlwaysPrompt",
+    "debug": true,
+    "enabledGrants": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "generateRefreshTokens": true,
+    "logoutBehavior": "AllApplications",
+    "logoutURL": "http://localhost:3000",
+    "proofKeyForCodeExchangePolicy": "Required",
+    "providedScopePolicy": {
+      "address": {
+        "enabled": true,
+        "required": false
+      },
+      "email": {
+        "enabled": true,
+        "required": false
+      },
+      "phone": {
+        "enabled": true,
+        "required": false
+      },
+      "profile": {
+        "enabled": true,
+        "required": false
+      }
+    },
+    "relationship": "FirstParty",
+    "requireClientAuthentication": true,
+    "requireRegistration": true,
+    "scopeHandlingPolicy": "Strict",
+    "unknownScopePolicy": "Reject"
+  },
+  "passwordlessConfiguration": {
+    "emailLoginStrategy": "ClickableLink",
+    "enabled": false,
+    "phoneLoginStrategy": "FormField"
+  },
+  "phoneConfiguration": {},
+  "registrationConfiguration": {
+    "birthDate": {
+      "enabled": false,
+      "required": false
+    },
+    "completeRegistration": false,
+    "confirmPassword": false,
+    "enabled": true,
+    "firstName": {
+      "enabled": false,
+      "required": false
+    },
+    "fullName": {
+      "enabled": false,
+      "required": false
+    },
+    "lastName": {
+      "enabled": false,
+      "required": false
+    },
+    "loginIdType": "email",
+    "middleName": {
+      "enabled": false,
+      "required": false
+    },
+    "mobilePhone": {
+      "enabled": false,
+      "required": false
+    },
+    "preferredLanguages": {
+      "enabled": false,
+      "required": false
+    },
+    "type": "basic"
+  },
+  "registrationDeletePolicy": {
+    "unverified": {
+      "enabled": false,
+      "numberOfDaysToRetain": 120
+    }
+  },
+  "roles": [],
+  "samlv2Configuration": {
+    "assertionEncryptionConfiguration": {
+      "digestAlgorithm": "SHA256",
+      "enabled": false,
+      "encryptionAlgorithm": "AES256GCM",
+      "keyLocation": "Child",
+      "keyTransportAlgorithm": "RSA_OAEP",
+      "maskGenerationFunction": "MGF1_SHA1"
+    },
+    "authorizedRedirectURLs": [],
+    "debug": false,
+    "enabled": false,
+    "initiatedLogin": {
+      "enabled": false,
+      "nameIdFormat": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+    },
+    "loginHintConfiguration": {
+      "enabled": true,
+      "parameterName": "login_hint"
+    },
+    "logout": {
+      "behavior": "AllParticipants",
+      "requireSignedRequests": false,
+      "singleLogout": {
+        "enabled": false,
+        "xmlSignatureC14nMethod": "exclusive_with_comments"
+      },
+      "xmlSignatureC14nMethod": "exclusive_with_comments"
+    },
+    "requireSignedRequests": false,
+    "xmlSignatureC14nMethod": "exclusive_with_comments",
+    "xmlSignatureLocation": "Assertion"
+  },
+  "scopes": [],
+  "state": "Active",
+  "tenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+  "universalConfiguration": {
+    "universal": false
+  },
+  "unverified": {
+    "behavior": "Allow"
+  },
+  "verifyRegistration": false,
+  "webAuthnConfiguration": {
+    "bootstrapWorkflow": {
+      "enabled": false
+    },
+    "enabled": false,
+    "reauthenticationWorkflow": {
+      "enabled": false
+    }
+  }
+}
