@@ -78,24 +78,23 @@ const action = async function (id: string, options: Record<string, any>): Promis
   } = options
   const httpClient = new HTTPClient(host, key);
 
-  if (options?.example) {
-    console.log(chalk.yellow("Generating example file in current directory"))
-    writeFileSync('./application.example.json', JSON.stringify(exampleApplicationBody, null, 2))
-    console.log(chalk.green(`File created at ${path.resolve('./application.example.json')}`))
-    return
-  }
-
-  if (options?.prop) {
-    let data = { application: {}}
-    const {key, value} = splitProp(options.prop)
-    data.application = await setNestedProps(data.application, `${key}`, value)
-    console.log(data)
-    const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
-    console.log(response)
-    return
-  }
-
   try {
+
+    if (options?.example) {
+      console.log(chalk.yellow("Generating example file in current directory"))
+      writeFileSync('./application.example.json', JSON.stringify(exampleApplicationBody, null, 2))
+      console.log(chalk.green(`File created at ${path.resolve('./application.example.json')}`))
+      return
+    }
+
+    if (options?.prop) {
+      let data = { application: {}}
+      const {key, value} = splitProp(options.prop)
+      data.application = await setNestedProps(data.application, `${key}`, value)
+      const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
+      return
+    }
+
     if (options?.data) {
       const data = await getData(options.data)
       await httpClient.executeRequest('PATCH', `/api/application/${id}`, { application: data })
@@ -103,28 +102,23 @@ const action = async function (id: string, options: Record<string, any>): Promis
       return
     }
 
+    const apiBody = convertOptionsToApiBody(options)
+    await httpClient.executeRequest('PATCH', `/api/application/${id}`, apiBody)
+    return
+
   } catch (e) {
     console.log(e)
   }
 
-  try {
-    const apiBody = convertOptionsToApiBody(options)
-
-    const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, apiBody)
-    console.log(response)
-    return
-  } catch (err) {
-    console.log(err)
-  }
 }
 export const appUpdate = new Command()
   .command('application:update')
   .argument('id', "The FusionAuth Application ID to update")
   .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
   .option('--redirect-url <redirectUrl>', 'Oauth2.0 Authorized URL')
-  .option('-p, --prop <prop>')
+  .option('-p, --prop <prop>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
   .option('--example', "Generate an example JSON document showing much of what can be updated via application:update")
   .addOption(hostOption)
   .addOption(apiKeyOption)
-  .description('Sets a global config value to allow telemetry to be collected')
+  .description('Updates an application with data provided via a file, a property, or a command flag.')
   .action(action)
