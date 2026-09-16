@@ -270,6 +270,16 @@ export function isDirEmpty(path: string) {
   }
 }
 
+/**
+ * Returns the base directory used for the global `.fa/config.json` file.
+ * Defaults to the directory containing this module, but can be overridden
+ * via FUSIONAUTH_CONFIG_DIR — primarily so tests can point at a real
+ * temporary directory instead of mocking the filesystem.
+ */
+export function getConfigDir(): string {
+    return process.env.FUSIONAUTH_CONFIG_DIR ?? __dirname
+}
+
 export function loadConfig() {
     const defaultConfig = {
         telemetry: true,
@@ -277,10 +287,11 @@ export function loadConfig() {
         version: "1.0"
 
     }
-    const configPath = __dirname + '/.fa/config.json'
+    const configDir = getConfigDir()
+    const configPath = configDir + '/.fa/config.json'
     try {
         if (!fs.existsSync(configPath)) {
-            createConfig(__dirname + '/.fa', defaultConfig)
+            createConfig(configDir + '/.fa', defaultConfig)
         }
         const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
         // TODO: Combine this with a local-project config
@@ -365,7 +376,7 @@ export function createConfig(dir: string, configObject: ConfigObject = { id: ran
 type PropertyToAdd = {[key:string]: any}
 async function updateGlobalConfig(propertiesToAdd: PropertyToAdd | PropertyToAdd[]) {
     const config = loadConfig()
-    const configPath = __dirname + '/.fa/config.json'
+    const configPath = getConfigDir() + '/.fa/config.json'
     let newConfig: any;
     
     if (Array.isArray(propertiesToAdd)) {

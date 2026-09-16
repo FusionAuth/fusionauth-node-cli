@@ -1,4 +1,4 @@
-import { describe, test } from "node:test"
+import { describe, test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import { action } from "../../src/commands/kickstart-kill.js"
 
@@ -15,6 +15,16 @@ function fakeChildProcess() {
 }
 
 describe('kickstart:kill action()', () => {
+  // action() calls logEvent() internally (unmocked). Disable telemetry so it
+  // short-circuits before touching the real filesystem or network.
+  beforeEach(() => {
+    process.env.FUSIONAUTH_TELEMETRY = 'false'
+  })
+
+  afterEach(() => {
+    delete process.env.FUSIONAUTH_TELEMETRY
+  })
+
   test('does not call confirmOrExit or spawn when Docker is not installed', async () => {
     const confirmCalls = []
     const spawnCalls = []
