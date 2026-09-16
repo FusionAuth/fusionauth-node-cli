@@ -57,7 +57,7 @@ export interface InstallAnswers {
 }
 
 /**
- * We need the intial admin's credentials (email and password) and a name for a
+ * We need the initial admin's credentials (email and password) and a name for a
  * starter app. This will take values from command line params if present, then 
  * fall back to prompting the user. 
  * 
@@ -228,6 +228,9 @@ const action = async function (dir: string, options: InstallOptions) {
 
   } catch (e) {
     console.error(e)
+    // Ensure a failed install (copy, kickstart write, rename, env update, etc.)
+    // is reflected in the process exit code rather than silently exiting 0.
+    process.exitCode = 1
   }
 }
 
