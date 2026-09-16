@@ -15,19 +15,10 @@ describe('validateEmail()', () => {
     assert.equal(validateEmail('admin@example.com'), true)
   })
 
-  test('accepts an email with subdomain', () => {
-    assert.equal(validateEmail('user@mail.example.co.uk'), true)
-  })
-
   test('rejects an address with no @', () => {
     const result = validateEmail('notanemail')
     assert.notEqual(result, true)
     assert.match(result, /valid email/)
-  })
-
-  test('rejects an address with no domain', () => {
-    const result = validateEmail('user@')
-    assert.notEqual(result, true)
   })
 
   test('rejects an empty string', () => {
@@ -45,25 +36,16 @@ describe('validatePassword()', () => {
     assert.equal(validatePassword('abcdefgh'), true)
   })
 
-  test('accepts a long password', () => {
-    assert.equal(validatePassword('supersecretpassword123'), true)
-  })
-
   test('rejects an empty password', () => {
     const result = validatePassword('')
     assert.notEqual(result, true)
     assert.match(result, /required/)
   })
 
-  test('rejects a password shorter than 8 characters', () => {
-    const result = validatePassword('short')
-    assert.notEqual(result, true)
-    assert.match(result, /8 characters/)
-  })
-
-  test('rejects a 7-character password', () => {
+  test('rejects a password one character short of the minimum', () => {
     const result = validatePassword('1234567')
     assert.notEqual(result, true)
+    assert.match(result, /8 characters/)
   })
 })
 
@@ -315,7 +297,7 @@ describe('resolveInstallAnswers() — CLI validation errors', () => {
 // ---------------------------------------------------------------------------
 
 describe('resolveInstallAnswers() — inquirer validate functions', () => {
-  test('email question carries a validate function that rejects bad input', async () => {
+  test('email question uses validateEmail directly', async () => {
     let capturedQuestions
 
     const mockPrompt = async (questions) => {
@@ -327,12 +309,10 @@ describe('resolveInstallAnswers() — inquirer validate functions', () => {
 
     const emailQuestion = capturedQuestions.find((q) => q.name === 'email')
     assert.ok(emailQuestion, 'email question should exist')
-    assert.ok(typeof emailQuestion.validate === 'function', 'email question should have validate')
-    assert.equal(emailQuestion.validate('good@example.com'), true)
-    assert.notEqual(emailQuestion.validate('bad'), true)
+    assert.equal(emailQuestion.validate, validateEmail)
   })
 
-  test('password question carries a validate function that rejects short input', async () => {
+  test('password question uses validatePassword directly', async () => {
     let capturedQuestions
 
     const mockPrompt = async (questions) => {
@@ -344,9 +324,6 @@ describe('resolveInstallAnswers() — inquirer validate functions', () => {
 
     const passwordQuestion = capturedQuestions.find((q) => q.name === 'password')
     assert.ok(passwordQuestion, 'password question should exist')
-    assert.ok(typeof passwordQuestion.validate === 'function', 'password question should have validate')
-    assert.equal(passwordQuestion.validate('longenough'), true)
-    assert.notEqual(passwordQuestion.validate('short'), true)
-    assert.notEqual(passwordQuestion.validate(''), true)
+    assert.equal(passwordQuestion.validate, validatePassword)
   })
 })

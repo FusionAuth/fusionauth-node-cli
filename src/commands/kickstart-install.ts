@@ -9,6 +9,7 @@ import path from "node:path";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import validator from 'validator';
 import { betaWarning, errorAndExit, isDirEmpty, isDockerInstalled, logEvent } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,14 +18,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Validation helpers (exported for testing)
 // ---------------------------------------------------------------------------
 
-export const EMAIL_REGEX = /(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/;
-
 /**
  * Validates an email address.
  * @returns `true` if valid, otherwise an error message string.
  */
 export function validateEmail(email: string): true | string {
-  return EMAIL_REGEX.test(email) ? true : 'Not a valid email address';
+  return validator.isEmail(email) ? true : 'Not a valid email address';
 }
 
 /**
