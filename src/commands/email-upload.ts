@@ -94,7 +94,7 @@ export const emailUpload = new Command('email:upload')
                 }
 
                 try {
-                    const request: EmailTemplateRequest = {emailTemplate: removeUndefinedObjects.default(emailTemplate)};
+                    const request: EmailTemplateRequest = {emailTemplate: removeUndefinedObjects(emailTemplate)};
                     if (!templateExists) {
                         await client.createEmailTemplate(templateId, request);
                     } else if (overwrite) {

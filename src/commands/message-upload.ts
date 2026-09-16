@@ -94,7 +94,7 @@ export const messageUpload = new Command('message:upload')
                 }
 
                 try {
-                    const request: MessageTemplateRequest = {messageTemplate: removeUndefinedObjects.default(messageTemplate)};
+                    const request: MessageTemplateRequest = {messageTemplate: removeUndefinedObjects(messageTemplate)};
                     if (!templateExists) {
                         await client.createMessageTemplate(templateId, request);
                     } else if (overwrite) {
