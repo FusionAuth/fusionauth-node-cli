@@ -71,10 +71,11 @@ function splitProp(prop: string) {
   return {key, value}
 }
 
-const action = async function (id: string, options: Record<string, any>): Promise<void> {
+const action = async function (options: Record<string, any>): Promise<void> {
   const {
     host = 'http://localhost:9011',
-    key
+    key,
+    id
   } = options
   const httpClient = new HTTPClient(host, key);
 
@@ -113,7 +114,7 @@ const action = async function (id: string, options: Record<string, any>): Promis
 }
 export const appUpdate = new Command()
   .command('application:update')
-  .argument('id', "The FusionAuth Application ID to update")
+  .requiredOption('-i, --id <id>', "The FusionAuth Application ID to update")
   .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
   .option('--redirect-url <redirectUrl>', 'Oauth2.0 Authorized URL')
   .option('-p, --prop <prop>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
