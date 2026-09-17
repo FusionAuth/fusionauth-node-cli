@@ -90,8 +90,8 @@ const action = async function (options: Record<string, any>): Promise<void> {
 
     if (options?.prop) {
       let data = { application: {}}
-      const {key, value} = splitProp(options.prop)
-      data.application = await setNestedProps(data.application, `${key}`, value)
+      const splitprops = options.prop.map((prop:string) => splitProp(prop))
+      splitprops.forEach((prop:any) => setNestedProps(data.application, prop.key, prop.value))
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
       return
     }
@@ -117,7 +117,7 @@ export const appUpdate = new Command()
   .requiredOption('-i, --id <id>', "The FusionAuth Application ID to update")
   .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
   .option('--redirect-url <redirectUrl>', 'Oauth2.0 Authorized URL')
-  .option('-p, --prop <prop>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
+  .option('-p, --prop <prop...>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
   .option('--example', "Generate an example JSON document showing much of what can be updated via application:update")
   .addOption(hostOption)
   .addOption(apiKeyOption)
