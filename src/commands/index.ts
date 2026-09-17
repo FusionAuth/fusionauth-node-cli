@@ -1,3 +1,4 @@
+export * from './application-update/index.js'
 export * from './check-common-config.js';
 export * from './check-oauth-2-1.js';
 export * from './email-create.js';
