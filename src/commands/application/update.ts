@@ -1,12 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
 import { __dirname, logEvent } from '../../utils.js'
-import {
-  ApplyOptions,
-  ExecutionMetrics,
-  StepResult,
-  StepStatus,
-  ErrorCategory,
-} from '../../utilities/apply/types.js';
 import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
@@ -43,10 +36,8 @@ function setNestedProps(obj: any, path: string, value: any) {
 }
 
 
-function displaySuccess() {
-
-  console.log(chalk.green("Successfully submitted Application update"))
-
+function displaySuccess(message:string = "Successfully submitted Application update") {
+  console.log(chalk.green(message))
 }
 
 
@@ -80,6 +71,7 @@ const action = async function (options: Record<string, any>): Promise<void> {
   const httpClient = new HTTPClient(host, key);
 
   try {
+    logEvent('cli application:create')
 
     if (options?.example) {
       console.log(chalk.yellow("Generating example file in current directory"))
@@ -93,18 +85,21 @@ const action = async function (options: Record<string, any>): Promise<void> {
       const splitprops = options.prop.map((prop:string) => splitProp(prop))
       splitprops.forEach((prop:any) => setNestedProps(data.application, prop.key, prop.value))
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
+      displaySuccess(`Applied patch\n${JSON.stringify(data,null,2)}`)
+
       return
     }
 
     if (options?.data) {
       const data = await getData(options.data)
       await httpClient.executeRequest('PATCH', `/api/application/${id}`, { application: data })
-      displaySuccess()
+      displaySuccess(`Applied patch\n${JSON.stringify(data,null,2)}`)
       return
     }
 
     const apiBody = convertOptionsToApiBody(options)
     await httpClient.executeRequest('PATCH', `/api/application/${id}`, apiBody)
+    displaySuccess(`Applied patch\n${JSON.stringify(apiBody,null,2)}`)
     return
 
   } catch (e) {
