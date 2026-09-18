@@ -27,6 +27,12 @@
 - Custom error reporting via `utils.reportError()` and `utils.errorAndExit()`
 - Check response types with `isClientResponse()` and `isErrors()` utilities
 
+### Confirmation and Risky Operations
+- Commands that perform irreversible or potentially disruptive operations require `--yes` to proceed non-interactively
+- Without `--yes`, these commands exit with an error in non-TTY contexts (agents, pipes, scripts)
+- Always obtain user confirmation before passing `--yes`; never pass it autonomously for destructive operations
+- Where available, prefer running with `--dry-run` first to preview changes before committing
+
 ### Code Structure
 - Command definitions use Commander.js with fluent API
 - JSDoc comments for function documentation
