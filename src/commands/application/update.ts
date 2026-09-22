@@ -5,7 +5,6 @@ import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import chalk from "chalk";
-import { exampleApplicationBody } from "../../utils.js";
 
 function getData(file: string) {
   const fileLoc = path.resolve(file)
@@ -62,23 +61,15 @@ function splitProp(prop: string) {
   return {key, value}
 }
 
-const action = async function (options: Record<string, any>): Promise<void> {
+const action = async function (id:string, options: Record<string, any>): Promise<void> {
   const {
     host = 'http://localhost:9011',
-    key,
-    id
+    key
   } = options
   const httpClient = new HTTPClient(host, key);
 
   try {
     logEvent('cli application:create')
-
-    if (options?.example) {
-      console.log(chalk.yellow("Generating example file in current directory"))
-      writeFileSync('./application.example.json', JSON.stringify(exampleApplicationBody, null, 2))
-      console.log(chalk.green(`File created at ${path.resolve('./application.example.json')}`))
-      return
-    }
 
     if (options?.prop) {
       let data = { application: {}}
@@ -102,14 +93,17 @@ const action = async function (options: Record<string, any>): Promise<void> {
     displaySuccess(`Applied patch\n${JSON.stringify(apiBody,null,2)}`)
     return
 
-  } catch (e) {
+  } catch (e:any) {
     console.log(e)
+    if (e?.fieldErrors) {
+      console.log(e.fieldErrors[0].message)
+    }
   }
 
 }
 export const appUpdate = new Command()
   .command('application:update')
-  .requiredOption('-i, --id <id>', "The FusionAuth Application ID to update")
+  .argument('<id>', "The FusionAuth Application ID to update")
   .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
   .option('--redirect-url <redirectUrl>', 'Oauth2.0 Authorized URL')
   .option('-p, --prop <prop...>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
