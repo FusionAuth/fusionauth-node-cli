@@ -5,14 +5,18 @@ import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import chalk from "chalk";
+import { inspect } from "node:util";
 
 function getData(file: string) {
-  const fileLoc = path.resolve(file)
+  try {
+    const fileLoc = path.resolve(file)
+    const contentBuffer = readFileSync(fileLoc).toString('utf-8')
+    const contents = JSON.parse(contentBuffer)
+    return contents
+  } catch(e:any) {
+    throw new Error(e)
+  }
 
-  const contentBuffer = readFileSync(fileLoc).toString('utf-8')
-  const contents = JSON.parse(contentBuffer)
-
-  return contents
 
 }
 
@@ -40,22 +44,6 @@ function displaySuccess(message:string = "Successfully submitted Application upd
 }
 
 
-
-
-export function convertOptionsToApiBody(options: any) {
-  let body: Record<string, any> = {
-    application: {}
-  }
-  console.log({ options })
-  if (options.redirectUrl) {
-    if (!body?.application?.oauthConfiguration) body.application.oauthConfiguration = {}
-    body.application.oauthConfiguration.authorizedRedirectURLs = [options.redirectUrl]
-  }
-
-  console.log(body)
-  return body
-}
-
 function splitProp(prop: string) {
   const [key,value] = prop.split("=")
   return {key, value}
@@ -71,6 +59,14 @@ const action = async function (id:string, options: Record<string, any>): Promise
   try {
     logEvent('cli application:create')
 
+    if (options?.data) {
+      const data = await getData(options.data)
+      const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
+      if (response.status !== 200) throw response.body
+      console.log(chalk.green(`Applied patch\n`), inspect(data, {showHidden: false, depth: null, colors: true}))
+      return
+    }
+
     if (options?.prop) {
       let data = { application: {}}
       const splitprops = options.prop.map((prop:string) => splitProp(prop))
@@ -81,22 +77,12 @@ const action = async function (id:string, options: Record<string, any>): Promise
       return
     }
 
-    if (options?.data) {
-      const data = await getData(options.data)
-      await httpClient.executeRequest('PATCH', `/api/application/${id}`, { application: data })
-      displaySuccess(`Applied patch\n${JSON.stringify(data,null,2)}`)
-      return
-    }
-
-    const apiBody = convertOptionsToApiBody(options)
-    await httpClient.executeRequest('PATCH', `/api/application/${id}`, apiBody)
-    displaySuccess(`Applied patch\n${JSON.stringify(apiBody,null,2)}`)
-    return
-
   } catch (e:any) {
-    console.log(e)
-    if (e?.fieldErrors) {
-      console.log(e.fieldErrors[0].message)
+    if (e?.fieldErrors || e?.generalErrors) {
+      console.log(chalk.red('An error ocurred. Patch was not applied. Full error:\n'))
+      console.log(inspect(e, {showHidden: false, depth: null, colors: true}))
+    } else {
+      console.log(chalk.red(e))
     }
   }
 

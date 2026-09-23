@@ -25,17 +25,13 @@ const action = async function (id:string, options: Record<string, any>): Promise
   } catch({body}:any) {
     console.log(chalk.red("The request produced the following error:\n"), inspect(body,{showHidden: false, depth: null, colors: true}))
   }
-  
-
 }
-
-
-  export const appGet = new Command()
-    .command('application:get')
-    .argument('<id>', "The FusionAuth Application ID to update")
-    .option('-o, --output <filePath>', "Path where the data should be stored")
-    .addOption(hostOption)
-    .addOption(apiKeyOption)
-    .description('Updates an application with data provided via a file, a property, or a command flag.')
-    .action(action)
+export const appGet = new Command()
+  .command('application:get')
+  .argument('<id>', "The FusionAuth Application ID to update")
+  .option('-o, --output <filePath>', "Path where the data should be stored")
+  .addOption(hostOption)
+  .addOption(apiKeyOption)
+  .description('Updates an application with data provided via a file, a property, or a command flag.')
+  .action(action)
   
