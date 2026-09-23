@@ -72,7 +72,7 @@ const action = async function (id:string, options: Record<string, any>): Promise
       const splitprops = options.prop.map((prop:string) => splitProp(prop))
       splitprops.forEach((prop:any) => setNestedProps(data.application, prop.key, prop.value))
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
-      displaySuccess(`Applied patch\n${JSON.stringify(data,null,2)}`)
+      displaySuccess(`Applied the following patch\n${JSON.stringify(data,null,2)}`)
 
       return
     }
