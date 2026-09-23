@@ -57,7 +57,7 @@ const action = async function (id:string, options: Record<string, any>): Promise
   const httpClient = new HTTPClient(host, key);
 
   try {
-    logEvent('cli application:create')
+    logEvent('cli application:update')
 
     if (options?.data) {
       const data = await getData(options.data)

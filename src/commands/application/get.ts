@@ -7,15 +7,16 @@ import { writeFileSync } from "node:fs";
 import chalk from "chalk";
 import { inspect } from "node:util";
 
-const action = async function (id:string, options: Record<string, any>): Promise<void> {
 
+export async function executeGet(id:string, options: Record<string, any>): Promise<void> {
+  logEvent("cli application:get")
   const {
     host = 'http://localhost:9011',
     key,
     filePath = `./${id}.json`
   } = options
-  logEvent('cli application:get')
-  try {
+
+try {
     const fullPath = path.resolve(filePath);
     const httpClient = new HTTPClient(host, key);
     const response = await httpClient.executeRequest('GET', `/api/application/${id}`)
@@ -25,7 +26,17 @@ const action = async function (id:string, options: Record<string, any>): Promise
   } catch({body}:any) {
     console.log(chalk.red("The request produced the following error:\n"), inspect(body,{showHidden: false, depth: null, colors: true}))
   }
+
+
 }
+
+
+const action = async function (id:string, options: Record<string, any>): Promise<void> {
+  logEvent('cli application:get')
+  
+  executeGet(id, options)  
+}
+
 export const appGet = new Command()
   .command('application:get')
   .argument('<id>', "The FusionAuth Application ID to update")
