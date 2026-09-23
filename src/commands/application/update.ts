@@ -63,7 +63,7 @@ const action = async function (id:string, options: Record<string, any>): Promise
       const data = await getData(options.data)
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
       if (response.status !== 200) throw response.body
-      console.log(chalk.green(`Applied patch\n`), inspect(data, {showHidden: false, depth: null, colors: true}))
+      console.log(chalk.green(`Applied the following patch\n`), inspect(data, {showHidden: false, depth: null, colors: true}))
       return
     }
 
