@@ -166,11 +166,12 @@ describe('profile defaults', () => {
       .post('/api/application/', (body) => {
         const oauth = body.application.oauthConfiguration
         const jwt = body.application.jwtConfiguration
-        assert.deepEqual(oauth.enabledGrants, ['authorization_code'])
+        assert.deepEqual(oauth.enabledGrants, ['authorization_code', 'refresh_token'])
         assert.equal(oauth.proofKeyForCodeExchangePolicy, 'Required')
         assert.equal(oauth.clientAuthenticationPolicy, 'NotRequired')
         assert.equal(oauth.requireClientAuthentication, false)
         assert.equal(oauth.generateRefreshTokens, true)
+        assert.equal(oauth.requireRegistration, true)
         assert.deepEqual(oauth.authorizedRedirectURLs, ['https://example.com/callback'])
         assert.equal(jwt.enabled, true)
         assert.equal(jwt.timeToLiveInSeconds, 300)
@@ -198,6 +199,7 @@ describe('profile defaults', () => {
         const oauth = body.application.oauthConfiguration
         assert.equal(oauth.proofKeyForCodeExchangePolicy, 'Required')
         assert.equal(oauth.clientAuthenticationPolicy, 'NotRequired')
+        assert.equal(oauth.requireRegistration, true)
         return true
       })
       .reply(200, APP_RESPONSE)
@@ -218,9 +220,11 @@ describe('profile defaults', () => {
         assert.equal(oauth.proofKeyForCodeExchangePolicy, 'NotRequiredWhenUsingClientAuthentication')
         assert.equal(oauth.clientAuthenticationPolicy, 'Required')
         assert.equal(oauth.requireClientAuthentication, true)
+        assert.equal(oauth.requireRegistration, true)
+        assert.deepEqual(oauth.enabledGrants, ['authorization_code', 'refresh_token'])
         assert.equal(jwt.timeToLiveInSeconds, 3600)
-        assert.equal(jwt.refreshTokenUsagePolicy, 'Reusable')
-        assert.equal(jwt.refreshTokenExpirationPolicy, 'Fixed')
+        assert.equal(jwt.refreshTokenUsagePolicy, 'OneTimeUse')
+        assert.equal(jwt.refreshTokenExpirationPolicy, 'SlidingWindow')
         return true
       })
       .reply(200, APP_RESPONSE_WITH_SECRET)

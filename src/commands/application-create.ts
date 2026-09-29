@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import {Command, Option} from '@commander-js/extra-typings';
+import boxen from 'boxen';
 import {
     Application,
     ClientAuthenticationPolicy,
@@ -39,19 +40,27 @@ export interface ApplicationCreateResult {
     name?: string;
 }
 
+// Shared refresh token policy for all profiles. A sliding window of
+// one-time-use refresh tokens is the recommended default across
+// spa/native/webapp — only timeToLiveInSeconds differs per profile.
+const defaultRefreshTokenPolicy = {
+    refreshTokenUsagePolicy: RefreshTokenUsagePolicy.OneTimeUse,
+    refreshTokenExpirationPolicy: RefreshTokenExpirationPolicy.SlidingWindow,
+};
+
 const publicClientDefaults: Application = {
     oauthConfiguration: {
-        enabledGrants: [GrantType.authorization_code],
+        enabledGrants: [GrantType.authorization_code, GrantType.refresh_token],
         generateRefreshTokens: true,
         proofKeyForCodeExchangePolicy: ProofKeyForCodeExchangePolicy.Required,
         clientAuthenticationPolicy: ClientAuthenticationPolicy.NotRequired,
         requireClientAuthentication: false,
+        requireRegistration: true,
     },
     jwtConfiguration: {
         enabled: true,
         timeToLiveInSeconds: 300,
-        refreshTokenUsagePolicy: RefreshTokenUsagePolicy.OneTimeUse,
-        refreshTokenExpirationPolicy: RefreshTokenExpirationPolicy.SlidingWindow,
+        ...defaultRefreshTokenPolicy,
     },
 };
 
@@ -60,17 +69,17 @@ const profileDefaults: Record<Profile, Application> = {
     native: publicClientDefaults,
     webapp: {
         oauthConfiguration: {
-            enabledGrants: [GrantType.authorization_code],
+            enabledGrants: [GrantType.authorization_code, GrantType.refresh_token],
             generateRefreshTokens: true,
             proofKeyForCodeExchangePolicy: ProofKeyForCodeExchangePolicy.NotRequiredWhenUsingClientAuthentication,
             clientAuthenticationPolicy: ClientAuthenticationPolicy.Required,
             requireClientAuthentication: true,
+            requireRegistration: true,
         },
         jwtConfiguration: {
             enabled: true,
             timeToLiveInSeconds: 3600,
-            refreshTokenUsagePolicy: RefreshTokenUsagePolicy.Reusable,
-            refreshTokenExpirationPolicy: RefreshTokenExpirationPolicy.Fixed,
+            ...defaultRefreshTokenPolicy,
         },
     },
 };
@@ -284,6 +293,27 @@ const action = async function (options: ApplicationCreateOptions) {
     if (result.clientSecret) {
         console.log(`  Client Secret:              ${result.clientSecret}`);
     }
+
+    console.log(boxen(
+        [
+            `Customize FusionAuth with a ${chalk.cyan('simple theme')}:`,
+            '  https://fusionauth.io/docs/customize/look-and-feel/simple-theme-editor',
+            '',
+            `Create ${chalk.cyan('users')}:`,
+            '  https://fusionauth.io/docs/lifecycle/register-users/',
+            '',
+            `Configure an ${chalk.cyan('SMTP server')}:`,
+            '  https://fusionauth.io/docs/customize/email-and-messages/configure-email',
+            '',
+            `Set up ${chalk.cyan('email templates')}:`,
+            '  https://fusionauth.io/docs/customize/email-and-messages/email-templates',
+            '',
+            `${chalk.cyan('Add login')} to your application:`,
+            '  https://fusionauth.io/docs/get-started/start-here/step-1',
+            '',
+        ].join('\n'),
+        {padding: 1, title: 'Next Steps', borderColor: 'green', borderStyle: 'bold'}
+    ));
 };
 
 // noinspection JSUnusedGlobalSymbols

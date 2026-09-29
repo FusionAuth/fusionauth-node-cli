@@ -74,7 +74,8 @@ describe('application:create integration tests', () => {
     assert.equal(app.oauthConfiguration.clientAuthenticationPolicy, 'NotRequired')
     assert.equal(app.oauthConfiguration.requireClientAuthentication, false)
     assert.equal(app.oauthConfiguration.generateRefreshTokens, true)
-    assert.deepEqual(app.oauthConfiguration.enabledGrants, ['authorization_code'])
+    assert.equal(app.oauthConfiguration.requireRegistration, true)
+    assert.deepEqual(app.oauthConfiguration.enabledGrants, ['authorization_code', 'refresh_token'])
     assert.deepEqual(app.oauthConfiguration.authorizedRedirectURLs, ['https://example.com/callback'])
     assert.equal(app.jwtConfiguration.timeToLiveInSeconds, 300)
     assert.equal(app.jwtConfiguration.refreshTokenUsagePolicy, 'OneTimeUse')
@@ -105,6 +106,7 @@ describe('application:create integration tests', () => {
     const app = await getApplication(result.applicationId, apiKey)
     assert.equal(app.oauthConfiguration.proofKeyForCodeExchangePolicy, 'Required')
     assert.equal(app.oauthConfiguration.clientAuthenticationPolicy, 'NotRequired')
+    assert.equal(app.oauthConfiguration.requireRegistration, true)
     assert.deepEqual(app.oauthConfiguration.authorizedRedirectURLs, ['myapp://callback'])
     assert.equal(app.jwtConfiguration.timeToLiveInSeconds, 300)
 
@@ -132,9 +134,10 @@ describe('application:create integration tests', () => {
     assert.equal(app.oauthConfiguration.proofKeyForCodeExchangePolicy, 'NotRequiredWhenUsingClientAuthentication')
     assert.equal(app.oauthConfiguration.clientAuthenticationPolicy, 'Required')
     assert.equal(app.oauthConfiguration.requireClientAuthentication, true)
+    assert.equal(app.oauthConfiguration.requireRegistration, true)
     assert.equal(app.jwtConfiguration.timeToLiveInSeconds, 3600)
-    assert.equal(app.jwtConfiguration.refreshTokenUsagePolicy, 'Reusable')
-    assert.equal(app.jwtConfiguration.refreshTokenExpirationPolicy, 'Fixed')
+    assert.equal(app.jwtConfiguration.refreshTokenUsagePolicy, 'OneTimeUse')
+    assert.equal(app.jwtConfiguration.refreshTokenExpirationPolicy, 'SlidingWindow')
   })
 
   test('--data custom mode creates application with provided configuration', async () => {
