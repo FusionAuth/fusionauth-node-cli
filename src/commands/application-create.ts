@@ -48,25 +48,33 @@ const defaultRefreshTokenPolicy = {
     refreshTokenExpirationPolicy: RefreshTokenExpirationPolicy.SlidingWindow,
 };
 
-const publicClientDefaults: Application = {
-    oauthConfiguration: {
-        enabledGrants: [GrantType.authorization_code, GrantType.refresh_token],
-        generateRefreshTokens: true,
-        proofKeyForCodeExchangePolicy: ProofKeyForCodeExchangePolicy.Required,
-        clientAuthenticationPolicy: ClientAuthenticationPolicy.NotRequired,
-        requireClientAuthentication: false,
-        requireRegistration: true,
-    },
-    jwtConfiguration: {
-        enabled: true,
-        timeToLiveInSeconds: 300,
-        ...defaultRefreshTokenPolicy,
-    },
-};
+// requireRegistration: true means a user must have a registration for this
+// application before they can complete the authorization_code/implicit grant.
+// registrationConfiguration.enabled is intentionally left false (self-service
+// registration is off), so registrations must be created out-of-band — e.g.
+// via the Registration API — before a user can log in. See the "Create users"
+// Next Steps link printed after a successful create.
+function buildPublicClientDefaults(): Application {
+    return {
+        oauthConfiguration: {
+            enabledGrants: [GrantType.authorization_code, GrantType.refresh_token],
+            generateRefreshTokens: true,
+            proofKeyForCodeExchangePolicy: ProofKeyForCodeExchangePolicy.Required,
+            clientAuthenticationPolicy: ClientAuthenticationPolicy.NotRequired,
+            requireClientAuthentication: false,
+            requireRegistration: true,
+        },
+        jwtConfiguration: {
+            enabled: true,
+            timeToLiveInSeconds: 300,
+            ...defaultRefreshTokenPolicy,
+        },
+    };
+}
 
 const profileDefaults: Record<Profile, Application> = {
-    spa: publicClientDefaults,
-    native: publicClientDefaults,
+    spa: buildPublicClientDefaults(),
+    native: buildPublicClientDefaults(),
     webapp: {
         oauthConfiguration: {
             enabledGrants: [GrantType.authorization_code, GrantType.refresh_token],
@@ -74,6 +82,7 @@ const profileDefaults: Record<Profile, Application> = {
             proofKeyForCodeExchangePolicy: ProofKeyForCodeExchangePolicy.NotRequiredWhenUsingClientAuthentication,
             clientAuthenticationPolicy: ClientAuthenticationPolicy.Required,
             requireClientAuthentication: true,
+            // See comment on buildPublicClientDefaults() above re: requireRegistration.
             requireRegistration: true,
         },
         jwtConfiguration: {
