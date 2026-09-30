@@ -493,6 +493,25 @@ describe('regression: error attribution', () => {
     assert.equal(result.success, false)
     assert.match(result.error, /Error creating application/)
   })
+
+  test('rawError preserves the original structured FusionAuth error rather than a generic wrapper', async () => {
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(400, { fieldErrors: { name: [{ message: 'is required' }] } })
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      profile: 'webapp',
+      redirectUri: ['https://example.com/callback'],
+    })
+    assert.equal(result.success, false)
+    // rawError must be the original FusionAuth ClientResponse-shaped rejection
+    // (so errorAndExit/reportError can format fieldErrors/generalErrors),
+    // not the generic Error used for the human-readable `error` message.
+    assert.equal(result.rawError instanceof Error, false)
+    assert.equal(result.rawError.statusCode, 400)
+    assert.deepEqual(result.rawError.exception, { fieldErrors: { name: [{ message: 'is required' }] } })
+  })
 })
 
 // ---------------------------------------------------------------------------

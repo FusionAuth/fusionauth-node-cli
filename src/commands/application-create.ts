@@ -98,6 +98,31 @@ const profileDefaults: Record<Profile, Application> = {
 const REQUIRED_CORS_HEADERS = ['dpop', 'Authorization', 'Accept'];
 
 /**
+ * Wraps an unknown error with additional context while preserving the
+ * original value (e.g. a FusionAuth `ClientResponse` rejection, which
+ * carries structured `fieldErrors`/`generalErrors`) as `.cause`, so callers
+ * further up the stack can still access it for rich reporting instead of
+ * only the flattened message string.
+ */
+function wrapError(message: string, cause: unknown): Error {
+    const error = new Error(message);
+    (error as Error & {cause?: unknown}).cause = cause;
+    return error;
+}
+
+/**
+ * Unwraps an error produced by wrapError() back to its original cause, for
+ * use as ApplicationCreateResult.rawError. Falls back to the error itself
+ * when there's no cause (e.g. errors that were never wrapped).
+ */
+function unwrapError(e: unknown): unknown {
+    if (e instanceof Error && 'cause' in e && e.cause !== undefined) {
+        return e.cause;
+    }
+    return e;
+}
+
+/**
  * Ensures that the required DPoP-related CORS headers are present in the
  * FusionAuth system configuration. Also enables CORS if it is currently
  * disabled. Should be called for spa and native profiles before creating
@@ -122,7 +147,7 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean): Promis
         try {
             retrieveResponse = await client.retrieveSystemConfiguration();
         } catch (e: unknown) {
-            throw new Error(`Error retrieving system configuration: ${e instanceof Error ? e.message : String(e)}`);
+            throw wrapError(`Error retrieving system configuration: ${e instanceof Error ? e.message : String(e)}`, e);
         }
 
         const systemConfig = retrieveResponse.response.systemConfiguration!;
@@ -166,7 +191,7 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean): Promis
                 console.log(`  CORS headers added:         ${missing.join(', ')}`);
             }
         } catch (e: unknown) {
-            throw new Error(`Error updating CORS configuration: ${e instanceof Error ? e.message : String(e)}`);
+            throw wrapError(`Error updating CORS configuration: ${e instanceof Error ? e.message : String(e)}`, e);
         }
     } finally {
         client.setTenantId(originalTenantId);
@@ -286,7 +311,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
                 {application}
             );
         } catch (e: unknown) {
-            throw new Error(`Error creating application: ${e instanceof Error ? e.message : String(e)}`);
+            throw wrapError(`Error creating application: ${e instanceof Error ? e.message : String(e)}`, e);
         }
 
         const created = clientResponse.response.application!;
@@ -307,7 +332,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
-        return { success: false, error: message, rawError: e };
+        return { success: false, error: message, rawError: unwrapError(e) };
     }
 }
 
