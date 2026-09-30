@@ -45,6 +45,10 @@ describe('application:create integration tests', () => {
       key: apiKey,
       host: fusionAuthUrl,
       tenantId: TENANT_ID,
+      // Bypasses the CORS-change confirmation prompt (spa/native profiles).
+      // The confirmation gate itself is covered by unit tests; these
+      // integration tests are focused on real API behavior.
+      yes: true,
       ...overrides,
     }
   }

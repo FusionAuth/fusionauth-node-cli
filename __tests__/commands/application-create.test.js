@@ -95,6 +95,17 @@ describe('mode validation', () => {
     assert.equal(result.success, false)
     assert.match(result.error, /--redirect-uri is required/)
   })
+
+  test('--profile without --name returns error without making API calls', async () => {
+    const { name, ...optionsWithoutName } = BASE_OPTIONS
+    const result = await executeApplicationCreate({
+      ...optionsWithoutName,
+      profile: 'spa',
+      redirectUri: ['https://example.com/callback'],
+    })
+    assert.equal(result.success, false)
+    assert.match(result.error, /--name is required/)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -149,6 +160,38 @@ describe('--data parsing', () => {
     })
     assert.equal(result.success, false)
     assert.match(result.error, /Error reading --data file/)
+  })
+
+  test('--data mode preserves the JSON name when --name is omitted (full custom control)', async () => {
+    const { name, ...optionsWithoutName } = BASE_OPTIONS
+
+    nock(FA_HOST)
+      .post('/api/application/', (body) => {
+        assert.equal(body.application.name, 'Name From JSON')
+        return true
+      })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...optionsWithoutName,
+      data: JSON.stringify({ name: 'Name From JSON', oauthConfiguration: {} }),
+    })
+    assert.equal(result.success, true)
+  })
+
+  test('--data mode overrides the JSON name when --name is explicitly provided', async () => {
+    nock(FA_HOST)
+      .post('/api/application/', (body) => {
+        assert.equal(body.application.name, 'Test App')  // BASE_OPTIONS.name
+        return true
+      })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      data: JSON.stringify({ name: 'Name From JSON', oauthConfiguration: {} }),
+    })
+    assert.equal(result.success, true)
   })
 })
 
@@ -425,6 +468,7 @@ describe('regression: error attribution', () => {
       ...BASE_OPTIONS,
       profile: 'spa',
       redirectUri: ['https://example.com/callback'],
+      yes: true,
     })
     assert.equal(result.success, false)
   })
@@ -482,6 +526,7 @@ describe('CORS header management', () => {
       ...BASE_OPTIONS,
       profile: 'spa',
       redirectUri: ['https://example.com/callback'],
+      yes: true,
     })
     assert.equal(result.success, true)
   })
@@ -509,7 +554,64 @@ describe('CORS header management', () => {
       ...BASE_OPTIONS,
       profile: 'spa',
       redirectUri: ['https://example.com/callback'],
+      yes: true,
     })
+    assert.equal(result.success, true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Confirmation gate (--yes) for CORS mutation
+// Per CONTRIBUTING.md's Risky Operations Policy, mutating system-wide CORS
+// configuration must be gated behind confirmOrExit()/--yes.
+// ---------------------------------------------------------------------------
+
+describe('confirmation gate for CORS mutation', () => {
+  test('non-interactive without --yes aborts before patching CORS or creating the application', async (t) => {
+    // process.exit is mocked so confirmOrExit() throws instead of actually
+    // exiting (see utils.ts docstring) — the throw is caught by
+    // executeApplicationCreate's try/catch and returned as a normal result,
+    // per its documented contract of never exiting the process itself.
+    const exitMock = t.mock.method(process, 'exit', () => {})
+
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedHeaders: [] }))  // missing headers → would trigger patch
+
+    // Deliberately no PATCH or POST /api/application interceptors registered —
+    // if either were called, afterEach's nock.isDone() check would fail.
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      profile: 'spa',
+      redirectUri: ['https://example.com/callback'],
+    })
+
+    assert.equal(result.success, false)
+    assert.equal(exitMock.mock.calls.length, 1, 'process.exit should be called once')
+    assert.equal(exitMock.mock.calls[0].arguments[0], 1)
+  })
+
+  test('--yes bypasses the confirmation prompt and proceeds with the CORS patch', async () => {
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedHeaders: [] }))
+
+    nock(FA_HOST)
+      .patch('/api/system-configuration')
+      .reply(200, {})
+
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      profile: 'spa',
+      redirectUri: ['https://example.com/callback'],
+      yes: true,
+    })
+
     assert.equal(result.success, true)
   })
 })

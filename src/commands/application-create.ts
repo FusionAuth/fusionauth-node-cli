@@ -12,14 +12,14 @@ import {
     RefreshTokenUsagePolicy,
 } from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {errorAndExit, logEvent} from '../utils.js';
+import {confirmOrExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from '../options.js';
 import * as utils from '../utils.js';
 
 type Profile = 'spa' | 'native' | 'webapp';
 
 export interface ApplicationCreateOptions {
-    name: string;
+    name?: string;
     profile?: string;
     redirectUri?: string[];
     logoutUrl?: string;
@@ -27,6 +27,7 @@ export interface ApplicationCreateOptions {
     applicationId?: string;
     tenantId?: string;
     data?: string;
+    yes?: boolean;
     key: string;
     host: string;
 }
@@ -34,6 +35,7 @@ export interface ApplicationCreateOptions {
 export interface ApplicationCreateResult {
     success: boolean;
     error?: string;
+    rawError?: unknown;
     applicationId?: string;
     clientId?: string;
     clientSecret?: string;
@@ -104,10 +106,14 @@ const REQUIRED_CORS_HEADERS = ['dpop', 'Authorization', 'Accept'];
  * CORS is a prerequisite for spa/native DPoP flows. If this call fails the
  * entire command is aborted — no application will be created.
  *
+ * This mutates system-wide configuration, so per the Risky Operations Policy
+ * (CONTRIBUTING.md) it is gated behind confirmOrExit()/--yes and only prompts
+ * when a change is actually needed.
+ *
  * Note: /api/system-configuration does not accept a tenant ID. The tenant
  * header is cleared for these calls and restored afterward.
  */
-async function ensureCorsHeaders(client: FusionAuthClient): Promise<void> {
+async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean): Promise<void> {
     const originalTenantId = client.tenantId ?? null;
     client.setTenantId(null);
 
@@ -134,12 +140,16 @@ async function ensureCorsHeaders(client: FusionAuthClient): Promise<void> {
             return;
         }
 
-        if (needsEnable) {
-            console.warn(chalk.yellow(
-                'Warning: CORS was disabled and has been enabled to support this application. ' +
-                'This may allow cross-domain requests that were previously blocked.'
-            ));
-        }
+        const changes = [
+            ...(needsEnable ? ['enable CORS'] : []),
+            ...(missing.length > 0 ? [`add CORS header(s): ${missing.join(', ')}`] : []),
+        ].join(' and ');
+
+        await confirmOrExit(
+            `This will modify your FusionAuth system configuration to ${changes}. ` +
+            'This may allow cross-domain requests that were previously blocked.',
+            yes
+        );
 
         try {
             await client.patchSystemConfiguration({
@@ -203,6 +213,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
         applicationId,
         tenantId,
         data,
+        yes,
         key: apiKey,
         host,
     } = options;
@@ -225,6 +236,9 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
             if (redirectUri === undefined || redirectUri.length === 0) {
                 return { success: false, error: '--redirect-uri is required when using --profile.' };
             }
+            if (!name) {
+                return { success: false, error: '--name is required when using --profile.' };
+            }
 
             const defaults = profileDefaults[profile as Profile];
             application = {...defaults};
@@ -239,8 +253,13 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
             };
         } else {
             // --- Custom mode ---
+            // --name is optional here so --data can provide "full custom control":
+            // only override the JSON's name field if --name was explicitly passed.
+            // If neither supplies a name, FusionAuth's API will reject the request.
             application = parseData(data!);
-            application.name = name;
+            if (name) {
+                application.name = name;
+            }
         }
 
         // --- ID overrides (applied last in both modes) ---
@@ -254,9 +273,10 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
         const fusionAuthClient = new FusionAuthClient(apiKey, host, tenantId);
 
         // For spa/native profiles, enforce DPoP-required CORS headers first.
-        // If this fails the command aborts — createApplication is never called.
+        // If this fails (or the user declines the confirmation prompt), the
+        // command aborts — createApplication is never called.
         if (profile === 'spa' || profile === 'native') {
-            await ensureCorsHeaders(fusionAuthClient);
+            await ensureCorsHeaders(fusionAuthClient, yes ?? false);
         }
 
         const clientResponse = await fusionAuthClient.createApplication(
@@ -265,6 +285,10 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
         );
 
         const created = clientResponse.response.application!;
+        // clientId intentionally mirrors applicationId here: FusionAuth does not
+        // allow oauthConfiguration.clientId to be set via the API (it's only
+        // ever returned, never accepted as input), so for applications created
+        // by this command the two values are always identical.
         const clientId = created.oauthConfiguration?.clientId ?? created.id ?? '';
         const clientSecret = created.oauthConfiguration?.clientSecret;
 
@@ -278,10 +302,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
-        if (process.env.NODE_ENV !== 'test') {
-            utils.errorAndExit('Error creating application: ', e);
-        }
-        return { success: false, error: message };
+        return { success: false, error: `Error creating application: ${message}`, rawError: e };
     }
 }
 
@@ -292,7 +313,7 @@ const action = async function (options: ApplicationCreateOptions) {
     const result = await executeApplicationCreate(options);
 
     if (!result.success) {
-        utils.errorAndExit(result.error ?? 'Error creating application.');
+        utils.errorAndExit(result.error ?? 'Error creating application.', result.rawError);
         return;
     }
 
@@ -328,7 +349,7 @@ const action = async function (options: ApplicationCreateOptions) {
 // noinspection JSUnusedGlobalSymbols
 export const applicationCreate = new Command('application:create')
     .description('Create an application in FusionAuth')
-    .requiredOption('--name <name>', 'The name of the application')
+    .option('--name <name>', 'The name of the application (required with --profile; overrides the name in --data if provided)')
     .addOption(
         new Option('--profile <profile>', 'Security profile to apply (mutually exclusive with --data)')
             .choices(['spa', 'native', 'webapp'] as const)
@@ -339,6 +360,7 @@ export const applicationCreate = new Command('application:create')
     .option('--data <data>', 'Full application config as inline JSON or @file.json (mutually exclusive with --profile)')
     .option('--application-id <uuid>', 'Application UUID (auto-generated if omitted; overrides --data)')
     .option('--tenant-id <uuid>', 'Tenant UUID (overrides --data)')
+    .option('--yes', 'Skip confirmation prompt for automatic CORS configuration changes (spa/native profiles)', false)
     .addOption(apiKeyOption)
     .addOption(hostOption)
     .action(action);

@@ -183,42 +183,53 @@ async function waitForFusionAuthReady() {
       clearTimeout(timeoutId)
 
       if (response.ok) {
-        // Verify the kickstart has run and the container is fully initialized.
-        // We check using the container IP directly (more reliable than localhost
-        // on macOS Docker Desktop where port-mapping affects auth behavior).
+        // Verify the kickstart has run and the container is fully initialized
+        // by checking authenticated API access. Tries localhost first, then
+        // falls back to the container's direct bridge IP.
         let authReady = false
         const authStartTime = Date.now()
         
         while (Date.now() - authStartTime < 30000) { // 30 second timeout for auth readiness
+          // Try localhost first, only falling back to the container's direct
+          // bridge IP (via docker inspect) if localhost doesn't respond ok.
+          // Mirrors resolveFusionAuthUrl()'s ordering — on Docker Desktop the
+          // bridge IP generally isn't routable from the host, so localhost
+          // must be attempted first rather than being unconditionally
+          // overridden.
+          const urlsToTry = [DEFAULT_FUSIONAUTH_URL]
           try {
-            const authController = new AbortController()
-            const authTimeoutId = setTimeout(() => authController.abort(), 5000)
+            const { stdout } = await execAsync(
+              `docker inspect ${CONTAINER_NAME} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+            )
+            const ip = stdout.trim().split(/\s+/).filter(Boolean)[0]
+            if (ip) urlsToTry.push(`http://${ip}:9011`)
+          } catch (_) {}
 
-            // Try localhost first, fall back to container IP check via Docker inspect
-            let checkUrl = DEFAULT_FUSIONAUTH_URL
+          for (const checkUrl of urlsToTry) {
             try {
-              const { stdout } = await execAsync(
-                `docker inspect ${CONTAINER_NAME} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
-              )
-              const ip = stdout.trim().split(/\s+/).filter(Boolean)[0]
-              if (ip) checkUrl = `http://${ip}:9011`
-            } catch (_) {}
-            
-            const tenantsResponse = await fetch(`${checkUrl}/api/tenant`, {
-              method: 'GET',
-              headers: { Authorization: DEFAULT_API_KEY },
-              signal: authController.signal
-            })
-            clearTimeout(authTimeoutId)
+              const authController = new AbortController()
+              const authTimeoutId = setTimeout(() => authController.abort(), 5000)
 
-            if (tenantsResponse.ok) {
-              authReady = true
-              break
+              const tenantsResponse = await fetch(`${checkUrl}/api/tenant`, {
+                method: 'GET',
+                headers: { Authorization: DEFAULT_API_KEY },
+                signal: authController.signal
+              })
+              clearTimeout(authTimeoutId)
+
+              if (tenantsResponse.ok) {
+                authReady = true
+                break
+              }
+            } catch (err) {
+              // Not reachable via this URL yet, try the next one
             }
-          } catch (err) {
-            // Auth not ready yet, retry
           }
-          
+
+          if (authReady) {
+            break
+          }
+
           await sleep(HEALTH_CHECK_INTERVAL)
         }
         
