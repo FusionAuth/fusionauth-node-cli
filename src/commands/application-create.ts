@@ -286,7 +286,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
 }
 
 /**
- * CLI action wrapper — calls executeAction and handles output/exit.
+ * CLI action wrapper — calls executeApplicationCreate and handles output/exit.
  */
 const action = async function (options: ApplicationCreateOptions) {
     const result = await executeApplicationCreate(options);
