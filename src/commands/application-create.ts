@@ -279,10 +279,15 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
             await ensureCorsHeaders(fusionAuthClient, yes ?? false);
         }
 
-        const clientResponse = await fusionAuthClient.createApplication(
-            application.id ?? '',
-            {application}
-        );
+        let clientResponse;
+        try {
+            clientResponse = await fusionAuthClient.createApplication(
+                application.id ?? '',
+                {application}
+            );
+        } catch (e: unknown) {
+            throw new Error(`Error creating application: ${e instanceof Error ? e.message : String(e)}`);
+        }
 
         const created = clientResponse.response.application!;
         // clientId intentionally mirrors applicationId here: FusionAuth does not
@@ -302,7 +307,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
-        return { success: false, error: `Error creating application: ${message}`, rawError: e };
+        return { success: false, error: message, rawError: e };
     }
 }
 

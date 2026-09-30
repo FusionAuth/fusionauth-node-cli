@@ -206,25 +206,33 @@ const action = async function (dir: string, options: InstallOptions) {
 
     const spinner = yoctoSpinner({ text: "Building..." }).start()
 
-    // Sequential, awaited steps (rather than setTimeout-chained callbacks) so that:
-    //  - exceptions propagate through the surrounding try/catch
-    //  - step ordering is deterministic regardless of machine speed
-    console.log(chalk.green(`\nTransferring files to ${dir}`))
-    fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
+    try {
+      // Sequential, awaited steps (rather than setTimeout-chained callbacks) so that:
+      //  - exceptions propagate through the surrounding try/catch
+      //  - step ordering is deterministic regardless of machine speed
+      console.log(chalk.green(`\nTransferring files to ${dir}`))
+      fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
 
-    console.log(chalk.green(`Creating Kickstart file`))
-    if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exist.`))
-    await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
+      console.log(chalk.green(`Creating Kickstart file`))
+      if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exist.`))
+      await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
 
-    const postgresPass = randomUUID()
-    const dbPass = randomUUID()
+      const postgresPass = randomUUID()
+      const dbPass = randomUUID()
 
-    console.log(chalk.green(`Transferring environment variables`))
-    fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
-    fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
+      console.log(chalk.green(`Transferring environment variables`))
+      fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
+      fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
 
-    spinner.success("Done building!\n")
-    console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
+      spinner.success("Done building!\n")
+      console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
+    } catch (e) {
+      // Ensure the spinner's animation interval is stopped on every failure
+      // path — otherwise it keeps rendering (and can keep the process alive)
+      // even though the outer catch below has already taken over reporting.
+      spinner.error("Build failed.")
+      throw e
+    }
 
   } catch (e) {
     console.error(e)

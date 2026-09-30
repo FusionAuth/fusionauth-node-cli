@@ -453,6 +453,10 @@ describe('regression: error attribution', () => {
       redirectUri: ['https://example.com/callback'],
     })
     assert.equal(result.success, false)
+    // createApplication was never called, so the message must not be misattributed
+    // to it — it should describe the actual (CORS retrieval) failure.
+    assert.match(result.error, /Error retrieving system configuration/)
+    assert.doesNotMatch(result.error, /Error creating application/)
   })
 
   test('CORS patch failure returns error before createApplication is called', async () => {
@@ -471,6 +475,23 @@ describe('regression: error attribution', () => {
       yes: true,
     })
     assert.equal(result.success, false)
+    assert.match(result.error, /Error updating CORS configuration/)
+    assert.doesNotMatch(result.error, /Error creating application/)
+  })
+
+  test('createApplication failure is correctly attributed to application creation', async () => {
+    // No CORS-related calls for webapp — createApplication is the only call made.
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(500, {})
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      profile: 'webapp',
+      redirectUri: ['https://example.com/callback'],
+    })
+    assert.equal(result.success, false)
+    assert.match(result.error, /Error creating application/)
   })
 })
 
