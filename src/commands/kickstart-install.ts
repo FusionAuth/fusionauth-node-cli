@@ -213,7 +213,7 @@ const action = async function (dir: string, options: InstallOptions) {
     fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
 
     console.log(chalk.green(`Creating Kickstart file`))
-    if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
+    if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exist.`))
     await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
 
     const postgresPass = randomUUID()
