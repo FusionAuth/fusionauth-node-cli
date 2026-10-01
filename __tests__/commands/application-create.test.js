@@ -292,7 +292,12 @@ describe('profile defaults', () => {
   })
 
   test('optional profile options are included when provided', async () => {
-    mockCompliantSystemConfig()
+    // allowedOrigins already includes the origin below so this test can
+    // focus on the oauthConfiguration fields without also triggering the
+    // CORS-origin confirmation gate (covered separately).
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedOrigins: ['https://example.com'] }))
 
     nock(FA_HOST)
       .post('/api/application/', (body) => {
@@ -538,6 +543,77 @@ describe('CORS header management', () => {
     const result = await executeApplicationCreate(spaOptions({ yes: true }))
     assert.equal(result.success, true)
   })
+
+  test('PATCH adds --authorized-origin-url to the system CORS allowlist', async () => {
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedOrigins: ['https://existing.example.com'] }))
+
+    nock(FA_HOST)
+      .patch('/api/system-configuration', (body) => {
+        const origins = body.systemConfiguration.corsConfiguration.allowedOrigins
+        assert(origins.includes('https://existing.example.com'), 'should preserve existing origin')
+        assert(origins.includes('https://myapp.example.com'), 'should add the new origin')
+        return true
+      })
+      .reply(200, {})
+
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate(spaOptions({
+      yes: true,
+      authorizedOriginUrl: ['https://myapp.example.com'],
+    }))
+    assert.equal(result.success, true)
+  })
+
+  test('no PATCH when --authorized-origin-url is already in the system CORS allowlist', async () => {
+    // Headers/enabled already compliant too — only origins differ from the
+    // baseline, so this also exercises the "would otherwise early-return"
+    // path now correctly checking origins as well.
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedOrigins: ['https://myapp.example.com'] }))
+
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate(spaOptions({
+      authorizedOriginUrl: ['https://myapp.example.com'],
+    }))
+    assert.equal(result.success, true)
+  })
+
+  test('no PATCH for origins when allowedOrigins already contains "*"', async () => {
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedOrigins: ['*'] }))
+
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate(spaOptions({
+      authorizedOriginUrl: ['https://myapp.example.com'],
+    }))
+    assert.equal(result.success, true)
+  })
+
+  test('--authorized-origin-url is not required — no origin changes attempted when omitted', async () => {
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse())
+
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate(spaOptions())
+    assert.equal(result.success, true)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -584,6 +660,23 @@ describe('confirmation gate for CORS mutation', () => {
     const result = await executeApplicationCreate(spaOptions({ yes: true }))
 
     assert.equal(result.success, true)
+  })
+
+  test('a missing authorized origin alone (headers/enabled already compliant) still requires confirmation', async (t) => {
+    const exitMock = t.mock.method(process, 'exit', () => {})
+
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse())  // headers/enabled compliant; no allowedOrigins at all
+
+    // Deliberately no PATCH or POST /api/application interceptors registered.
+
+    const result = await executeApplicationCreate(spaOptions({
+      authorizedOriginUrl: ['https://myapp.example.com'],
+    }))
+
+    assert.equal(result.success, false)
+    assert.equal(exitMock.mock.calls.length, 1, 'process.exit should be called once')
   })
 })
 

@@ -123,10 +123,19 @@ function unwrapError(e: unknown): unknown {
 }
 
 /**
- * Ensures that the required DPoP-related CORS headers are present in the
+ * Ensures that the required DPoP-related CORS headers — and, when
+ * authorizedOrigins is non-empty, those origins — are present in the
  * FusionAuth system configuration. Also enables CORS if it is currently
  * disabled. Should be called for spa and native profiles before creating
  * the application.
+ *
+ * Enabling CORS and allowing the right headers is not sufficient on its
+ * own: FusionAuth's CORS allowlist (corsConfiguration.allowedOrigins) is a
+ * separate, independent setting, and browsers will still block cross-origin
+ * requests from a spa/native app's own origin unless it's present there (or
+ * allowedOrigins is "*"). --authorized-origin-url is the only source of
+ * that origin available to this command, so it's reused here in addition
+ * to populating application.oauthConfiguration.authorizedOriginURLs.
  *
  * CORS is a prerequisite for spa/native DPoP flows. If this call fails the
  * entire command is aborted — no application will be created.
@@ -137,7 +146,7 @@ function unwrapError(e: unknown): unknown {
  * Note: /api/system-configuration does not accept a tenant ID. The tenant
  * header is cleared for these calls and restored afterward.
  */
-async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean): Promise<void> {
+async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authorizedOrigins: string[]): Promise<void> {
     const originalTenantId = client.tenantId ?? null;
     client.setTenantId(null);
 
@@ -158,15 +167,23 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean): Promis
             (h) => !existingLower.includes(h.toLowerCase())
         );
 
+        // Origins are case-sensitive, unlike header names, and "*" already
+        // permits every origin — nothing to add in that case.
+        const existingOrigins: string[] = cors.allowedOrigins ?? [];
+        const missingOrigins = existingOrigins.includes('*')
+            ? []
+            : authorizedOrigins.filter((o) => !existingOrigins.includes(o));
+
         const needsEnable = cors.enabled !== true;
 
-        if (missing.length === 0 && !needsEnable) {
+        if (missing.length === 0 && missingOrigins.length === 0 && !needsEnable) {
             return;
         }
 
         const changes = [
             ...(needsEnable ? ['enable CORS'] : []),
             ...(missing.length > 0 ? [`add CORS header(s): ${missing.join(', ')}`] : []),
+            ...(missingOrigins.length > 0 ? [`add CORS allowed origin(s): ${missingOrigins.join(', ')}`] : []),
         ].join(' and ');
 
         await confirmOrExit(
@@ -182,12 +199,18 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean): Promis
                         ...cors,
                         enabled: true,
                         allowedHeaders: [...existing, ...missing],
+                        ...(missingOrigins.length > 0
+                            ? {allowedOrigins: [...existingOrigins, ...missingOrigins]}
+                            : {}),
                     },
                 },
             });
 
             if (missing.length > 0) {
                 console.log(`  CORS headers added:         ${missing.join(', ')}`);
+            }
+            if (missingOrigins.length > 0) {
+                console.log(`  CORS allowed origins added: ${missingOrigins.join(', ')}`);
             }
         } catch (e: unknown) {
             throw wrapError(`Error updating CORS configuration: ${e instanceof Error ? e.message : String(e)}`, e);
@@ -296,11 +319,12 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
 
         const fusionAuthClient = new FusionAuthClient(apiKey, host, tenantId);
 
-        // For spa/native profiles, enforce DPoP-required CORS headers first.
-        // If this fails (or the user declines the confirmation prompt), the
-        // command aborts — createApplication is never called.
+        // For spa/native profiles, enforce DPoP-required CORS headers (and
+        // allowed origins, when provided) first. If this fails (or the user
+        // declines the confirmation prompt), the command aborts —
+        // createApplication is never called.
         if (profile === 'spa' || profile === 'native') {
-            await ensureCorsHeaders(fusionAuthClient, yes ?? false);
+            await ensureCorsHeaders(fusionAuthClient, yes ?? false, authorizedOriginUrl ?? []);
         }
 
         let clientResponse;

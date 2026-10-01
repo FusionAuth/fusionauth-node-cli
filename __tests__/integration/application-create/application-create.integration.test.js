@@ -107,6 +107,28 @@ describe('application:create integration tests', () => {
     await assertCorsHeadersConfigured(apiKey)
   })
 
+  test('--authorized-origin-url is added to the system CORS allowlist, not just the application', async () => {
+    const origin = 'https://myapp.example.com'
+    const result = await executeApplicationCreate(spaOptions({ authorizedOriginUrl: [origin] }))
+
+    assert.equal(result.success, true, `Expected success but got: ${result.error}`)
+    createdApplicationIds.push(result.applicationId)
+
+    // The application-level setting (iframe/X-Frame-Options allowlist for
+    // hosted pages) is a separate concern from the system CORS allowlist
+    // below, but --authorized-origin-url should still populate it as before.
+    const app = await getApplication(result.applicationId, apiKey)
+    assert.deepEqual(app.oauthConfiguration.authorizedOriginURLs, [origin])
+
+    // The system-wide CORS allowlist must also include it, or the browser
+    // will block the spa's actual cross-origin requests to the API despite
+    // CORS being "configured" (headers/enabled only, per the bug this
+    // guards against).
+    const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
+    const allowedOrigins = sysConfig.systemConfiguration.corsConfiguration?.allowedOrigins ?? []
+    assert(allowedOrigins.includes(origin), `system CORS allowedOrigins should contain '${origin}'`)
+  })
+
   test('--profile native creates application with correct settings and configures CORS', async () => {
     const result = await executeApplicationCreate(baseOptions({
       profile: 'native',
