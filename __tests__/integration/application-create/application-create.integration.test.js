@@ -13,6 +13,7 @@ import { executeApplicationCreate } from '../../../src/commands/application-crea
 
 const TENANT_ID = '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1'
 const REQUIRED_CORS_HEADERS = ['dpop', 'authorization', 'accept']
+const REDIRECT_URI = 'https://example.com/callback'
 
 describe('application:create integration tests', () => {
   let fusionAuthUrl
@@ -53,15 +54,32 @@ describe('application:create integration tests', () => {
     }
   }
 
+  function spaOptions(overrides = {}) {
+    return baseOptions({ profile: 'spa', redirectUri: [REDIRECT_URI], ...overrides })
+  }
+
+  function webappOptions(overrides = {}) {
+    return baseOptions({ profile: 'webapp', redirectUri: [REDIRECT_URI], ...overrides })
+  }
+
+  // Verifies the DPoP-related CORS headers required by spa/native profiles
+  // were added to system configuration, and that CORS is enabled.
+  async function assertCorsHeadersConfigured(apiKey) {
+    const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
+    const corsHeaders = (sysConfig.systemConfiguration.corsConfiguration?.allowedHeaders ?? [])
+      .map(h => h.toLowerCase())
+    for (const required of REQUIRED_CORS_HEADERS) {
+      assert(corsHeaders.includes(required), `CORS allowedHeaders should contain '${required}'`)
+    }
+    assert.equal(sysConfig.systemConfiguration.corsConfiguration?.enabled, true)
+  }
+
   // ---------------------------------------------------------------------------
   // Happy paths — one per profile
   // ---------------------------------------------------------------------------
 
   test('--profile spa creates application with correct settings and configures CORS', async () => {
-    const result = await executeApplicationCreate(baseOptions({
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    }))
+    const result = await executeApplicationCreate(spaOptions())
 
     assert.equal(result.success, true, `Expected success but got: ${result.error}`)
     assert.ok(result.applicationId, 'applicationId should be set')
@@ -80,19 +98,13 @@ describe('application:create integration tests', () => {
     assert.equal(app.oauthConfiguration.generateRefreshTokens, true)
     assert.equal(app.oauthConfiguration.requireRegistration, true)
     assert.deepEqual(app.oauthConfiguration.enabledGrants, ['authorization_code', 'refresh_token'])
-    assert.deepEqual(app.oauthConfiguration.authorizedRedirectURLs, ['https://example.com/callback'])
+    assert.deepEqual(app.oauthConfiguration.authorizedRedirectURLs, [REDIRECT_URI])
     assert.equal(app.jwtConfiguration.timeToLiveInSeconds, 300)
     assert.equal(app.jwtConfiguration.refreshTokenUsagePolicy, 'OneTimeUse')
     assert.equal(app.jwtConfiguration.refreshTokenExpirationPolicy, 'SlidingWindow')
 
     // Verify CORS headers were added to system configuration
-    const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
-    const corsHeaders = (sysConfig.systemConfiguration.corsConfiguration?.allowedHeaders ?? [])
-      .map(h => h.toLowerCase())
-    for (const required of REQUIRED_CORS_HEADERS) {
-      assert(corsHeaders.includes(required), `CORS allowedHeaders should contain '${required}'`)
-    }
-    assert.equal(sysConfig.systemConfiguration.corsConfiguration?.enabled, true)
+    await assertCorsHeadersConfigured(apiKey)
   })
 
   test('--profile native creates application with correct settings and configures CORS', async () => {
@@ -115,19 +127,11 @@ describe('application:create integration tests', () => {
     assert.equal(app.jwtConfiguration.timeToLiveInSeconds, 300)
 
     // CORS must also be configured for native
-    const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
-    const corsHeaders = (sysConfig.systemConfiguration.corsConfiguration?.allowedHeaders ?? [])
-      .map(h => h.toLowerCase())
-    for (const required of REQUIRED_CORS_HEADERS) {
-      assert(corsHeaders.includes(required), `CORS allowedHeaders should contain '${required}'`)
-    }
+    await assertCorsHeadersConfigured(apiKey)
   })
 
   test('--profile webapp creates confidential client and returns clientSecret', async () => {
-    const result = await executeApplicationCreate(baseOptions({
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-    }))
+    const result = await executeApplicationCreate(webappOptions())
 
     assert.equal(result.success, true, `Expected success but got: ${result.error}`)
     assert.ok(result.clientSecret, 'webapp should have a client secret')
@@ -178,18 +182,12 @@ describe('application:create integration tests', () => {
 
   test('running spa create twice does not duplicate CORS headers', async () => {
     // First create
-    const result1 = await executeApplicationCreate(baseOptions({
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    }))
+    const result1 = await executeApplicationCreate(spaOptions())
     assert.equal(result1.success, true)
     createdApplicationIds.push(result1.applicationId)
 
     // Second create without resetting CORS
-    const result2 = await executeApplicationCreate(baseOptions({
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback2'],
-    }))
+    const result2 = await executeApplicationCreate(spaOptions({ redirectUri: ['https://example.com/callback2'] }))
     assert.equal(result2.success, true)
     createdApplicationIds.push(result2.applicationId)
 
@@ -213,11 +211,8 @@ describe('application:create integration tests', () => {
   test('system-configuration is reachable without tenant header when --tenant-id is provided', async () => {
     // If the tenant header were incorrectly sent to /api/system-configuration,
     // this would fail with 401 — exactly the bug we fixed.
-    const result = await executeApplicationCreate(baseOptions({
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      tenantId: TENANT_ID,
-    }))
+    // (--tenant-id is already the default in baseOptions()/spaOptions().)
+    const result = await executeApplicationCreate(spaOptions())
     assert.equal(result.success, true, `Expected success but got: ${result.error}`)
     createdApplicationIds.push(result.applicationId)
   })
@@ -228,11 +223,7 @@ describe('application:create integration tests', () => {
 
   test('--application-id is respected and application is created with that ID', async () => {
     const customId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
-    const result = await executeApplicationCreate(baseOptions({
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-      applicationId: customId,
-    }))
+    const result = await executeApplicationCreate(webappOptions({ applicationId: customId }))
 
     assert.equal(result.success, true, `Expected success but got: ${result.error}`)
     assert.equal(result.applicationId, customId)
