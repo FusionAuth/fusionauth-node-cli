@@ -131,9 +131,8 @@ function unwrapError(e: unknown): unknown {
  * CORS is a prerequisite for spa/native DPoP flows. If this call fails the
  * entire command is aborted — no application will be created.
  *
- * This mutates system-wide configuration, so per the Risky Operations Policy
- * (CONTRIBUTING.md) it is gated behind confirmOrExit()/--yes and only prompts
- * when a change is actually needed.
+ * This mutates system-wide configuration, so it is gated behind
+ * confirmOrExit()/--yes and only prompts when a change is actually needed.
  *
  * Note: /api/system-configuration does not accept a tenant ID. The tenant
  * header is cleared for these calls and restored afterward.

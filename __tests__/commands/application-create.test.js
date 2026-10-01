@@ -602,8 +602,8 @@ describe('CORS header management', () => {
 
 // ---------------------------------------------------------------------------
 // Confirmation gate (--yes) for CORS mutation
-// Per CONTRIBUTING.md's Risky Operations Policy, mutating system-wide CORS
-// configuration must be gated behind confirmOrExit()/--yes.
+// Mutating system-wide CORS configuration must be gated behind
+// confirmOrExit()/--yes.
 // ---------------------------------------------------------------------------
 
 describe('confirmation gate for CORS mutation', () => {
