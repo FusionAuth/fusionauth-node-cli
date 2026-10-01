@@ -117,6 +117,18 @@ describe('mode validation', () => {
     assert.equal(result.success, false)
     assert.match(result.error, /--name is required/)
   })
+
+  test('an invalid --profile value returns a clear error without making API calls', async () => {
+    // Direct library callers bypass Commander's .choices() validation, so
+    // executeApplicationCreate() must validate this itself rather than
+    // silently spreading `undefined` into an empty application object.
+    const result = await executeApplicationCreate(spaOptions({ profile: 'not-a-real-profile' }))
+    assert.equal(result.success, false)
+    assert.match(result.error, /--profile must be one of/)
+    assert.match(result.error, /spa/)
+    assert.match(result.error, /native/)
+    assert.match(result.error, /webapp/)
+  })
 })
 
 // ---------------------------------------------------------------------------

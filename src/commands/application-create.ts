@@ -247,8 +247,19 @@ function parseData(data: string): Application {
 }
 
 /**
- * Core logic for application:create. Returns a result object rather than
- * calling process.exit(), allowing tests to import and invoke this directly.
+ * Core logic for application:create. Returns a result object on every
+ * validation/API failure it detects itself, rather than calling
+ * process.exit() directly — this is what allows tests to import and invoke
+ * it, and non-CLI callers to handle failures programmatically.
+ *
+ * One exception: for spa/native profiles, this calls ensureCorsHeaders(),
+ * which calls confirmOrExit() to gate a system-wide CORS mutation per this
+ * project's Risky Operations convention (see kickstart-kill.ts for the
+ * same pattern elsewhere). confirmOrExit() does call process.exit() for a
+ * non-interactive caller without yes=true, or an interactive caller who
+ * declines — so a direct (non-CLI) caller in that situation will still see
+ * the process terminate rather than a returned result. Pass yes: true to
+ * avoid this when calling programmatically in a non-interactive context.
  */
 export async function executeApplicationCreate(options: ApplicationCreateOptions): Promise<ApplicationCreateResult> {
     const {
@@ -285,6 +296,9 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
             }
             if (!name) {
                 return { success: false, error: '--name is required when using --profile.' };
+            }
+            if (!(profile in profileDefaults)) {
+                return { success: false, error: `--profile must be one of: ${Object.keys(profileDefaults).join(', ')}.` };
             }
 
             const defaults = profileDefaults[profile as Profile];

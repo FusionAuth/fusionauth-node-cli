@@ -6,7 +6,7 @@ FusionAuth CLI is a command-line tool for working with the FusionAuth CIAM platf
 ## Build Commands
 - Build: `npm run build` (compiles TypeScript to `./dist/`)
 - No lint command configured
-- No test framework - tests not implemented
+- Tests use Node's built-in test runner (`node:test`); run `npm run test:unit` for fast unit tests or `npm test` for the full suite, including Docker-based integration tests under `__tests__/integration/`.
 
 ## Code Style Guidelines
 
