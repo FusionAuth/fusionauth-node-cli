@@ -433,7 +433,7 @@ let baselineSystemConfiguration = null
 /**
  * Captures the current system configuration as the baseline to restore to
  * after CORS-mutating tests. Must be called once before any test that
- * modifies system configuration (e.g. application:create --profile spa/native).
+ * modifies system configuration (e.g. application:create --profile spa).
  * @param {string} apiKey - API key
  * @returns {Promise<object>}
  */

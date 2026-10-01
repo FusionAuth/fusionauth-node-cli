@@ -18,13 +18,14 @@ const REDIRECT_URI = 'https://example.com/callback'
 describe('application:create integration tests', () => {
   let fusionAuthUrl
   let apiKey
+  let systemConfigBaseline
   const createdApplicationIds = []
 
   before(async () => {
     const container = await startFusionAuthContainer()
     fusionAuthUrl = container.url
     apiKey = container.apiKey
-    await captureSystemConfigurationBaseline(apiKey)
+    systemConfigBaseline = await captureSystemConfigurationBaseline(apiKey)
   })
 
   after(async () => {
@@ -46,7 +47,7 @@ describe('application:create integration tests', () => {
       key: apiKey,
       host: fusionAuthUrl,
       tenantId: TENANT_ID,
-      // Bypasses the CORS-change confirmation prompt (spa/native profiles).
+      // Bypasses the CORS-change confirmation prompt (spa profile).
       // The confirmation gate itself is covered by unit tests; these
       // integration tests are focused on real API behavior.
       yes: true,
@@ -62,7 +63,7 @@ describe('application:create integration tests', () => {
     return baseOptions({ profile: 'webapp', redirectUri: [REDIRECT_URI], ...overrides })
   }
 
-  // Verifies the DPoP-related CORS headers required by spa/native profiles
+  // Verifies the DPoP-related CORS headers required by the spa profile
   // were added to system configuration, and that CORS is enabled.
   async function assertCorsHeadersConfigured(apiKey) {
     const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
@@ -129,7 +130,7 @@ describe('application:create integration tests', () => {
     assert(allowedOrigins.includes(origin), `system CORS allowedOrigins should contain '${origin}'`)
   })
 
-  test('--profile native creates application with correct settings and configures CORS', async () => {
+  test('--profile native creates application without touching system CORS configuration', async () => {
     const result = await executeApplicationCreate(baseOptions({
       profile: 'native',
       redirectUri: ['myapp://callback'],
@@ -148,8 +149,11 @@ describe('application:create integration tests', () => {
     assert.deepEqual(app.oauthConfiguration.authorizedRedirectURLs, ['myapp://callback'])
     assert.equal(app.jwtConfiguration.timeToLiveInSeconds, 300)
 
-    // CORS must also be configured for native
-    await assertCorsHeadersConfigured(apiKey)
+    // Native apps don't go through a browser's CORS enforcement, so
+    // --profile native should leave system CORS configuration untouched,
+    // unlike spa.
+    const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
+    assert.deepEqual(sysConfig.systemConfiguration.corsConfiguration, systemConfigBaseline.corsConfiguration)
   })
 
   test('--profile webapp creates confidential client and returns clientSecret', async () => {

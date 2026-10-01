@@ -301,7 +301,7 @@ describe('--data parsing', () => {
     assert.equal(result.success, true)
   })
 
-  test('--data mode does not mutate system CORS configuration (unlike --profile spa/native)', async () => {
+  test('--data mode does not mutate system CORS configuration (unlike --profile spa)', async () => {
     // Only register /api/application — if system-configuration is called,
     // nock will throw and the afterEach isDone() check will also fail.
     nock(FA_HOST)
@@ -348,9 +348,7 @@ describe('profile defaults', () => {
     assert.equal(result.success, true)
   })
 
-  test('native profile sends same defaults as spa', async () => {
-    mockCompliantSystemConfig()
-
+  test('native profile sends same oauth defaults as spa', async () => {
     nock(FA_HOST)
       .post('/api/application/', (body) => {
         const oauth = body.application.oauthConfiguration
@@ -359,6 +357,23 @@ describe('profile defaults', () => {
         assert.equal(oauth.requireRegistration, true)
         return true
       })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      profile: 'native',
+      redirectUri: ['myapp://callback'],
+    })
+    assert.equal(result.success, true)
+  })
+
+  test('native profile does not call system-configuration', async () => {
+    // Native apps don't go through a browser's CORS enforcement, so
+    // --profile native should not touch CORS at all, unlike spa. Only
+    // register /api/application — if system-configuration is called,
+    // nock will throw and the afterEach isDone() check will also fail.
+    nock(FA_HOST)
+      .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
     const result = await executeApplicationCreate({

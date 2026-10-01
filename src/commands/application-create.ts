@@ -42,9 +42,11 @@ export interface ApplicationCreateResult {
     name?: string;
 }
 
-// Shared refresh token policy for all profiles. A sliding window of
-// one-time-use refresh tokens is the recommended default across
-// spa/native/webapp — only timeToLiveInSeconds differs per profile.
+// Shared refresh token policy (usage + expiration) across all profiles. A
+// sliding window of one-time-use refresh tokens is the recommended default
+// for spa/native/webapp. This does not include timeToLiveInSeconds — that's
+// the access token (JWT) lifetime, set separately per profile below in
+// jwtConfiguration, not part of the refresh token policy itself.
 const defaultRefreshTokenPolicy = {
     refreshTokenUsagePolicy: RefreshTokenUsagePolicy.OneTimeUse,
     refreshTokenExpirationPolicy: RefreshTokenExpirationPolicy.SlidingWindow,
@@ -126,19 +128,22 @@ function unwrapError(e: unknown): unknown {
  * Ensures that the required DPoP-related CORS headers — and, when
  * authorizedOrigins is non-empty, those origins — are present in the
  * FusionAuth system configuration. Also enables CORS if it is currently
- * disabled. Should be called for spa and native profiles before creating
- * the application.
+ * disabled. Should be called for the spa profile before creating the
+ * application.
  *
  * Enabling CORS and allowing the right headers is not sufficient on its
  * own: FusionAuth's CORS allowlist (corsConfiguration.allowedOrigins) is a
  * separate, independent setting, and browsers will still block cross-origin
- * requests from a spa/native app's own origin unless it's present there (or
+ * requests from the spa app's own origin unless it's present there (or
  * allowedOrigins is "*"). --authorized-origin-url is the only source of
  * that origin available to this command, so it's reused here in addition
  * to populating application.oauthConfiguration.authorizedOriginURLs.
  *
- * CORS is a prerequisite for spa/native DPoP flows. If this call fails the
- * entire command is aborted — no application will be created.
+ * CORS only applies to browser-based requests, so this is only relevant
+ * for the spa profile — native apps don't go through a browser's CORS
+ * enforcement at all, so this should not be called for native. If this
+ * call fails the entire command is aborted — no application will be
+ * created.
  *
  * This mutates system-wide configuration, so it is gated behind
  * confirmOrExit()/--yes and only prompts when a change is actually needed.
@@ -252,7 +257,7 @@ function parseData(data: string): Application {
  * process.exit() directly — this is what allows tests to import and invoke
  * it, and non-CLI callers to handle failures programmatically.
  *
- * One exception: for spa/native profiles, this calls ensureCorsHeaders(),
+ * One exception: for the spa profile, this calls ensureCorsHeaders(),
  * which calls confirmOrExit() to gate a system-wide CORS mutation per this
  * project's Risky Operations convention (see kickstart-kill.ts for the
  * same pattern elsewhere). confirmOrExit() does call process.exit() for a
@@ -358,11 +363,13 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
 
         const fusionAuthClient = new FusionAuthClient(apiKey, host, tenantId);
 
-        // For spa/native profiles, enforce DPoP-required CORS headers (and
+        // For the spa profile, enforce DPoP-required CORS headers (and
         // allowed origins, when provided) first. If this fails (or the user
         // declines the confirmation prompt), the command aborts —
-        // createApplication is never called.
-        if (profile === 'spa' || profile === 'native') {
+        // createApplication is never called. Native apps don't go through
+        // a browser's CORS enforcement, so this is intentionally skipped
+        // for --profile native.
+        if (profile === 'spa') {
             await ensureCorsHeaders(fusionAuthClient, yes ?? false, authorizedOriginUrl ?? []);
         }
 
@@ -452,7 +459,7 @@ export const applicationCreate = new Command('application:create')
     .option('--data <data>', 'Full application config as inline JSON or @file.json (mutually exclusive with --profile)')
     .option('--application-id <uuid>', 'Application UUID (auto-generated if omitted; overrides --data)')
     .option('--tenant-id <uuid>', 'Tenant UUID (overrides --data)')
-    .option('--yes', 'Skip confirmation prompt for automatic CORS configuration changes (spa/native profiles)', false)
+    .option('--yes', 'Skip confirmation prompt for automatic CORS configuration changes (spa profile)', false)
     .addOption(apiKeyOption)
     .addOption(hostOption)
     .action(action);
