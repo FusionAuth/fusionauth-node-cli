@@ -288,7 +288,15 @@ export async function makeApiRequest(method, path, data = null, apiKey = DEFAULT
       )
     }
 
-    return await response.json()
+    // Some successful responses (e.g. DELETE /api/application) have an
+    // empty body — calling response.json() directly throws in that case
+    // ("Unexpected end of JSON input"), so read as text first and only
+    // parse when there's actually something to parse.
+    const responseText = await response.text()
+    if (!responseText) {
+      return null
+    }
+    return JSON.parse(responseText)
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new Error(`API request timeout: ${method} ${path}`)
