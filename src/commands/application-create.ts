@@ -228,7 +228,12 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authori
 /**
  * Parses the --data value. If it begins with '@', reads the referenced file.
  * Otherwise parses the value as inline JSON.
- * Throws an Error on parse or file-read failure (caught by executeApplicationCreate).
+ * Throws an Error on parse, file-read, or shape failure (caught by
+ * executeApplicationCreate). "Shape failure" means the parsed JSON is valid
+ * but isn't a non-null, non-array object — e.g. `--data 'null'` or
+ * `--data '[1,2,3]'` would otherwise be cast to Application unchecked,
+ * surfacing as a confusing downstream TypeError (null) or a nonsensical
+ * API payload (array/primitive) instead of a clear validation error here.
  */
 function parseData(data: string): Application {
     let json: string;
@@ -243,12 +248,19 @@ function parseData(data: string): Application {
     } else {
         json = data;
     }
+    let parsed: unknown;
     try {
-        return JSON.parse(json) as Application;
+        parsed = JSON.parse(json);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
         throw new Error(`Error parsing --data JSON: ${message}`);
     }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        throw new Error(
+            `--data JSON must be a non-null, non-array object, got ${Array.isArray(parsed) ? 'an array' : parsed === null ? 'null' : typeof parsed}.`
+        );
+    }
+    return parsed as Application;
 }
 
 /**

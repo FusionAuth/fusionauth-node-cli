@@ -20,9 +20,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * this file can run from:
  *  - Built (dist/): resources live beside the compiled command, at
  *    dist/commands/resources, via the build's copy-files step.
- *  - Source (src/, e.g. `npm start` running this file directly via tsx):
- *    resources live one level up, at src/resources — they are not copied
- *    anywhere until a build runs.
+ *  - Source (src/, e.g. running this file directly via tsx during local
+ *    development, independent of the npm start script): resources live one
+ *    level up, at src/resources — they are not copied anywhere until a
+ *    build runs.
  * Throws if neither layout is found, rather than silently proceeding with
  * a path that doesn't exist.
  */

@@ -351,7 +351,7 @@ describe('resolveResourcesDir()', () => {
   test('resolves to an existing directory containing kickstart resources', () => {
     // Covers both layouts this file can run from: dist/commands/resources
     // (built, via copy-files) and src/resources (running the TS source
-    // directly, e.g. `npm start`, before any build has copied anything).
+    // directly via tsx, before any build has copied anything).
     const resourcesDir = resolveResourcesDir()
     assert.ok(fs.existsSync(resourcesDir), `${resourcesDir} should exist`)
     assert.ok(

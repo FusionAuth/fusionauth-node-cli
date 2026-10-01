@@ -188,6 +188,36 @@ describe('--data parsing', () => {
     assert.match(result.error, /JSON/)
   })
 
+  test('--data "null" returns a clear validation error without making API calls', async () => {
+    // JSON.parse('null') succeeds (it's valid JSON), so this isn't caught
+    // by the malformed-JSON case above. Without a shape check, this would
+    // otherwise surface as a confusing downstream TypeError instead.
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      data: 'null',
+    })
+    assert.equal(result.success, false)
+    assert.match(result.error, /--data JSON must be a non-null, non-array object/)
+  })
+
+  test('--data as a JSON array returns a clear validation error without making API calls', async () => {
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      data: '[1,2,3]',
+    })
+    assert.equal(result.success, false)
+    assert.match(result.error, /--data JSON must be a non-null, non-array object/)
+  })
+
+  test('--data as a JSON primitive returns a clear validation error without making API calls', async () => {
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      data: '42',
+    })
+    assert.equal(result.success, false)
+    assert.match(result.error, /--data JSON must be a non-null, non-array object/)
+  })
+
   test('missing @file returns error without making API calls', async () => {
     const result = await executeApplicationCreate({
       ...BASE_OPTIONS,
@@ -752,8 +782,12 @@ describe('confirmation gate for CORS mutation', () => {
   test('non-interactive without --yes aborts before patching CORS or creating the application', async (t) => {
     // process.exit is mocked so confirmOrExit() throws instead of actually
     // exiting (see utils.ts docstring) — the throw is caught by
-    // executeApplicationCreate's try/catch and returned as a normal result,
-    // per its documented contract of never exiting the process itself.
+    // executeApplicationCreate's try/catch and returned as a normal result.
+    // In production (unmocked), confirmOrExit() can still exit the process
+    // directly for a non-interactive caller without yes=true — see the
+    // documented exception to the "always returns a result" contract on
+    // executeApplicationCreate's JSDoc. It's only this test's mock that
+    // turns that exit into a returned result instead.
     const exitMock = t.mock.method(process, 'exit', () => {})
 
     nock(FA_HOST)
