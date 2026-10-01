@@ -314,13 +314,38 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
             };
         } else {
             // --- Custom mode ---
-            // --name is optional here so --data can provide "full custom control":
-            // only override the JSON's name field if --name was explicitly passed.
-            // If neither supplies a name, FusionAuth's API will reject the request.
+            // --data provides "full custom control": the JSON is the source of
+            // truth, and --name/--redirect-uri/--logout-url/--authorized-origin-url
+            // are all optional overrides that only take effect if explicitly
+            // passed, leaving the JSON's own values untouched otherwise. This
+            // mirrors the --application-id/--tenant-id override pattern below,
+            // which applies unconditionally in both modes.
             application = parseData(data!);
             if (name) {
                 application.name = name;
             }
+            if (redirectUri && redirectUri.length > 0) {
+                application.oauthConfiguration = {
+                    ...application.oauthConfiguration,
+                    authorizedRedirectURLs: redirectUri,
+                };
+            }
+            if (logoutUrl) {
+                application.oauthConfiguration = {
+                    ...application.oauthConfiguration,
+                    logoutURL: logoutUrl,
+                };
+            }
+            if (authorizedOriginUrl && authorizedOriginUrl.length > 0) {
+                application.oauthConfiguration = {
+                    ...application.oauthConfiguration,
+                    authorizedOriginURLs: authorizedOriginUrl,
+                };
+            }
+            // Note: unlike --profile mode, this does not call ensureCorsHeaders()
+            // — --data mode never mutates system-wide CORS configuration, since
+            // "full custom control" means the caller owns their own
+            // infrastructure config, not just the application body.
         }
 
         // --- ID overrides (applied last in both modes) ---

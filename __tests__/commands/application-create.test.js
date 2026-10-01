@@ -216,6 +216,93 @@ describe('--data parsing', () => {
     })
     assert.equal(result.success, true)
   })
+
+  test('--data mode preserves the JSON oauthConfiguration when the override flags are omitted', async () => {
+    nock(FA_HOST)
+      .post('/api/application/', (body) => {
+        const oauth = body.application.oauthConfiguration
+        assert.deepEqual(oauth.authorizedRedirectURLs, ['https://from-json.example.com/cb'])
+        assert.equal(oauth.logoutURL, 'https://from-json.example.com/logout')
+        assert.deepEqual(oauth.authorizedOriginURLs, ['https://from-json.example.com'])
+        return true
+      })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      data: JSON.stringify({
+        oauthConfiguration: {
+          authorizedRedirectURLs: ['https://from-json.example.com/cb'],
+          logoutURL: 'https://from-json.example.com/logout',
+          authorizedOriginURLs: ['https://from-json.example.com'],
+        },
+      }),
+    })
+    assert.equal(result.success, true)
+  })
+
+  test('--redirect-uri overrides the JSON authorizedRedirectURLs when explicitly provided', async () => {
+    nock(FA_HOST)
+      .post('/api/application/', (body) => {
+        assert.deepEqual(body.application.oauthConfiguration.authorizedRedirectURLs, [REDIRECT_URI])
+        return true
+      })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      redirectUri: [REDIRECT_URI],
+      data: JSON.stringify({ oauthConfiguration: { authorizedRedirectURLs: ['https://from-json.example.com/cb'] } }),
+    })
+    assert.equal(result.success, true)
+  })
+
+  test('--logout-url overrides the JSON logoutURL when explicitly provided', async () => {
+    nock(FA_HOST)
+      .post('/api/application/', (body) => {
+        assert.equal(body.application.oauthConfiguration.logoutURL, 'https://override.example.com/logout')
+        return true
+      })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      logoutUrl: 'https://override.example.com/logout',
+      data: JSON.stringify({ oauthConfiguration: { logoutURL: 'https://from-json.example.com/logout' } }),
+    })
+    assert.equal(result.success, true)
+  })
+
+  test('--authorized-origin-url overrides the JSON authorizedOriginURLs when explicitly provided', async () => {
+    nock(FA_HOST)
+      .post('/api/application/', (body) => {
+        assert.deepEqual(body.application.oauthConfiguration.authorizedOriginURLs, ['https://override.example.com'])
+        return true
+      })
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      authorizedOriginUrl: ['https://override.example.com'],
+      data: JSON.stringify({ oauthConfiguration: { authorizedOriginURLs: ['https://from-json.example.com'] } }),
+    })
+    assert.equal(result.success, true)
+  })
+
+  test('--data mode does not mutate system CORS configuration (unlike --profile spa/native)', async () => {
+    // Only register /api/application — if system-configuration is called,
+    // nock will throw and the afterEach isDone() check will also fail.
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      authorizedOriginUrl: ['https://override.example.com'],
+      data: JSON.stringify({ oauthConfiguration: {} }),
+    })
+    assert.equal(result.success, true)
+  })
 })
 
 // ---------------------------------------------------------------------------
