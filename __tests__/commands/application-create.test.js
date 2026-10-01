@@ -10,11 +10,20 @@ const FA_HOST = 'http://localhost:9011'
 const API_KEY = 'test-api-key'
 const TENANT_ID = '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1'
 const APP_ID = '3c219e58-ed0e-4b18-ad48-f4f92793ae32'
+const REDIRECT_URI = 'https://example.com/callback'
 
 const BASE_OPTIONS = {
   name: 'Test App',
   key: API_KEY,
   host: FA_HOST,
+}
+
+function spaOptions(overrides = {}) {
+  return { ...BASE_OPTIONS, profile: 'spa', redirectUri: [REDIRECT_URI], ...overrides }
+}
+
+function webappOptions(overrides = {}) {
+  return { ...BASE_OPTIONS, profile: 'webapp', redirectUri: [REDIRECT_URI], ...overrides }
 }
 
 // Minimal successful createApplication response
@@ -53,6 +62,14 @@ function systemConfigResponse(overrides = {}) {
   }
 }
 
+// Registers a GET /api/system-configuration mock reporting CORS as already
+// compliant — used by every test where no CORS mutation should occur.
+function mockCompliantSystemConfig() {
+  nock(FA_HOST)
+    .get('/api/system-configuration')
+    .reply(200, systemConfigResponse())
+}
+
 beforeEach(() => {
   process.env.NODE_ENV = 'test'
   nock.cleanAll()
@@ -70,9 +87,7 @@ afterEach(() => {
 describe('mode validation', () => {
   test('both --profile and --data provided returns error without making API calls', async () => {
     const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
+      ...spaOptions(),
       data: '{"name":"x"}',
     })
     assert.equal(result.success, false)
@@ -97,12 +112,8 @@ describe('mode validation', () => {
   })
 
   test('--profile without --name returns error without making API calls', async () => {
-    const { name, ...optionsWithoutName } = BASE_OPTIONS
-    const result = await executeApplicationCreate({
-      ...optionsWithoutName,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const { name, ...optionsWithoutName } = spaOptions()
+    const result = await executeApplicationCreate(optionsWithoutName)
     assert.equal(result.success, false)
     assert.match(result.error, /--name is required/)
   })
@@ -201,9 +212,7 @@ describe('--data parsing', () => {
 
 describe('profile defaults', () => {
   test('spa profile sends correct oauthConfiguration and jwtConfiguration', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
+    mockCompliantSystemConfig()
 
     nock(FA_HOST)
       .post('/api/application/', (body) => {
@@ -215,7 +224,7 @@ describe('profile defaults', () => {
         assert.equal(oauth.requireClientAuthentication, false)
         assert.equal(oauth.generateRefreshTokens, true)
         assert.equal(oauth.requireRegistration, true)
-        assert.deepEqual(oauth.authorizedRedirectURLs, ['https://example.com/callback'])
+        assert.deepEqual(oauth.authorizedRedirectURLs, [REDIRECT_URI])
         assert.equal(jwt.enabled, true)
         assert.equal(jwt.timeToLiveInSeconds, 300)
         assert.equal(jwt.refreshTokenUsagePolicy, 'OneTimeUse')
@@ -224,18 +233,12 @@ describe('profile defaults', () => {
       })
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(spaOptions())
     assert.equal(result.success, true)
   })
 
   test('native profile sends same defaults as spa', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
+    mockCompliantSystemConfig()
 
     nock(FA_HOST)
       .post('/api/application/', (body) => {
@@ -272,11 +275,7 @@ describe('profile defaults', () => {
       })
       .reply(200, APP_RESPONSE_WITH_SECRET)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(webappOptions())
     assert.equal(result.success, true)
     assert.equal(result.clientSecret, 'super-secret')
   })
@@ -288,18 +287,12 @@ describe('profile defaults', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(webappOptions())
     assert.equal(result.success, true)
   })
 
   test('optional profile options are included when provided', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
+    mockCompliantSystemConfig()
 
     nock(FA_HOST)
       .post('/api/application/', (body) => {
@@ -310,13 +303,10 @@ describe('profile defaults', () => {
       })
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
+    const result = await executeApplicationCreate(spaOptions({
       authorizedOriginUrl: ['https://example.com'],
       logoutUrl: 'https://example.com/logout',
-    })
+    }))
     assert.equal(result.success, true)
   })
 })
@@ -327,9 +317,7 @@ describe('profile defaults', () => {
 
 describe('ID overrides', () => {
   test('--application-id is sent in the request URL and body', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
+    mockCompliantSystemConfig()
 
     nock(FA_HOST)
       .post(`/api/application/${APP_ID}`, (body) => {
@@ -338,12 +326,7 @@ describe('ID overrides', () => {
       })
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      applicationId: APP_ID,
-    })
+    const result = await executeApplicationCreate(spaOptions({ applicationId: APP_ID }))
     assert.equal(result.success, true)
     assert.equal(result.applicationId, APP_ID)
   })
@@ -402,19 +385,12 @@ describe('regression: tenant header scoping', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      tenantId: TENANT_ID,
-    })
+    const result = await executeApplicationCreate(spaOptions({ tenantId: TENANT_ID }))
     assert.equal(result.success, true)
   })
 
   test('X-FusionAuth-TenantId is present on createApplication call when --tenant-id supplied', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
+    mockCompliantSystemConfig()
 
     nock(FA_HOST, {
       reqheaders: { 'x-fusionauth-tenantid': TENANT_ID },
@@ -422,12 +398,7 @@ describe('regression: tenant header scoping', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      tenantId: TENANT_ID,
-    })
+    const result = await executeApplicationCreate(spaOptions({ tenantId: TENANT_ID }))
     assert.equal(result.success, true)
   })
 })
@@ -447,11 +418,7 @@ describe('regression: error attribution', () => {
     // Do NOT register /api/application — if it were called, afterEach isDone() would pass
     // incorrectly. We rely on the nock.pendingMocks() check being empty as the success signal,
     // but more importantly we assert result.success is false here.
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(spaOptions())
     assert.equal(result.success, false)
     // createApplication was never called, so the message must not be misattributed
     // to it — it should describe the actual (CORS retrieval) failure.
@@ -468,12 +435,7 @@ describe('regression: error attribution', () => {
       .patch('/api/system-configuration')
       .reply(403)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      yes: true,
-    })
+    const result = await executeApplicationCreate(spaOptions({ yes: true }))
     assert.equal(result.success, false)
     assert.match(result.error, /Error updating CORS configuration/)
     assert.doesNotMatch(result.error, /Error creating application/)
@@ -485,11 +447,7 @@ describe('regression: error attribution', () => {
       .post('/api/application/')
       .reply(500, {})
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(webappOptions())
     assert.equal(result.success, false)
     assert.match(result.error, /Error creating application/)
   })
@@ -499,11 +457,7 @@ describe('regression: error attribution', () => {
       .post('/api/application/')
       .reply(400, { fieldErrors: { name: [{ message: 'is required' }] } })
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(webappOptions())
     assert.equal(result.success, false)
     // rawError must be the original FusionAuth ClientResponse-shaped rejection
     // (so errorAndExit/reportError can format fieldErrors/generalErrors),
@@ -531,11 +485,7 @@ describe('CORS header management', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(spaOptions())
     assert.equal(result.success, true)
   })
 
@@ -562,12 +512,7 @@ describe('CORS header management', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      yes: true,
-    })
+    const result = await executeApplicationCreate(spaOptions({ yes: true }))
     assert.equal(result.success, true)
   })
 
@@ -590,12 +535,7 @@ describe('CORS header management', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      yes: true,
-    })
+    const result = await executeApplicationCreate(spaOptions({ yes: true }))
     assert.equal(result.success, true)
   })
 })
@@ -621,11 +561,7 @@ describe('confirmation gate for CORS mutation', () => {
     // Deliberately no PATCH or POST /api/application interceptors registered —
     // if either were called, afterEach's nock.isDone() check would fail.
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(spaOptions())
 
     assert.equal(result.success, false)
     assert.equal(exitMock.mock.calls.length, 1, 'process.exit should be called once')
@@ -645,12 +581,7 @@ describe('confirmation gate for CORS mutation', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-      yes: true,
-    })
+    const result = await executeApplicationCreate(spaOptions({ yes: true }))
 
     assert.equal(result.success, true)
   })
@@ -666,48 +597,21 @@ describe('output', () => {
       .post('/api/application/')
       .reply(200, APP_RESPONSE_WITH_SECRET)
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'webapp',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(webappOptions())
     assert.equal(result.success, true)
     assert.equal(result.clientSecret, 'super-secret')
   })
 
-  test('clientSecret is absent for spa profile (public client)', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
+  test('spa profile result includes name/applicationId/clientId and omits clientSecret', async () => {
+    mockCompliantSystemConfig()
 
     nock(FA_HOST)
       .post('/api/application/')
       .reply(200, APP_RESPONSE)  // no clientSecret in response
 
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
+    const result = await executeApplicationCreate(spaOptions())
     assert.equal(result.success, true)
     assert.equal(result.clientSecret, undefined)
-  })
-
-  test('result contains name, applicationId, and clientId', async () => {
-    nock(FA_HOST)
-      .get('/api/system-configuration')
-      .reply(200, systemConfigResponse())
-
-    nock(FA_HOST)
-      .post('/api/application/')
-      .reply(200, APP_RESPONSE)
-
-    const result = await executeApplicationCreate({
-      ...BASE_OPTIONS,
-      profile: 'spa',
-      redirectUri: ['https://example.com/callback'],
-    })
-    assert.equal(result.success, true)
     assert.equal(result.name, 'Test App')
     assert.equal(result.applicationId, APP_ID)
     assert.equal(result.clientId, APP_ID)
