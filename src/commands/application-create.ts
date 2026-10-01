@@ -297,7 +297,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
             if (!name) {
                 return { success: false, error: '--name is required when using --profile.' };
             }
-            if (!(profile in profileDefaults)) {
+            if (!Object.keys(profileDefaults).includes(profile)) {
                 return { success: false, error: `--profile must be one of: ${Object.keys(profileDefaults).join(', ')}.` };
             }
 

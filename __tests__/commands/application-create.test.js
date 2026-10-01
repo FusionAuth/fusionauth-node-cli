@@ -129,6 +129,18 @@ describe('mode validation', () => {
     assert.match(result.error, /native/)
     assert.match(result.error, /webapp/)
   })
+
+  test('a --profile value that is an inherited Object property is rejected', async () => {
+    // `profile in profileDefaults` would incorrectly accept values like
+    // 'toString' or 'constructor', since `in` checks the prototype chain,
+    // not just own properties. profileDefaults['toString'] then resolves
+    // to the inherited Function, and {...profileDefaults['toString']}
+    // silently produces {} — reaching the exact "empty defaults, no
+    // security profile applied" bug this validation exists to prevent.
+    const result = await executeApplicationCreate(spaOptions({ profile: 'toString' }))
+    assert.equal(result.success, false)
+    assert.match(result.error, /--profile must be one of/)
+  })
 })
 
 // ---------------------------------------------------------------------------
