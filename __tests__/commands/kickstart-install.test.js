@@ -1,9 +1,11 @@
 import { describe, test, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
 import {
   validateEmail,
   validatePassword,
   resolveInstallAnswers,
+  resolveResourcesDir,
 } from '../../src/commands/kickstart-install.js'
 
 // ---------------------------------------------------------------------------
@@ -338,5 +340,27 @@ describe('resolveInstallAnswers() — inquirer validate functions', () => {
     const passwordQuestion = capturedQuestions.find((q) => q.name === 'password')
     assert.ok(passwordQuestion, 'password question should exist')
     assert.equal(passwordQuestion.validate, validatePassword)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// resolveResourcesDir()
+// ---------------------------------------------------------------------------
+
+describe('resolveResourcesDir()', () => {
+  test('resolves to an existing directory containing kickstart resources', () => {
+    // Covers both layouts this file can run from: dist/commands/resources
+    // (built, via copy-files) and src/resources (running the TS source
+    // directly, e.g. `npm start`, before any build has copied anything).
+    const resourcesDir = resolveResourcesDir()
+    assert.ok(fs.existsSync(resourcesDir), `${resourcesDir} should exist`)
+    assert.ok(
+      fs.existsSync(`${resourcesDir}/kickstart/fusionauth`),
+      `${resourcesDir}/kickstart/fusionauth should exist`
+    )
+    assert.ok(
+      fs.existsSync(`${resourcesDir}/kickstart/kickstart.json`),
+      `${resourcesDir}/kickstart/kickstart.json should exist`
+    )
   })
 })

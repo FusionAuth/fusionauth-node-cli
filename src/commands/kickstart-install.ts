@@ -14,6 +14,30 @@ import { betaWarning, errorAndExit, isDirEmpty, isDockerInstalled, logEvent } fr
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Resolves the directory containing the kickstart resource files
+ * (fusionauth-config files, kickstart.json, etc.), supporting both layouts
+ * this file can run from:
+ *  - Built (dist/): resources live beside the compiled command, at
+ *    dist/commands/resources, via the build's copy-files step.
+ *  - Source (src/, e.g. `npm start` running this file directly via tsx):
+ *    resources live one level up, at src/resources — they are not copied
+ *    anywhere until a build runs.
+ * Throws if neither layout is found, rather than silently proceeding with
+ * a path that doesn't exist.
+ */
+export function resolveResourcesDir(): string {
+    const distLayout = path.join(__dirname, 'resources');
+    if (fs.existsSync(distLayout)) {
+        return distLayout;
+    }
+    const srcLayout = path.join(__dirname, '..', 'resources');
+    if (fs.existsSync(srcLayout)) {
+        return srcLayout;
+    }
+    throw new Error(`Could not locate kickstart resources directory (checked ${distLayout} and ${srcLayout}).`);
+}
+
 // ---------------------------------------------------------------------------
 // Validation helpers (exported for testing)
 // ---------------------------------------------------------------------------
@@ -210,12 +234,13 @@ const action = async function (dir: string, options: InstallOptions) {
       // Sequential, awaited steps (rather than setTimeout-chained callbacks) so that:
       //  - exceptions propagate through the surrounding try/catch
       //  - step ordering is deterministic regardless of machine speed
+      const resourcesDir = resolveResourcesDir();
       console.log(chalk.green(`\nTransferring files to ${dir}`))
-      fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
+      fs.cpSync(`${resourcesDir}/kickstart/fusionauth`, directory, { recursive: true })
 
       console.log(chalk.green(`Creating Kickstart file`))
       if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exist.`))
-      await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
+      await createKickstart(resourcesDir + '/kickstart/kickstart.json', answers, directory)
 
       const postgresPass = randomUUID()
       const dbPass = randomUUID()
