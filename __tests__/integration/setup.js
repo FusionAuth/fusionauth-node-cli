@@ -22,9 +22,51 @@ const HEALTH_CHECK_TIMEOUT = 240000 // 4 minutes
 const HEALTH_CHECK_INTERVAL = 5000 // 5 seconds
 const REQUEST_TIMEOUT = 10000 // 10 seconds
 const CONTAINER_NAME = 'fusionauth-integration-test-base-fusionauth-1'
+const COMPOSE_DIR = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
 
 let isContainerRunning = false
 let resolvedFusionAuthUrl = DEFAULT_FUSIONAUTH_URL
+
+/**
+ * Best-effort teardown used by the SIGINT/SIGTERM handlers below. Unlike
+ * stopFusionAuthContainer(), this does not check isContainerRunning — a
+ * termination signal can arrive before that flag is set (e.g. while still
+ * waiting on docker compose up -d or the health check loop), by which point
+ * containers may already exist and still need cleaning up.
+ * @param {string} reason - what triggered the teardown, for logging
+ */
+async function forceTeardown(reason) {
+  if (process.env.SKIP_TEARDOWN === 'true') {
+    console.log(`ℹ Skipping container teardown on ${reason} (SKIP_TEARDOWN=true)`)
+    return
+  }
+  try {
+    await execAsync(`cd ${COMPOSE_DIR} && docker compose down -v`)
+    isContainerRunning = false
+  } catch (err) {
+    console.error(`Warning: Failed to stop container during ${reason} cleanup: ${err.message}`)
+  }
+}
+
+let handlingTerminationSignal = false
+
+/**
+ * Ensures a Ctrl+C (or kill) during a test run doesn't leak the FusionAuth
+ * container — without this, after()/t.after() hooks never run on an
+ * interrupted process, leaving containers running (or stopped-but-not-
+ * removed, which can then collide with the next run's `docker compose up`).
+ * @param {string} signal
+ */
+async function handleTerminationSignal(signal) {
+  if (handlingTerminationSignal) return
+  handlingTerminationSignal = true
+  console.log(`\n⚠ Received ${signal}, cleaning up FusionAuth container before exiting...`)
+  await forceTeardown(signal)
+  process.exit(signal === 'SIGINT' ? 130 : 143)
+}
+
+process.on('SIGINT', () => { void handleTerminationSignal('SIGINT') })
+process.on('SIGTERM', () => { void handleTerminationSignal('SIGTERM') })
 
 /**
  * Resolves the FusionAuth URL. On environments where localhost port-mapping
@@ -86,9 +128,8 @@ export async function startFusionAuthContainer() {
 
   console.log('↻ Starting FusionAuth container via docker compose...')
 
-  const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
-  const envFile = path.join(composeDir, '.env.test')
-  const kickstartFilePath = path.join(composeDir, 'kickstart.json')
+  const envFile = path.join(COMPOSE_DIR, '.env.test')
+  const kickstartFilePath = path.join(COMPOSE_DIR, 'kickstart.json')
 
   // Create .env.test file with test configuration
   const envContent = `
@@ -107,20 +148,33 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
   fs.writeFileSync(envFile, envContent)
 
   try {
-    // Check for and tear down any existing containers first
+    // Check for and tear down any existing containers first. Use -a/--all —
+    // without it, docker compose ps only lists running/restarting
+    // containers, so a stopped-but-not-removed container from a prior
+    // interrupted run would be invisible here, this cleanup would be
+    // skipped entirely, and the `up -d` below would fail with
+    // "Conflict: container name already in use".
+    let psOutput = ''
     try {
-      const { stdout: psOutput } = await execAsync(`cd ${composeDir} && docker compose ps -q`)
-      if (psOutput.trim()) {
-        console.log('⚠ Found existing FusionAuth containers, tearing them down...')
-        await execAsync(`cd ${composeDir} && docker compose down -v`)
-        console.log('✓ Existing containers removed')
-      }
+      const result = await execAsync(`cd ${COMPOSE_DIR} && docker compose ps -aq`)
+      psOutput = result.stdout
     } catch (e) {
-      // Container may not exist, that's fine
+      // `docker compose ps` itself failing (e.g. project has never existed)
+      // is fine — there's nothing to tear down.
+    }
+
+    if (psOutput.trim()) {
+      console.log('⚠ Found existing FusionAuth containers, tearing them down...')
+      // Unlike the ps check above, a failure here means stale containers
+      // genuinely remain. Let it propagate (via the outer catch) instead of
+      // silently continuing into `up -d`, which would just hit the same
+      // naming conflict with a far more confusing error message.
+      await execAsync(`cd ${COMPOSE_DIR} && docker compose down -v`)
+      console.log('✓ Existing containers removed')
     }
 
     // Start containers
-    await execAsync(`cd ${composeDir} && docker compose --env-file .env.test up -d`)
+    await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test up -d`)
 
     // Wait for FusionAuth to be healthy
     await waitForFusionAuthReady()
@@ -154,10 +208,8 @@ export async function stopFusionAuthContainer() {
 
   console.log('↻ Stopping FusionAuth container...')
 
-  const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
-
   try {
-    await execAsync(`cd ${composeDir} && docker compose down -v`)
+    await execAsync(`cd ${COMPOSE_DIR} && docker compose down -v`)
     isContainerRunning = false
     console.log('✓ FusionAuth container stopped')
   } catch (err) {
