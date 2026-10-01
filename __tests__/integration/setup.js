@@ -41,7 +41,7 @@ async function forceTeardown(reason) {
     return
   }
   try {
-    await execAsync(`cd ${COMPOSE_DIR} && docker compose down -v`)
+    await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test down -v`)
     isContainerRunning = false
   } catch (err) {
     console.error(`Warning: Failed to stop container during ${reason} cleanup: ${err.message}`)
@@ -156,7 +156,7 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
     // "Conflict: container name already in use".
     let psOutput = ''
     try {
-      const result = await execAsync(`cd ${COMPOSE_DIR} && docker compose ps -aq`)
+      const result = await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test ps -aq`)
       psOutput = result.stdout
     } catch (e) {
       // `docker compose ps` itself failing (e.g. project has never existed)
@@ -169,7 +169,7 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
       // genuinely remain. Let it propagate (via the outer catch) instead of
       // silently continuing into `up -d`, which would just hit the same
       // naming conflict with a far more confusing error message.
-      await execAsync(`cd ${COMPOSE_DIR} && docker compose down -v`)
+      await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test down -v`)
       console.log('✓ Existing containers removed')
     }
 
@@ -209,7 +209,7 @@ export async function stopFusionAuthContainer() {
   console.log('↻ Stopping FusionAuth container...')
 
   try {
-    await execAsync(`cd ${COMPOSE_DIR} && docker compose down -v`)
+    await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test down -v`)
     isContainerRunning = false
     console.log('✓ FusionAuth container stopped')
   } catch (err) {
