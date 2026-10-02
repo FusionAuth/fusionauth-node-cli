@@ -2,6 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Async version of exec used in place of execSync to avoid blocking the
@@ -21,8 +22,12 @@ const DEFAULT_API_KEY = '90dd6b25-d1ef-4175-9656-159dd994932e'
 const HEALTH_CHECK_TIMEOUT = 240000 // 4 minutes
 const HEALTH_CHECK_INTERVAL = 5000 // 5 seconds
 const REQUEST_TIMEOUT = 10000 // 10 seconds
-const CONTAINER_NAME = 'fusionauth-integration-test-base-fusionauth-1'
-const COMPOSE_DIR = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
+// fileURLToPath() (not .pathname) is required here: .pathname leaves
+// characters like spaces percent-encoded (e.g. '%20'), which is not a
+// valid path component on disk and would break both writeFileSync(envFile)
+// and every docker compose invocation below for a checkout under a path
+// containing a space.
+const COMPOSE_DIR = fileURLToPath(new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url))
 
 let isContainerRunning = false
 let resolvedFusionAuthUrl = DEFAULT_FUSIONAUTH_URL
@@ -41,7 +46,7 @@ async function forceTeardown(reason) {
     return
   }
   try {
-    await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test down -v`)
+    await execAsync('docker compose --env-file .env.test down -v', { cwd: COMPOSE_DIR })
     isContainerRunning = false
   } catch (err) {
     console.error(`Warning: Failed to stop container during ${reason} cleanup: ${err.message}`)
@@ -69,6 +74,26 @@ process.on('SIGINT', () => { void handleTerminationSignal('SIGINT') })
 process.on('SIGTERM', () => { void handleTerminationSignal('SIGTERM') })
 
 /**
+ * Resolves the FusionAuth service container's ID via Docker Compose,
+ * rather than assuming Compose's default generated container name
+ * ('{project}-{service}-{index}'). That default only holds when
+ * COMPOSE_PROJECT_NAME is unset; if it's set (e.g. by a contributor's
+ * shell profile or CI wrapper), the real container name differs and a
+ * hard-coded guess would silently fail to match anything.
+ * @returns {Promise<string>} The container ID, or '' if it can't be found
+ *   (e.g. the compose project doesn't exist yet) — callers should treat
+ *   that the same as a failed `docker inspect` and fall back gracefully.
+ */
+async function resolveContainerId() {
+  try {
+    const { stdout } = await execAsync('docker compose --env-file .env.test ps -q fusionauth', { cwd: COMPOSE_DIR })
+    return stdout.trim()
+  } catch (_) {
+    return ''
+  }
+}
+
+/**
  * Resolves the FusionAuth URL. On environments where localhost port-mapping
  * behaves differently (e.g. macOS Docker Desktop), falls back to the
  * container's direct bridge IP to ensure authenticated requests succeed.
@@ -90,8 +115,10 @@ async function resolveFusionAuthUrl() {
   // Fall back to the container's direct bridge IP (works on macOS Docker Desktop
   // where localhost port-mapping doesn't forward API-key auth correctly).
   try {
+    const containerId = await resolveContainerId()
+    if (!containerId) throw new Error('FusionAuth container not found')
     const { stdout } = await execAsync(
-      `docker inspect ${CONTAINER_NAME} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+      `docker inspect ${containerId} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
     )
     const ips = stdout.trim().split(/\s+/).filter(Boolean)
     for (const ip of ips) {
@@ -156,7 +183,7 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
     // "Conflict: container name already in use".
     let psOutput = ''
     try {
-      const result = await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test ps -aq`)
+      const result = await execAsync('docker compose --env-file .env.test ps -aq', { cwd: COMPOSE_DIR })
       psOutput = result.stdout
     } catch (e) {
       // `docker compose ps` itself failing (e.g. project has never existed)
@@ -169,12 +196,12 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
       // genuinely remain. Let it propagate (via the outer catch) instead of
       // silently continuing into `up -d`, which would just hit the same
       // naming conflict with a far more confusing error message.
-      await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test down -v`)
+      await execAsync('docker compose --env-file .env.test down -v', { cwd: COMPOSE_DIR })
       console.log('✓ Existing containers removed')
     }
 
     // Start containers
-    await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test up -d`)
+    await execAsync('docker compose --env-file .env.test up -d', { cwd: COMPOSE_DIR })
 
     // Wait for FusionAuth to be healthy
     await waitForFusionAuthReady()
@@ -209,7 +236,7 @@ export async function stopFusionAuthContainer() {
   console.log('↻ Stopping FusionAuth container...')
 
   try {
-    await execAsync(`cd ${COMPOSE_DIR} && docker compose --env-file .env.test down -v`)
+    await execAsync('docker compose --env-file .env.test down -v', { cwd: COMPOSE_DIR })
     isContainerRunning = false
     console.log('✓ FusionAuth container stopped')
   } catch (err) {
@@ -250,8 +277,10 @@ async function waitForFusionAuthReady() {
           // overridden.
           const urlsToTry = [DEFAULT_FUSIONAUTH_URL]
           try {
+            const containerId = await resolveContainerId()
+            if (!containerId) throw new Error('FusionAuth container not found')
             const { stdout } = await execAsync(
-              `docker inspect ${CONTAINER_NAME} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+              `docker inspect ${containerId} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
             )
             const ip = stdout.trim().split(/\s+/).filter(Boolean)[0]
             if (ip) urlsToTry.push(`http://${ip}:9011`)
