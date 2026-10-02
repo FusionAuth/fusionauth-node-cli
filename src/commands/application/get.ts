@@ -16,6 +16,7 @@ export async function executeGet(id:string, options: Record<string, any>): Promi
     filePath = `./${id}.json`
   } = options
 
+  if (!host || !key) throw new Error("You must provide a FusionAuth host and an API key")
 try {
     const fullPath = path.resolve(filePath);
     const httpClient = new HTTPClient(host, key);
@@ -23,8 +24,8 @@ try {
     if (response.status != 200) throw response
 
     writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
-  } catch({body}:any) {
-    console.log(chalk.red("The request produced the following error:\n"), inspect(body,{showHidden: false, depth: null, colors: true}))
+  } catch(e:any) {
+    console.log(chalk.red("The request produced the following error:\n"), inspect(e,{showHidden: false, depth: null, colors: true}))
   }
 
 
