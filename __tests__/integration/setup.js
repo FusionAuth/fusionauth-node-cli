@@ -63,7 +63,15 @@ let handlingTerminationSignal = false
  * @param {string} signal
  */
 async function handleTerminationSignal(signal) {
-  if (handlingTerminationSignal) return
+  if (handlingTerminationSignal) {
+    // Second signal while teardown is still in flight (e.g. docker compose
+    // down -v hung) — the user wants out now. Exit immediately rather than
+    // silently no-op'ing: once a SIGINT/SIGTERM listener is registered,
+    // Node no longer applies its default "second Ctrl+C just kills the
+    // process" behavior on its own, so we have to implement that ourselves.
+    console.log(`\n⚠ Received ${signal} again — forcing immediate exit (teardown may be incomplete).`)
+    process.exit(signal === 'SIGINT' ? 130 : 143)
+  }
   handlingTerminationSignal = true
   console.log(`\n⚠ Received ${signal}, cleaning up FusionAuth container before exiting...`)
   await forceTeardown(signal)
