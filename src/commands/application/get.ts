@@ -24,8 +24,10 @@ try {
     if (response.status != 200) throw response
 
     writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
+    console.log(chalk.green(`Response written to `) + fullPath)
   } catch(e:any) {
-    console.log(chalk.red("The request produced the following error:\n"), inspect(e,{showHidden: false, depth: null, colors: true}))
+    console.log(chalk.red("The request produced the following error:\n"))
+    throw new Error(inspect(e,{showHidden: false, depth: null, colors: true}))
   }
 
 
