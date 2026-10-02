@@ -1,6 +1,6 @@
 {
   "name": "@fusionauth/cli",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "FusionAuth CLI",
   "main": "dist/index.js",
   "engines": {
@@ -16,7 +16,9 @@
     "prepublishOnly": "npm run build",
     "postinstall": "test -f dist/postinstall.js && node dist/postinstall.js || true",
     "start": "npm run build && node dist/index.js",
-    "test": "node --import tsx --test",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:integration": "NODE_ENV=test FUSIONAUTH_TELEMETRY=false node --import=tsx --test --test-concurrency=1 '__tests__/integration/**/*.test.js'",
+    "test:unit": "NODE_ENV=test FUSIONAUTH_TELEMETRY=false node --import=tsx --test __tests__/utils.test.js '__tests__/postInstall/*.test.js' '__tests__/telemetry/*.test.js' '__tests__/utilities/**/*.test.js' '__tests__/commands/*.test.js'",
     "prepare": "husky"
   },
   "keywords": [

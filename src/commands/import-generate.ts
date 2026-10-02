@@ -27,7 +27,7 @@ function warnDeprecatedFlags(argv: string[] = process.argv): void {
   for (const [old, replacement] of getDeprecatedFlagUsage(argv)) {
     console.warn(chalk.yellow(
       `DEPRECATION WARNING: please use ${replacement} going forward. ` +
-      `${old} will be deprecated in a future release.`
+      `${old} will be removed in a future release.`
     ));
   }
 }
