@@ -22,6 +22,14 @@ fusionauth --help;
 ```
 
 Currently, the CLI supports the following commands:
+- Application Update
+  - `fusionauth application:update <application-id>` - Updates an application with provided data
+    - `--host` - Required. Provide a FusionAuth host URL or add it via an environment variable (`FUSIONAUTH_HOST`)
+    - `--key` - Required. Provide an API key with permissions for updating the given application or add via an environment variable( `FUSIONAUTH_API_KEY`)
+    - `-d, --data <path-to-json-file>` - Provide a data file containing all the properties you wish to update constructed like the body of an application update
+    - `-p, --prop <property.to.change=value>` - Update a single property in the application
+    - `--redirect-url <redirectUrl>` - Update the Authorized redirect URL for your applicatoin
+    - `--example` - Create an example file with editable properties to use in conjunction with the `--data` flag
 - Common config check
   - `fusionauth check:common-config` - Checks to make sure common configuration settings are set.
 - OAuth 2.1 compliance check
