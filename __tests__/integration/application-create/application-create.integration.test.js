@@ -12,7 +12,7 @@ import {
 import { executeApplicationCreate } from '../../../src/commands/application-create.js'
 
 const TENANT_ID = '886a57e0-f2ac-440a-9a9d-d10c17b6f1a1'
-const REQUIRED_CORS_HEADERS = ['dpop', 'authorization', 'accept']
+const REQUIRED_CORS_HEADERS = ['dpop', 'authorization', 'accept', 'content-type']
 const REDIRECT_URI = 'https://example.com/callback'
 
 describe('application:create integration tests', () => {
@@ -63,8 +63,8 @@ describe('application:create integration tests', () => {
     return baseOptions({ profile: 'webapp', redirectUri: [REDIRECT_URI], ...overrides })
   }
 
-  // Verifies the DPoP-related CORS headers required by the spa profile
-  // were added to system configuration, and that CORS is enabled.
+  // Verifies the required CORS headers (see REQUIRED_CORS_HEADERS) for the
+  // spa profile were added to system configuration, and that CORS is enabled.
   async function assertCorsHeadersConfigured(apiKey) {
     const sysConfig = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
     const corsHeaders = (sysConfig.systemConfiguration.corsConfiguration?.allowedHeaders ?? [])

@@ -97,7 +97,13 @@ const profileDefaults: Record<Profile, Application> = {
     },
 };
 
-const REQUIRED_CORS_HEADERS = ['dpop', 'Authorization', 'Accept'];
+// Headers a spa app needs the browser to allow through CORS: 'dpop' and
+// 'Authorization' for DPoP-bound bearer tokens, and 'Accept'/'Content-Type'
+// because JSON request/response bodies are not CORS-safelisted by default
+// (unlike e.g. application/x-www-form-urlencoded) — without 'Content-Type'
+// here, a SPA sending `Content-Type: application/json` would still fail
+// preflight even after this command reports CORS as configured.
+const REQUIRED_CORS_HEADERS = ['dpop', 'Authorization', 'Accept', 'Content-Type'];
 
 /**
  * Wraps an unknown error with additional context while preserving the
@@ -114,19 +120,28 @@ function wrapError(message: string, cause: unknown): Error {
 
 /**
  * Unwraps an error produced by wrapError() back to its original cause, for
- * use as ApplicationCreateResult.rawError. Falls back to the error itself
- * when there's no cause (e.g. errors that were never wrapped).
+ * use as ApplicationCreateResult.rawError — which exists specifically to
+ * carry structured detail (e.g. FusionAuth's fieldErrors/generalErrors)
+ * beyond the plain message already captured in ApplicationCreateResult.error.
+ *
+ * Returns undefined for a direct, never-wrapped Error (e.g. parseData()'s
+ * validation errors) — its message is already the `error` string, so
+ * returning the same Error object again as rawError would make
+ * errorAndExit()/reportError() print that message a second time. Only a
+ * genuinely-wrapped error's distinct .cause, or a rejection that was never
+ * an Error at all (e.g. a raw ClientResponse-shaped object thrown without
+ * wrapError()), is preserved — both can carry detail worth reporting.
  */
 function unwrapError(e: unknown): unknown {
-    if (e instanceof Error && 'cause' in e && e.cause !== undefined) {
-        return e.cause;
+    if (e instanceof Error) {
+        return 'cause' in e && e.cause !== undefined ? e.cause : undefined;
     }
     return e;
 }
 
 /**
- * Ensures that the required DPoP-related CORS headers — and, when
- * authorizedOrigins is non-empty, those origins — are present in the
+ * Ensures that the required CORS headers (see REQUIRED_CORS_HEADERS) — and,
+ * when authorizedOrigins is non-empty, those origins — are present in the
  * FusionAuth system configuration. Also enables CORS if it is currently
  * disabled. Should be called for the spa profile before creating the
  * application.

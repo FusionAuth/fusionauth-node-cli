@@ -55,7 +55,7 @@ function systemConfigResponse(overrides = {}) {
     systemConfiguration: {
       corsConfiguration: {
         enabled: true,
-        allowedHeaders: ['dpop', 'Authorization', 'Accept'],
+        allowedHeaders: ['dpop', 'Authorization', 'Accept', 'Content-Type'],
         ...overrides,
       },
     },
@@ -627,6 +627,19 @@ describe('regression: error attribution', () => {
     assert.equal(result.rawError.statusCode, 400)
     assert.deepEqual(result.rawError.exception, { fieldErrors: { name: [{ message: 'is required' }] } })
   })
+
+  test('rawError is undefined for a direct, never-wrapped validation error', async () => {
+    // parseData() throws a plain Error directly (not via wrapError()), so
+    // it has no distinct .cause. Its message is already captured in
+    // `error` — if rawError also returned the same Error object,
+    // errorAndExit()/reportError() would print that message a second time.
+    const result = await executeApplicationCreate({
+      ...BASE_OPTIONS,
+      data: '{not valid json',
+    })
+    assert.equal(result.success, false)
+    assert.equal(result.rawError, undefined)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -682,7 +695,7 @@ describe('CORS header management', () => {
       .get('/api/system-configuration')
       .reply(200, systemConfigResponse({
         enabled: false,
-        allowedHeaders: ['dpop', 'Authorization', 'Accept'],
+        allowedHeaders: ['dpop', 'Authorization', 'Accept', 'Content-Type'],
       }))
 
     nock(FA_HOST)
