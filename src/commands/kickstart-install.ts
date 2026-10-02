@@ -26,13 +26,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  *    build runs.
  * Throws if neither layout is found, rather than silently proceeding with
  * a path that doesn't exist.
+ *
+ * @param baseDir Directory to resolve relative to. Defaults to this
+ *   module's own directory (dist/commands or src/commands, depending on
+ *   which was imported); overridable so tests can exercise all three
+ *   outcomes (dist found / src fallback found / neither found) against
+ *   controlled, synthetic directories instead of depending on the real
+ *   repo's build state.
  */
-export function resolveResourcesDir(): string {
-    const distLayout = path.join(__dirname, 'resources');
+export function resolveResourcesDir(baseDir: string = __dirname): string {
+    const distLayout = path.join(baseDir, 'resources');
     if (fs.existsSync(distLayout)) {
         return distLayout;
     }
-    const srcLayout = path.join(__dirname, '..', 'resources');
+    const srcLayout = path.join(baseDir, '..', 'resources');
     if (fs.existsSync(srcLayout)) {
         return srcLayout;
     }
