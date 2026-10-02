@@ -188,11 +188,17 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authori
         );
 
         // Origins are case-sensitive, unlike header names, and "*" already
-        // permits every origin — nothing to add in that case.
+        // permits every origin — nothing to add in that case. Dedupe the
+        // supplied origins first — authorizedOrigins is only ever compared
+        // against the pre-existing allowlist below, so a duplicate within
+        // authorizedOrigins itself (e.g. --authorized-origin-url passed the
+        // same URL twice) would otherwise pass that filter twice and write
+        // a duplicate entry into the system-wide CORS configuration.
         const existingOrigins: string[] = cors.allowedOrigins ?? [];
+        const dedupedAuthorizedOrigins = [...new Set(authorizedOrigins)];
         const missingOrigins = existingOrigins.includes('*')
             ? []
-            : authorizedOrigins.filter((o) => !existingOrigins.includes(o));
+            : dedupedAuthorizedOrigins.filter((o) => !existingOrigins.includes(o));
 
         const needsEnable = cors.enabled !== true;
 

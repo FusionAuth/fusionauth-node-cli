@@ -358,9 +358,19 @@ describe('resolveInstallAnswers() — inquirer validate functions', () => {
 // tsx, fixing __dirname to .../src/commands for the whole test run.
 
 describe('resolveResourcesDir()', () => {
+  const createdDirs = []
+
   function mkTempDir(prefix) {
-    return fs.mkdtempSync(path.join(os.tmpdir(), prefix))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix))
+    createdDirs.push(dir)
+    return dir
   }
+
+  afterEach(() => {
+    for (const dir of createdDirs.splice(0)) {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
 
   test('returns baseDir/resources when it exists (dist layout)', () => {
     const baseDir = mkTempDir('resolve-resources-dist-')

@@ -738,6 +738,32 @@ describe('CORS header management', () => {
     assert.equal(result.success, true)
   })
 
+  test('duplicate --authorized-origin-url values are not duplicated in the system CORS allowlist', async () => {
+    nock(FA_HOST)
+      .get('/api/system-configuration')
+      .reply(200, systemConfigResponse({ allowedOrigins: [] }))
+
+    nock(FA_HOST)
+      .patch('/api/system-configuration', (body) => {
+        const origins = body.systemConfiguration.corsConfiguration.allowedOrigins
+        const count = origins.filter(o => o === 'https://myapp.example.com').length
+        assert.equal(count, 1, `'https://myapp.example.com' should appear exactly once, got ${count}`)
+        return true
+      })
+      .reply(200, {})
+
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(200, APP_RESPONSE)
+
+    const result = await executeApplicationCreate(spaOptions({
+      yes: true,
+      // Same origin supplied twice via --authorized-origin-url.
+      authorizedOriginUrl: ['https://myapp.example.com', 'https://myapp.example.com'],
+    }))
+    assert.equal(result.success, true)
+  })
+
   test('no PATCH when --authorized-origin-url is already in the system CORS allowlist', async () => {
     // Headers/enabled already compliant too — only origins differ from the
     // baseline, so this also exercises the "would otherwise early-return"
