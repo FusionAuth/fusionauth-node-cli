@@ -14,6 +14,38 @@ import { betaWarning, errorAndExit, isDirEmpty, isDockerInstalled, logEvent } fr
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Resolves the directory containing the kickstart resource files
+ * (fusionauth-config files, kickstart.json, etc.), supporting both layouts
+ * this file can run from:
+ *  - Built (dist/): resources live beside the compiled command, at
+ *    dist/commands/resources, via the build's copy-files step.
+ *  - Source (src/, e.g. running this file directly via tsx during local
+ *    development, independent of the npm start script): resources live one
+ *    level up, at src/resources — they are not copied anywhere until a
+ *    build runs.
+ * Throws if neither layout is found, rather than silently proceeding with
+ * a path that doesn't exist.
+ *
+ * @param baseDir Directory to resolve relative to. Defaults to this
+ *   module's own directory (dist/commands or src/commands, depending on
+ *   which was imported); overridable so tests can exercise all three
+ *   outcomes (dist found / src fallback found / neither found) against
+ *   controlled, synthetic directories instead of depending on the real
+ *   repo's build state.
+ */
+export function resolveResourcesDir(baseDir: string = __dirname): string {
+    const distLayout = path.join(baseDir, 'resources');
+    if (fs.existsSync(distLayout)) {
+        return distLayout;
+    }
+    const srcLayout = path.join(baseDir, '..', 'resources');
+    if (fs.existsSync(srcLayout)) {
+        return srcLayout;
+    }
+    throw new Error(`Could not locate kickstart resources directory (checked ${distLayout} and ${srcLayout}).`);
+}
+
 // ---------------------------------------------------------------------------
 // Validation helpers (exported for testing)
 // ---------------------------------------------------------------------------
@@ -206,25 +238,34 @@ const action = async function (dir: string, options: InstallOptions) {
 
     const spinner = yoctoSpinner({ text: "Building..." }).start()
 
-    // Sequential, awaited steps (rather than setTimeout-chained callbacks) so that:
-    //  - exceptions propagate through the surrounding try/catch
-    //  - step ordering is deterministic regardless of machine speed
-    console.log(chalk.green(`\nTransferring files to ${dir}`))
-    fs.cpSync(`${__dirname}/resources/kickstart/fusionauth`, directory, { recursive: true })
+    try {
+      // Sequential, awaited steps (rather than setTimeout-chained callbacks) so that:
+      //  - exceptions propagate through the surrounding try/catch
+      //  - step ordering is deterministic regardless of machine speed
+      const resourcesDir = resolveResourcesDir();
+      console.log(chalk.green(`\nTransferring files to ${dir}`))
+      fs.cpSync(`${resourcesDir}/kickstart/fusionauth`, directory, { recursive: true })
 
-    console.log(chalk.green(`Creating Kickstart file`))
-    if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exists.`))
-    await createKickstart(__dirname + '/resources/kickstart/kickstart.json', answers, directory)
+      console.log(chalk.green(`Creating Kickstart file`))
+      if (!fs.existsSync(directory)) throw (chalk.red(`Something went wrong. ${directory} does not exist.`))
+      await createKickstart(resourcesDir + '/kickstart/kickstart.json', answers, directory)
 
-    const postgresPass = randomUUID()
-    const dbPass = randomUUID()
+      const postgresPass = randomUUID()
+      const dbPass = randomUUID()
 
-    console.log(chalk.green(`Transferring environment variables`))
-    fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
-    fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
+      console.log(chalk.green(`Transferring environment variables`))
+      fs.renameSync(`${directory}/.env.defaults`, `${directory}/.env`)
+      fs.appendFileSync(`${directory}/.env`, `\nPOSTGRES_PASSWORD=${postgresPass}\nDATABASE_PASSWORD=${dbPass}\nCLI_DIR=${directory}`)
 
-    spinner.success("Done building!\n")
-    console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
+      spinner.success("Done building!\n")
+      console.log(boxen(`You're ready to start your Docker container\n${chalk.magenta(`Step 1:`)} cd ${dir}\n${chalk.magenta("Step 2: ")}npx fusionauth kickstart:start`, { padding: 1, title: "Next Steps", borderColor: "green", borderStyle: 'bold' }))
+    } catch (e) {
+      // Ensure the spinner's animation interval is stopped on every failure
+      // path — otherwise it keeps rendering (and can keep the process alive)
+      // even though the outer catch below has already taken over reporting.
+      spinner.error("Build failed.")
+      throw e
+    }
 
   } catch (e) {
     console.error(e)

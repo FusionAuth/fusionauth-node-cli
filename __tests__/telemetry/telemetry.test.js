@@ -99,6 +99,14 @@ describe('tests for logEvent', () => {
     beforeEach(() => {
       tempDir = createTempDir()
       process.env.FUSIONAUTH_CONFIG_DIR = tempDir
+      // This block's tests assert on the presence/absence of
+      // FUSIONAUTH_TELEMETRY, including a test that requires it to be
+      // completely unset. Running the suite with FUSIONAUTH_TELEMETRY=false
+      // (as npm run test:unit does, to keep logEvent() from making real
+      // network/filesystem calls in *other* test files) would otherwise
+      // leak into these tests depending on execution order. Start every
+      // test here from a known, unset baseline instead of relying on that.
+      delete process.env.FUSIONAUTH_TELEMETRY
     })
 
     afterEach(() => {

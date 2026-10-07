@@ -4,6 +4,7 @@ import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { inspect } from 'node:util';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
@@ -29,7 +30,7 @@ export const __dirname = dirname(fileURLToPath(import.meta.url));
  * @param response
  */
 export const isClientResponse = (response: any): response is ClientResponse.default<any> => {
-    return response.wasSuccessful !== undefined;
+    return response != null && response.wasSuccessful !== undefined;
 }
 
 /**
@@ -37,7 +38,7 @@ export const isClientResponse = (response: any): response is ClientResponse.defa
  * @param response
  */
 export const isErrors = (response: any): response is Errors => {
-    return response.fieldErrors !== undefined || response.generalErrors !== undefined;
+    return response != null && (response.fieldErrors !== undefined || response.generalErrors !== undefined);
 }
 
 /**
@@ -85,7 +86,14 @@ export const reportError = (msg: string, error?: any): void => {
         return;
     }
 
-    console.error(chalk.red(toJson(error)));
+    // Last resort for a shape that matched none of the above (e.g. a plain
+    // object with no message/fieldErrors/generalErrors). util.inspect, not
+    // JSON.stringify (toJson), is used here deliberately: it handles
+    // circular references and non-JSON-serializable values (functions,
+    // undefined, symbols) gracefully instead of throwing or silently
+    // dropping them, which matters since `error` here is of truly unknown
+    // shape by this point.
+    console.error(chalk.red(inspect(error, { depth: null })));
 }
 
 /**

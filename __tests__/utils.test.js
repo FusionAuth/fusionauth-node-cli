@@ -1,6 +1,6 @@
 import { describe, test } from "node:test"
 import assert from "node:assert/strict"
-import { isConfirmationAccepted, handleConfirmationAnswer, confirmOrExit } from "../src/utils.js"
+import { isConfirmationAccepted, handleConfirmationAnswer, confirmOrExit, reportError } from "../src/utils.js"
 
 describe('isConfirmationAccepted()', () => {
   test('accepts "y"', () => {
@@ -135,5 +135,24 @@ describe('confirmOrExit()', () => {
 
     assert.equal(exitMock.mock.calls.length, 1, 'process.exit should be called once')
     assert.equal(exitMock.mock.calls[0].arguments[0], 1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// reportError() — unknown-shape fallback
+// ---------------------------------------------------------------------------
+
+describe('reportError() fallback for unknown error shapes', () => {
+  test('does not throw and still prints something useful for a circular-reference object', (t) => {
+    // JSON.stringify (the old implementation, toJson) throws on circular
+    // references. util.inspect handles this gracefully instead.
+    const errorMock = t.mock.method(console, 'error', () => {})
+    const circular = { statusCode: 500 }
+    circular.self = circular
+
+    assert.doesNotThrow(() => reportError('Something went wrong', circular))
+
+    const printedLines = errorMock.mock.calls.map((call) => call.arguments[0])
+    assert.ok(printedLines.some((line) => line.includes('statusCode')), 'should print the object contents')
   })
 })
