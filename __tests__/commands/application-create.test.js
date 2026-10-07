@@ -640,8 +640,14 @@ describe('regression: error attribution', () => {
 
     const result = await executeApplicationCreate(webappOptions())
     assert.equal(result.success, false)
-    assert.match(result.error, /An Application with id or name \[MyApp\] already exists\./)
     assert.doesNotMatch(result.error, /\[object Object\]/)
+    // The detailed FusionAuth error lives in rawError (structured), not
+    // flattened into `error` — formatting that for display is a
+    // presentation-layer concern (see reportError()), not something baked
+    // into the result data itself.
+    assert.deepEqual(result.rawError.exception, {
+      generalErrors: [{ code: '[duplicate]', message: 'An Application with id or name [MyApp] already exists.' }],
+    })
   })
 
   test('rawError is undefined for a direct, never-wrapped validation error', async () => {

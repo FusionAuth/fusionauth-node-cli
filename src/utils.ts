@@ -42,41 +42,6 @@ export const isErrors = (response: any): response is Errors => {
 }
 
 /**
- * Extracts a human-readable summary from an unknown rejection, including
- * FusionAuth SDK rejections (ClientResponse-shaped, which do NOT extend
- * Error — `e instanceof Error` is always false for these) that would
- * otherwise coerce to the unhelpful literal string "[object Object]" via
- * `String(e)` or template-literal interpolation, e.g.
- * "Error creating application: [object Object]" instead of the actual
- * "An Application with id or name [...] already exists." detail.
- * @param e The unknown rejection to describe
- */
-export function describeError(e: unknown): string {
-    if (isClientResponse(e)) {
-        const exception: any = e.exception;
-        if (isErrors(exception)) {
-            const parts: string[] = [];
-            if (exception.fieldErrors) {
-                for (const [field, fieldErrors] of Object.entries(exception.fieldErrors as Record<string, Array<{ message?: string }>>)) {
-                    parts.push(`${field}: ${fieldErrors.map((fe) => fe.message).join(', ')}`);
-                }
-            }
-            if (exception.generalErrors) {
-                parts.push(...(exception.generalErrors as Array<{ message?: string }>).map((ge) => ge.message ?? '').filter(Boolean));
-            }
-            if (parts.length > 0) {
-                return parts.join('; ');
-            }
-        }
-        if (exception instanceof Error) {
-            return exception.message;
-        }
-        return `HTTP ${e.statusCode}`;
-    }
-    return e instanceof Error ? e.message : String(e);
-}
-
-/**
  * Reports an error to the console
  * @param msg   The message to report
  * @param error The error to report

@@ -12,7 +12,7 @@ import {
     RefreshTokenUsagePolicy,
 } from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {confirmOrExit, describeError, logEvent} from '../utils.js';
+import {confirmOrExit, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from '../options.js';
 import * as utils from '../utils.js';
 
@@ -175,7 +175,7 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authori
         try {
             retrieveResponse = await client.retrieveSystemConfiguration();
         } catch (e: unknown) {
-            throw wrapError(`Error retrieving system configuration: ${describeError(e)}`, e);
+            throw wrapError('Error retrieving system configuration', e);
         }
 
         const systemConfig = retrieveResponse.response.systemConfiguration!;
@@ -239,7 +239,7 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authori
                 console.log(`  CORS allowed origins added: ${missingOrigins.join(', ')}`);
             }
         } catch (e: unknown) {
-            throw wrapError(`Error updating CORS configuration: ${describeError(e)}`, e);
+            throw wrapError('Error updating CORS configuration', e);
         }
     } finally {
         client.setTenantId(originalTenantId);
@@ -413,7 +413,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
                 {application}
             );
         } catch (e: unknown) {
-            throw wrapError(`Error creating application: ${describeError(e)}`, e);
+            throw wrapError('Error creating application', e);
         }
 
         const created = clientResponse.response.application!;
