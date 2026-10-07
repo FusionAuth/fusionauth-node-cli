@@ -4,6 +4,7 @@ import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { inspect } from 'node:util';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
@@ -29,7 +30,7 @@ export const __dirname = dirname(fileURLToPath(import.meta.url));
  * @param response
  */
 export const isClientResponse = (response: any): response is ClientResponse.default<any> => {
-    return response.wasSuccessful !== undefined;
+    return response != null && response.wasSuccessful !== undefined;
 }
 
 /**
@@ -37,7 +38,42 @@ export const isClientResponse = (response: any): response is ClientResponse.defa
  * @param response
  */
 export const isErrors = (response: any): response is Errors => {
-    return response.fieldErrors !== undefined || response.generalErrors !== undefined;
+    return response != null && (response.fieldErrors !== undefined || response.generalErrors !== undefined);
+}
+
+/**
+ * Extracts a human-readable summary from an unknown rejection, including
+ * FusionAuth SDK rejections (ClientResponse-shaped, which do NOT extend
+ * Error — `e instanceof Error` is always false for these) that would
+ * otherwise coerce to the unhelpful literal string "[object Object]" via
+ * `String(e)` or template-literal interpolation, e.g.
+ * "Error creating application: [object Object]" instead of the actual
+ * "An Application with id or name [...] already exists." detail.
+ * @param e The unknown rejection to describe
+ */
+export function describeError(e: unknown): string {
+    if (isClientResponse(e)) {
+        const exception: any = e.exception;
+        if (isErrors(exception)) {
+            const parts: string[] = [];
+            if (exception.fieldErrors) {
+                for (const [field, fieldErrors] of Object.entries(exception.fieldErrors as Record<string, Array<{ message?: string }>>)) {
+                    parts.push(`${field}: ${fieldErrors.map((fe) => fe.message).join(', ')}`);
+                }
+            }
+            if (exception.generalErrors) {
+                parts.push(...(exception.generalErrors as Array<{ message?: string }>).map((ge) => ge.message ?? '').filter(Boolean));
+            }
+            if (parts.length > 0) {
+                return parts.join('; ');
+            }
+        }
+        if (exception instanceof Error) {
+            return exception.message;
+        }
+        return `HTTP ${e.statusCode}`;
+    }
+    return e instanceof Error ? e.message : String(e);
 }
 
 /**
@@ -85,7 +121,14 @@ export const reportError = (msg: string, error?: any): void => {
         return;
     }
 
-    console.error(chalk.red(toJson(error)));
+    // Last resort for a shape that matched none of the above (e.g. a plain
+    // object with no message/fieldErrors/generalErrors). util.inspect, not
+    // JSON.stringify (toJson), is used here deliberately: it handles
+    // circular references and non-JSON-serializable values (functions,
+    // undefined, symbols) gracefully instead of throwing or silently
+    // dropping them, which matters since `error` here is of truly unknown
+    // shape by this point.
+    console.error(chalk.red(inspect(error, { depth: null })));
 }
 
 /**

@@ -628,6 +628,22 @@ describe('regression: error attribution', () => {
     assert.deepEqual(result.rawError.exception, { fieldErrors: { name: [{ message: 'is required' }] } })
   })
 
+  test('error message describes a duplicate-name failure instead of showing "[object Object]"', async () => {
+    // Real-world repro: creating an application with a name that already
+    // exists. FusionAuth's SDK rejects with a ClientResponse instance,
+    // which does NOT extend Error, so the old `e instanceof Error
+    // ? e.message : String(e)` always fell to String(e) — producing the
+    // literal, unhelpful "Error creating application: [object Object]".
+    nock(FA_HOST)
+      .post('/api/application/')
+      .reply(400, { generalErrors: [{ code: '[duplicate]', message: 'An Application with id or name [MyApp] already exists.' }] })
+
+    const result = await executeApplicationCreate(webappOptions())
+    assert.equal(result.success, false)
+    assert.match(result.error, /An Application with id or name \[MyApp\] already exists\./)
+    assert.doesNotMatch(result.error, /\[object Object\]/)
+  })
+
   test('rawError is undefined for a direct, never-wrapped validation error', async () => {
     // parseData() throws a plain Error directly (not via wrapError()), so
     // it has no distinct .cause. Its message is already captured in

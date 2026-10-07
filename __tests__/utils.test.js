@@ -1,6 +1,6 @@
 import { describe, test } from "node:test"
 import assert from "node:assert/strict"
-import { isConfirmationAccepted, handleConfirmationAnswer, confirmOrExit } from "../src/utils.js"
+import { isConfirmationAccepted, handleConfirmationAnswer, confirmOrExit, describeError, reportError } from "../src/utils.js"
 
 describe('isConfirmationAccepted()', () => {
   test('accepts "y"', () => {
@@ -135,5 +135,78 @@ describe('confirmOrExit()', () => {
 
     assert.equal(exitMock.mock.calls.length, 1, 'process.exit should be called once')
     assert.equal(exitMock.mock.calls[0].arguments[0], 1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// describeError()
+// ---------------------------------------------------------------------------
+
+// Minimal ClientResponse-shaped object — isClientResponse() only checks
+// `wasSuccessful !== undefined`, so a plain object with that field is
+// sufficient without importing the real SDK class.
+function clientResponseLike(overrides = {}) {
+  return { wasSuccessful: () => false, statusCode: 400, ...overrides }
+}
+
+describe('describeError()', () => {
+  test('extracts generalErrors from a ClientResponse-shaped rejection (e.g. a duplicate-name error)', () => {
+    // This is the exact shape that previously produced the reported bug:
+    // "Error creating application: [object Object]" — ClientResponse does
+    // not extend Error, so `e instanceof Error` was always false for these.
+    const e = clientResponseLike({
+      exception: { generalErrors: [{ code: '[duplicate]', message: 'An Application with id or name [MyApp] already exists.' }] },
+    })
+    assert.equal(describeError(e), 'An Application with id or name [MyApp] already exists.')
+  })
+
+  test('extracts fieldErrors from a ClientResponse-shaped rejection', () => {
+    const e = clientResponseLike({
+      exception: { fieldErrors: { name: [{ message: 'is required' }] } },
+    })
+    assert.equal(describeError(e), 'name: is required')
+  })
+
+  test('falls back to the nested exception message for a network-level failure', () => {
+    // DefaultRESTClient.go() sets `.exception` to the raw underlying Error
+    // (e.g. a fetch failure) when no HTTP response was ever received.
+    const e = clientResponseLike({
+      exception: new Error('request to http://localhost:9999/ failed, reason: connect ECONNREFUSED'),
+    })
+    assert.equal(describeError(e), 'request to http://localhost:9999/ failed, reason: connect ECONNREFUSED')
+  })
+
+  test('falls back to "HTTP <statusCode>" when there is no exception body at all', () => {
+    // e.g. a non-JSON error response (502 from a proxy, empty body, etc.)
+    const e = clientResponseLike({ statusCode: 502, exception: undefined })
+    assert.equal(describeError(e), 'HTTP 502')
+  })
+
+  test('returns a plain Error\'s message unchanged', () => {
+    assert.equal(describeError(new Error('boom')), 'boom')
+  })
+
+  test('stringifies anything else as a last resort', () => {
+    assert.equal(describeError('already a string'), 'already a string')
+    assert.equal(describeError(42), '42')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// reportError() — unknown-shape fallback
+// ---------------------------------------------------------------------------
+
+describe('reportError() fallback for unknown error shapes', () => {
+  test('does not throw and still prints something useful for a circular-reference object', (t) => {
+    // JSON.stringify (the old implementation, toJson) throws on circular
+    // references. util.inspect handles this gracefully instead.
+    const errorMock = t.mock.method(console, 'error', () => {})
+    const circular = { statusCode: 500 }
+    circular.self = circular
+
+    assert.doesNotThrow(() => reportError('Something went wrong', circular))
+
+    const printedLines = errorMock.mock.calls.map((call) => call.arguments[0])
+    assert.ok(printedLines.some((line) => line.includes('statusCode')), 'should print the object contents')
   })
 })

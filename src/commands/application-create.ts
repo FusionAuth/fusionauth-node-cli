@@ -12,7 +12,7 @@ import {
     RefreshTokenUsagePolicy,
 } from '@fusionauth/typescript-client';
 import chalk from 'chalk';
-import {confirmOrExit, logEvent} from '../utils.js';
+import {confirmOrExit, describeError, logEvent} from '../utils.js';
 import {apiKeyOption, hostOption} from '../options.js';
 import * as utils from '../utils.js';
 
@@ -175,7 +175,7 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authori
         try {
             retrieveResponse = await client.retrieveSystemConfiguration();
         } catch (e: unknown) {
-            throw wrapError(`Error retrieving system configuration: ${e instanceof Error ? e.message : String(e)}`, e);
+            throw wrapError(`Error retrieving system configuration: ${describeError(e)}`, e);
         }
 
         const systemConfig = retrieveResponse.response.systemConfiguration!;
@@ -239,7 +239,7 @@ async function ensureCorsHeaders(client: FusionAuthClient, yes: boolean, authori
                 console.log(`  CORS allowed origins added: ${missingOrigins.join(', ')}`);
             }
         } catch (e: unknown) {
-            throw wrapError(`Error updating CORS configuration: ${e instanceof Error ? e.message : String(e)}`, e);
+            throw wrapError(`Error updating CORS configuration: ${describeError(e)}`, e);
         }
     } finally {
         client.setTenantId(originalTenantId);
@@ -413,7 +413,7 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
                 {application}
             );
         } catch (e: unknown) {
-            throw wrapError(`Error creating application: ${e instanceof Error ? e.message : String(e)}`, e);
+            throw wrapError(`Error creating application: ${describeError(e)}`, e);
         }
 
         const created = clientResponse.response.application!;
@@ -442,6 +442,8 @@ export async function executeApplicationCreate(options: ApplicationCreateOptions
  * CLI action wrapper — calls executeApplicationCreate and handles output/exit.
  */
 const action = async function (options: ApplicationCreateOptions) {
+    utils.betaWarning();
+
     const result = await executeApplicationCreate(options);
 
     if (!result.success) {
@@ -449,6 +451,7 @@ const action = async function (options: ApplicationCreateOptions) {
         return;
     }
 
+    console.log();
     console.log(chalk.green('Application created.'));
     console.log(`  Name:                       ${result.name}`);
     console.log(`  Application ID / client_id: ${result.clientId}`);
@@ -456,6 +459,7 @@ const action = async function (options: ApplicationCreateOptions) {
         console.log(`  Client Secret:              ${result.clientSecret}`);
     }
 
+    console.log();
     console.log(boxen(
         [
             `Customize FusionAuth with a ${chalk.cyan('simple theme')}:`,
