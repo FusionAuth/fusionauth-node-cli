@@ -52,12 +52,12 @@ export function isJSON(string: string) {
 
 export function splitProp(prop: string) {
   try {
-    const [key, value] = prop.split("=")
-
-    if (isJSON(value)) {
-      return { key, value: JSON.parse(value) }
+    const [key, ...value] = prop.split("=")
+    const joinedValue = value.join("=")
+    if (isJSON(joinedValue)) {
+      return { key, value: JSON.parse(joinedValue) }
     }
-    return { key, value }
+    return { key, value: joinedValue }
   } catch (e: any) {
     throw new Error(e)
   }
