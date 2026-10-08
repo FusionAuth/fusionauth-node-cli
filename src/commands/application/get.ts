@@ -1,14 +1,13 @@
 import { Command } from "@commander-js/extra-typings";
-import { __dirname, logEvent, errorAndExit } from '../../utils.js'
+import { __dirname, logEvent, errorAndExit, betaWarning } from '../../utils.js'
 import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { writeFileSync } from "node:fs";
 import chalk from "chalk";
-import { inspect } from "node:util";
 
 
-export async function executeGet(id:string, options: Record<string, any>): Promise<void> {
+export async function executeGet(id: string, options: Record<string, any>) {
   logEvent("cli application:get")
   const {
     host = 'http://localhost:9011',
@@ -17,26 +16,42 @@ export async function executeGet(id:string, options: Record<string, any>): Promi
   } = options
 
   if (!host || !key) throw new Error("You must provide a FusionAuth host and an API key")
-try {
+  try {
     const fullPath = path.resolve(output);
     const httpClient = new HTTPClient(host, key);
     const response = await httpClient.executeRequest('GET', `/api/application/${id}`)
-    if (response.status != 200) throw response
+    if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
+    if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
 
-    writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
-    console.log(chalk.green(`Response written to `) + fullPath)
-  } catch(e:any) {
-    errorAndExit("The request produced the following error:\n", new Error(inspect(e,{showHidden: false, depth: null, colors: true})))
+
+    await writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
+
+    return {
+      success: true,
+      fullPath
+    }
+  } catch (e: any) {
+    return {
+      success: false,
+      error: e.message,
+      rawError: e
+    }
   }
-
-
 }
 
 
-const action = async function (id:string, options: Record<string, any>): Promise<void> {
+const action = async function (id: string, options: Record<string, any>): Promise<void> {
+  betaWarning();
   logEvent('cli application:get')
-  
-  executeGet(id, options)  
+
+  const result = await executeGet(id, options)
+
+  if (!result?.success) {
+    errorAndExit(result?.error ?? "An error ocurred while fetching the response.");
+    return;
+  }
+  console.log(chalk.green(`Response written to `) + result.fullPath)
+
 }
 
 export const appGet = new Command()
@@ -47,4 +62,3 @@ export const appGet = new Command()
   .addOption(apiKeyOption)
   .description('Retrieves an application by id, writing its data to a local file')
   .action(action)
-  

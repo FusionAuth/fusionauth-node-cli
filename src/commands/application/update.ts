@@ -1,5 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
-import { __dirname, errorAndExit, logEvent } from '../../utils.js'
+import { __dirname, betaWarning, errorAndExit, logEvent } from '../../utils.js'
 import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
@@ -108,10 +108,10 @@ export const executeUpdateAction = async function (id: string, options: Record<s
 }
 
 const action = async (id: string, options: Record<string, any>) => {
-
+  betaWarning()
   const result = await executeUpdateAction(id, options)
   if (!result?.success) {
-    errorAndExit(result?.error ?? 'Error creating application.', result?.rawError);
+    errorAndExit(result?.error ?? 'Error updating application.', result?.rawError);
     return;
   }
   displaySuccess(`Applied the following patch\n${JSON.stringify(result.patchData, null, 2)}`)
