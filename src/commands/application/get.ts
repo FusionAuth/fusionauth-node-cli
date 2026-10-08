@@ -1,12 +1,9 @@
 import { Command } from "@commander-js/extra-typings";
 import { __dirname, logEvent, errorAndExit, betaWarning } from '../../utils.js'
-import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { writeFileSync } from "node:fs";
 import chalk from "chalk";
-import { stdout } from "node:process";
-import { inspect } from "node:util";
 import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 

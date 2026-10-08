@@ -1,10 +1,10 @@
 import { Command } from "@commander-js/extra-typings";
 import { __dirname, betaWarning, errorAndExit, logEvent } from '../../utils.js'
-import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import chalk from "chalk";
+import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 export function getData(file: string) {
   try {
@@ -67,7 +67,7 @@ export const executeUpdateAction = async function (id: string, options: Record<s
     host = 'http://localhost:9011',
     key
   } = options
-  const httpClient = new HTTPClient(host, key);
+  const fusionAuthClient = new FusionAuthClient(key, host);
 
   try {
     logEvent('cli application:update')
@@ -75,13 +75,13 @@ export const executeUpdateAction = async function (id: string, options: Record<s
     if (!options.data && !options.prop) throw new Error("No --prop or --data was specified")
     if (options?.data) {
       const data = await getData(options.data)
-      const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
-      if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
-      if (response.status !== 200) throw new Error("The server responded with an error code ${response.status}")
+      const { response } = await fusionAuthClient.patchApplication(id, data)
       return {
         success: true,
-        patchData: data
-      }    }
+        patchData: data,
+        response
+      }    
+    }
     if (options?.prop) {
       let data = { application: {} }
       const splitprops = options.prop.map((prop: string) => {
@@ -89,18 +89,17 @@ export const executeUpdateAction = async function (id: string, options: Record<s
         return splitProp(prop)
       })
       splitprops.forEach((prop: any) => setNestedProps(data.application, prop.key, prop.value))
-      const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
-      if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
-      if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
-
-
+      const { response } = await fusionAuthClient.patchApplication(id, data)
       return {
         success: true,
-        patchData: data
-      }
+        patchData: data,
+        response
+      }   
     }
 
-  } catch (e: unknown) {
+  } catch (e: any) {
+    if (e.statusCode === 404) throw new Error(`Application with ID ${id} does not exist`)
+
     const message = e instanceof Error ? e.message : String(e);
     return { success: false, error: message, rawError: e };
   }
@@ -121,7 +120,7 @@ export const appUpdate = new Command()
   .command('application:update')
   .argument('<id>', "The FusionAuth Application ID to update")
   .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
-  .option('-p, --prop <prop>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
+  .option('-p, --prop <prop...>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
   .addOption(hostOption)
   .addOption(apiKeyOption)
   .description('Updates an application with data provided via a file, a property, or a command flag.')
