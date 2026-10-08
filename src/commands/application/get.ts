@@ -46,6 +46,6 @@ export const appGet = new Command()
   .option('-o, --output <filePath>', "Path where the data should be stored")
   .addOption(hostOption)
   .addOption(apiKeyOption)
-  .description('Updates an application with data provided via a file, a property, or a command flag.')
+  .description('Retrieves an application by id, writing its data to a local file')
   .action(action)
   
