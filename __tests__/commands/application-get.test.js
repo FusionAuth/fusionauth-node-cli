@@ -42,25 +42,14 @@ const BASE_OPTIONS = {
 
 describe('application:get options checks', () => {
 
-  test('writes to default file when none provided', async () => {
+  test('returns data when no output is specified', async () => {
     nock(FA_HOST)
         .get(`/api/application/${APP_ID}`)
         .reply(200, APP_RESPONSE)
-    if (!fs.existsSync('./tmp')) fs.mkdirSync('./tmp')
-    const tmp = path.resolve('./tmp')
-    chdir(tmp)
-
-    try {
-      await executeGet(APP_ID, BASE_OPTIONS)
-      const fileExists = fs.existsSync(tmp + '/' + APP_ID + '.json')
-      assert.equal(fileExists, true, "Response file not created")
-    } catch(e) {
-      console.log(e)
-    } finally {
-      chdir('../')
-      fs.rmSync(tmp, {recursive: true})
-      nock.en
-    }
+    
+    const result = await executeGet(APP_ID, BASE_OPTIONS)
+    assert.equal(result.success, true)
+    assert.deepEqual(result.data, APP_RESPONSE)
     
   })
   test('writes to specified file when provided', async () => {

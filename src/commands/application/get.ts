@@ -5,6 +5,8 @@ import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { writeFileSync } from "node:fs";
 import chalk from "chalk";
+import { stdout } from "node:process";
+import { inspect } from "node:util";
 
 
 export async function executeGet(id: string, options: Record<string, any>) {
@@ -12,24 +14,32 @@ export async function executeGet(id: string, options: Record<string, any>) {
   const {
     host = 'http://localhost:9011',
     key,
-    output = `./${id}.json`
+    output
   } = options
 
   if (!host || !key) throw new Error("You must provide a FusionAuth host and an API key")
   try {
-    const fullPath = path.resolve(output);
     const httpClient = new HTTPClient(host, key);
     const response = await httpClient.executeRequest('GET', `/api/application/${id}`)
     if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
     if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
 
-
-    await writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
-
-    return {
-      success: true,
-      fullPath
+    if (output) {
+      const fullPath = path.resolve(output);
+      await writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
+      return {
+        success: true,
+        fullPath
     }
+    } else {
+      return {
+        success: true,
+        data: response.body
+      }
+    }
+
+
+    
   } catch (e: any) {
     return {
       success: false,
@@ -50,8 +60,14 @@ const action = async function (id: string, options: Record<string, any>): Promis
     errorAndExit(result?.error ?? "An error ocurred while fetching the response.");
     return;
   }
-  console.log(chalk.green(`Response written to `) + result.fullPath)
-
+  if (result.fullPath) {
+    console.log(chalk.green(`Response written to `) + result.fullPath)
+    return 
+  }
+  if (result.data) {
+    console.log(result.data)
+  }
+  
 }
 
 export const appGet = new Command()

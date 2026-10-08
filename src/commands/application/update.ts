@@ -5,7 +5,6 @@ import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import chalk from "chalk";
-import { inspect } from "node:util";
 
 export function getData(file: string) {
   try {
