@@ -42,7 +42,7 @@ const action = async function (id:string, options: Record<string, any>): Promise
 
 export const appGet = new Command()
   .command('application:get')
-  .argument('<id>', "The FusionAuth Application ID to update")
+  .argument('<id>', "The FusionAuth Application ID to retrieve")
   .option('-o, --output <filePath>', "Path where the data should be stored")
   .addOption(hostOption)
   .addOption(apiKeyOption)
