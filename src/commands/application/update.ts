@@ -78,7 +78,7 @@ export const executeUpdateAction = async function (id: string, options: Record<s
       const data = await getData(options.data)
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
       if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
-      if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
+      if (response.status !== 200) throw new Error("The server responded with an error code ${response.status}")
       return {
         success: true,
         patchData: data
