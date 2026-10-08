@@ -13,12 +13,12 @@ export async function executeGet(id:string, options: Record<string, any>): Promi
   const {
     host = 'http://localhost:9011',
     key,
-    filePath = `./${id}.json`
+    output = `./${id}.json`
   } = options
 
   if (!host || !key) throw new Error("You must provide a FusionAuth host and an API key")
 try {
-    const fullPath = path.resolve(filePath);
+    const fullPath = path.resolve(output);
     const httpClient = new HTTPClient(host, key);
     const response = await httpClient.executeRequest('GET', `/api/application/${id}`)
     if (response.status != 200) throw response
