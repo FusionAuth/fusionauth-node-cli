@@ -70,7 +70,7 @@ describe('application:get options checks', () => {
     
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), `/test-app-${Date.now()}`))
     try {
-      await executeGet(APP_ID, {...BASE_OPTIONS, filePath: tmpRoot + "/myFile.json"})
+      await executeGet(APP_ID, {...BASE_OPTIONS, output: tmpRoot + "/myFile.json"})
       const fileExists = fs.existsSync(tmpRoot + '/myFile.json')
       assert.equal(fileExists, true, "Response file not created")
     } catch(e) {
