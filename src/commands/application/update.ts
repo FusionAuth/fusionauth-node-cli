@@ -3,7 +3,7 @@ import { __dirname, betaWarning, errorAndExit, logEvent } from '../../utils.js'
 import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import chalk from "chalk";
 
 export function getData(file: string) {
@@ -121,7 +121,7 @@ export const appUpdate = new Command()
   .command('application:update')
   .argument('<id>', "The FusionAuth Application ID to update")
   .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
-  .option('-p, --prop <prop...>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
+  .option('-p, --prop <prop>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
   .addOption(hostOption)
   .addOption(apiKeyOption)
   .description('Updates an application with data provided via a file, a property, or a command flag.')
