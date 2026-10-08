@@ -28,7 +28,7 @@ Currently, the CLI supports the following commands:
     - `--key` - Required. Provide an API key with permissions for updating the given application or add via an environment variable( `FUSIONAUTH_API_KEY`)
     - `-d, --data <path-to-json-file>` - Provide a data file containing all the properties you wish to update constructed like the body of an application update
     - `-p, --prop <property.to.change=value>` - Update a single property in the application
-    - `--redirect-url <redirectUrl>` - Update the Authorized redirect URL for your applicatoin
+    - `--redirect-url <redirectUrl>` - Update the Authorized redirect URL for your application
     - `--example` - Create an example file with editable properties to use in conjunction with the `--data` flag
 - Common config check
   - `fusionauth check:common-config` - Checks to make sure common configuration settings are set.
