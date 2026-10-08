@@ -4,7 +4,7 @@ import nock from 'nock'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { executeUpdateAction, getData, setNestedProps, splitProp } from '../../src/commands/application/update.js'
+import { executeUpdateAction, setNestedProps, splitProp } from '../../src/commands/application/update.js'
 
 
 beforeEach(() => {
@@ -107,27 +107,6 @@ describe("test action function", () => {
 })
 
 describe("test utiltiy functions for update", () => {
-  test('getData functions', () => {
-    const tmp = path.join(os.tmpdir() + "test.json")
-    const testJSON = {
-      application: {
-        authenticationTokenConfiguration: {
-          enabled: false
-        },
-        baseURL: "http://myurl.com3"
-      }
-    }
-
-    try {
-      fs.writeFileSync(tmp, JSON.stringify(testJSON, null, 2))
-      const returnedData = getData(tmp)
-      assert.deepEqual(returnedData, testJSON, "Data doesn't match")
-    } catch(e) {
-      console.log(e)
-    } finally {
-      fs.rmSync(tmp)
-    }
-  })
   test("setNestedProps functions properly", () => {
     let obj = {}
     const propString = "prop.propString"

@@ -5,17 +5,37 @@ import path from "node:path";
 import { readFileSync } from "node:fs";
 import chalk from "chalk";
 import { FusionAuthClient } from '@fusionauth/typescript-client';
+import fs from "node:fs"
 
-export function getData(file: string) {
-  try {
-    const fileLoc = path.resolve(file)
-    const contentBuffer = readFileSync(fileLoc).toString('utf-8')
-    const contents = JSON.parse(contentBuffer)
-    return contents
-  } catch (e: any) {
-    throw new Error(e)
-  }
+function parseData(data: string) {
+    let json: string;
+    if (data.startsWith('@')) {
+        const filePath = data.slice(1);
+        try {
+            json = fs.readFileSync(filePath, 'utf-8');
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e);
+            throw new Error(`Error reading --data file "${filePath}": ${message}`);
+        }
+    } else {
+        json = data;
+    }
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(json);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        throw new Error(`Error parsing --data JSON: ${message}`);
+    }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        throw new Error(
+            `--data JSON must be a non-null, non-array object, got ${Array.isArray(parsed) ? 'an array' : parsed === null ? 'null' : typeof parsed}.`
+        );
+    }
+    return parsed;
 }
+
+
 
 export function setNestedProps(obj: any, path: string, value: any) {
   /* Takes object and dynamically applies a property at any depth
@@ -74,7 +94,8 @@ export const executeUpdateAction = async function (id: string, options: Record<s
 
     if (!options.data && !options.prop) throw new Error("No --prop or --data was specified")
     if (options?.data) {
-      const data = await getData(options.data)
+      
+      const data = await parseData(options.data)
       const { response } = await fusionAuthClient.patchApplication(id, data)
       return {
         success: true,
@@ -119,7 +140,7 @@ const action = async (id: string, options: Record<string, any>) => {
 export const appUpdate = new Command()
   .command('application:update')
   .argument('<id>', "The FusionAuth Application ID to update")
-  .option('-d, --data <file>', "Apply changes from a named file of JSON that matches the API body for an application update (ignores other flags)")
+  .option('--data <data>', "Full application config as inline JSON or @file.json")
   .option('-p, --prop <prop...>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
   .addOption(hostOption)
   .addOption(apiKeyOption)
