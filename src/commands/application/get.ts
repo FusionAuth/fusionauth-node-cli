@@ -7,6 +7,7 @@ import { writeFileSync } from "node:fs";
 import chalk from "chalk";
 import { stdout } from "node:process";
 import { inspect } from "node:util";
+import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 
 export async function executeGet(id: string, options: Record<string, any>) {
@@ -19,31 +20,32 @@ export async function executeGet(id: string, options: Record<string, any>) {
 
   if (!host || !key) throw new Error("You must provide a FusionAuth host and an API key")
   try {
-    const httpClient = new HTTPClient(host, key);
-    const response = await httpClient.executeRequest('GET', `/api/application/${id}`)
-    if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
-    if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
-
+    const fusionAuthClient = new FusionAuthClient(key, host);
+    const res = await fusionAuthClient.retrieveApplication(id)
     if (output) {
       const fullPath = path.resolve(output);
-      await writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
+      await writeFileSync(fullPath, JSON.stringify(res.response, null, 2))
       return {
         success: true,
         fullPath
-    }
+      }
     } else {
       return {
         success: true,
-        data: response.body
+        data: res.response
       }
     }
 
-
-    
   } catch (e: any) {
+    if (e.statusCode === 404) return {
+      success: false,
+      error: "Application does not exist",
+      rawError: e
+    }
+
     return {
       success: false,
-      error: e.message,
+      error: `The server responded with an error: ${e.statusCode}`,
       rawError: e
     }
   }
@@ -62,12 +64,12 @@ const action = async function (id: string, options: Record<string, any>): Promis
   }
   if (result.fullPath) {
     console.log(chalk.green(`Response written to `) + result.fullPath)
-    return 
+    return
   }
   if (result.data) {
     console.log(result.data)
   }
-  
+
 }
 
 export const appGet = new Command()
