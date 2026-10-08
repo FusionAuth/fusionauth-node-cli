@@ -1,5 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
-import { __dirname, logEvent } from '../../utils.js'
+import { __dirname, errorAndExit, logEvent } from '../../utils.js'
 import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
@@ -63,7 +63,7 @@ export function splitProp(prop: string) {
   }
 }
 
-export const action = async function (id: string, options: Record<string, any>): Promise<void> {
+export const executeUpdateAction = async function (id: string, options: Record<string, any>) {
   const {
     host = 'http://localhost:9011',
     key
@@ -77,10 +77,12 @@ export const action = async function (id: string, options: Record<string, any>):
     if (options?.data) {
       const data = await getData(options.data)
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
-      if (response.status !== 200) throw response.body
-      console.log(chalk.green(`Applied the following patch\n`), inspect(data, { showHidden: false, depth: null, colors: true }))
-      return
-    }
+      if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
+      if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
+      return {
+        success: true,
+        patchData: data
+      }    }
     if (options?.prop) {
       let data = { application: {} }
       const splitprops = options.prop.map((prop: string) => {
@@ -89,24 +91,33 @@ export const action = async function (id: string, options: Record<string, any>):
       })
       splitprops.forEach((prop: any) => setNestedProps(data.application, prop.key, prop.value))
       const response = await httpClient.executeRequest('PATCH', `/api/application/${id}`, data)
-      if (response.status !== 200) throw response.body
+      if (response.status === 404) throw new Error(`Application with ID ${id} does not exist`)
+      if (response.status !== 200) throw response.body || new Error("The server responded with an error code ${response.status}")
 
-      displaySuccess(`Applied the following patch\n${JSON.stringify(data, null, 2)}`)
 
-      return
+      return {
+        success: true,
+        patchData: data
+      }
     }
 
-  } catch (e: any) {
-    if (e?.fieldErrors || e?.generalErrors) {
-      console.log(chalk.red('An error ocurred. Patch was not applied. Full error:\n'))
-      console.log(inspect(e, { showHidden: false, depth: null, colors: true }))
-
-    } else {
-      throw new Error(e)
-    }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { success: false, error: message, rawError: e };
   }
+}
+
+const action = async (id: string, options: Record<string, any>) => {
+
+  const result = await executeUpdateAction(id, options)
+  if (!result?.success) {
+    errorAndExit(result?.error ?? 'Error creating application.', result?.rawError);
+    return;
+  }
+  displaySuccess(`Applied the following patch\n${JSON.stringify(result.patchData, null, 2)}`)
 
 }
+
 export const appUpdate = new Command()
   .command('application:update')
   .argument('<id>', "The FusionAuth Application ID to update")

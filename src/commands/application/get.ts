@@ -1,5 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
-import { __dirname, logEvent } from '../../utils.js'
+import { __dirname, logEvent, errorAndExit } from '../../utils.js'
 import { HTTPClient } from '../../utilities/apply/http-client.js';
 import { apiKeyOption, hostOption } from '../../options.js';
 import path from "node:path";
@@ -26,8 +26,7 @@ try {
     writeFileSync(fullPath, JSON.stringify(response?.body, null, 2))
     console.log(chalk.green(`Response written to `) + fullPath)
   } catch(e:any) {
-    console.log(chalk.red("The request produced the following error:\n"))
-    throw new Error(inspect(e,{showHidden: false, depth: null, colors: true}))
+    errorAndExit("The request produced the following error:\n", new Error(inspect(e,{showHidden: false, depth: null, colors: true})))
   }
 
 

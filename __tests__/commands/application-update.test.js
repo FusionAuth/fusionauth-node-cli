@@ -1,11 +1,10 @@
 import { describe, test, beforeEach, afterEach, run } from 'node:test'
-import assert, { throws } from 'node:assert/strict'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { action, getData, setNestedProps, splitProp } from '../../src/commands/application/update.js'
-import { chdir, cwd } from 'node:process'
+import { executeUpdateAction, getData, setNestedProps, splitProp } from '../../src/commands/application/update.js'
 
 
 beforeEach(() => {
@@ -42,11 +41,14 @@ const BASE_OPTIONS = {
 describe("test action function", () => {
 
   test("no data or props should error", async () => {
-    await assert.rejects(() => action(APP_ID, {...BASE_OPTIONS}))
+    const result = await executeUpdateAction(APP_ID, {...BASE_OPTIONS})
+    await assert.equal(result.success, false)
   })
 
   test("Prop option errors with improper syntax", async () => {
-    await assert.rejects(() => action(APP_ID, {...BASE_OPTIONS, prop: ["something"]}))
+    const result = await executeUpdateAction(APP_ID, {...BASE_OPTIONS, prop: ["something"]})
+    await assert.equal(result.success, false)
+    // await assert.rejects(() => executeUpdateAction(APP_ID, {...BASE_OPTIONS, prop: ["something"]}))
   })
 
   test("errors when response isn't 200", async () => {
@@ -64,10 +66,43 @@ describe("test action function", () => {
     nock(FA_HOST)
       .patch(`/api/application/${APP_ID}`)
       .reply(400, APP_RESPONSE)
-    await assert.rejects(() => action((APP_ID),  {...BASE_OPTIONS, prop: ["something=somethingelse"]}), 'prop option fails')
-    await assert.rejects(() => action((APP_ID),  {...BASE_OPTIONS, data: tmp}), 'Data file fails')
+
+    const propResult = await executeUpdateAction((APP_ID),  {...BASE_OPTIONS, prop: ["something=somethingelse"]})
+    const dataResult = await executeUpdateAction((APP_ID),  {...BASE_OPTIONS, data: tmp})
+    await assert.equal(propResult.success, false)
+    await assert.equal(dataResult.success, false)
     
   })
+  test("success when response is 200 for prop", async () => {
+    const tmp = path.join(os.tmpdir() + "test.json")
+    const testJSON = {
+      application: {
+        authenticationTokenConfiguration: {
+          enabled: false
+        },
+        baseURL: "http://myurl.com3"
+      }
+    }
+    fs.writeFileSync(tmp, JSON.stringify(testJSON, null, 2))
+
+    nock(FA_HOST)
+      .patch(`/api/application/${APP_ID}`)
+      .reply(200, APP_RESPONSE)
+
+    const dataResult = await executeUpdateAction((APP_ID),  {...BASE_OPTIONS, prop: ["something2=somethingelse"]})
+    await assert.equal(dataResult.success, true)
+    
+  })
+  test("success when response is 200 for prop", async () => {
+    nock(FA_HOST)
+      .patch(`/api/application/${APP_ID}`)
+      .reply(200, APP_RESPONSE)
+
+    const propResult = await executeUpdateAction((APP_ID),  {...BASE_OPTIONS, prop: ["something=somethingelse"]})
+    await assert.equal(propResult.success, true)
+    
+  })
+
 
 })
 
