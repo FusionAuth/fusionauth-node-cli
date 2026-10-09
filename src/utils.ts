@@ -3,6 +3,7 @@ import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { inspect } from 'node:util';
 
 import chalk from 'chalk';
 import boxen from 'boxen';
@@ -11,7 +12,7 @@ import { PostHog } from 'posthog-node'
 
 import * as dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config({ quiet: true });
 
 /** Shape of a FusionAuth ClientResponse — used for duck-type checking without importing internals. */
 interface ClientResponseLike {
@@ -42,7 +43,7 @@ export const isClientResponse = (response: any): response is ClientResponseLike 
  * @param response
  */
 export const isErrors = (response: any): response is Errors => {
-    return response.fieldErrors !== undefined || response.generalErrors !== undefined;
+    return response != null && (response.fieldErrors !== undefined || response.generalErrors !== undefined);
 }
 
 /**
@@ -90,7 +91,14 @@ export const reportError = (msg: string, error?: any): void => {
         return;
     }
 
-    console.error(chalk.red(toJson(error)));
+    // Last resort for a shape that matched none of the above (e.g. a plain
+    // object with no message/fieldErrors/generalErrors). util.inspect, not
+    // JSON.stringify (toJson), is used here deliberately: it handles
+    // circular references and non-JSON-serializable values (functions,
+    // undefined, symbols) gracefully instead of throwing or silently
+    // dropping them, which matters since `error` here is of truly unknown
+    // shape by this point.
+    console.error(chalk.red(inspect(error, { depth: null })));
 }
 
 /**
@@ -180,6 +188,67 @@ export function errorAndExit(message: string, error?: any) {
     process.exit(1);
 }
 
+// Exported for testability — pure logic, no I/O, easy to unit test directly.
+export function isConfirmationAccepted(answer: string): boolean {
+    const normalized = answer.trim().toLowerCase();
+    return normalized === 'y' || normalized === 'yes';
+}
+
+// Exported for testability — settles the prompt's Promise without needing a real TTY/readline round-trip.
+export function handleConfirmationAnswer(
+    answer: string,
+    resolve: () => void,
+    reject: (reason?: any) => void
+): void {
+    if (isConfirmationAccepted(answer)) {
+        resolve();
+        return;
+    }
+    console.log('Aborted.');
+    process.exit(0);
+    // Only reached if process.exit was mocked/deferred (e.g. in tests) — reject rather
+    // than falling through to resolve(), which would incorrectly treat a decline as
+    // confirmation.
+    reject(new Error('Aborted by user.'));
+}
+
+/**
+ * Prompts the user for confirmation before proceeding with a risky operation.
+ *
+ * - If `yes` is true, returns immediately (caller has pre-confirmed).
+ * - If running interactively (both stdin and stdout are TTYs), prints the message
+ *   and prompts [y/N]. Accepts "y" or "yes" (case-insensitive, whitespace trimmed)
+ *   as confirmation; anything else aborts.
+ * - If not running interactively (agent/script/pipe — e.g. stdin is piped even if
+ *   stdout is a TTY), prints the message and exits with an error instructing the
+ *   caller to pass --yes.
+ *
+ * @param message A description of what will happen and why it is risky.
+ * @param yes     The value of the --yes flag from the command options.
+ */
+export async function confirmOrExit(message: string, yes: boolean): Promise<void> {
+    if (yes) return;
+
+    console.warn(chalk.yellow(message));
+
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
+        errorAndExit('Pass --yes to confirm this operation non-interactively.');
+        // Only reached if process.exit was mocked/deferred (e.g. in tests) — throw rather
+        // than returning normally, which would incorrectly let the caller proceed.
+        throw new Error('Confirmation required: pass --yes to confirm this operation non-interactively.');
+    }
+
+    const { createInterface } = await import('node:readline');
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+
+    await new Promise<void>((resolve, reject) => {
+        rl.question('Proceed? [y/N] ', (answer) => {
+            rl.close();
+            handleConfirmationAnswer(answer, resolve, reject);
+        });
+    });
+}
+
 /**
  * Returns a console log that can be added to a beta feature to warn the user
  */
@@ -214,6 +283,16 @@ export function isDirEmpty(path: string) {
   }
 }
 
+/**
+ * Returns the base directory used for the global `.fa/config.json` file.
+ * Defaults to the directory containing this module, but can be overridden
+ * via FUSIONAUTH_CONFIG_DIR — primarily so tests can point at a real
+ * temporary directory instead of mocking the filesystem.
+ */
+export function getConfigDir(): string {
+    return process.env.FUSIONAUTH_CONFIG_DIR ?? __dirname
+}
+
 export function loadConfig() {
     const defaultConfig = {
         telemetry: true,
@@ -221,10 +300,11 @@ export function loadConfig() {
         version: "1.0"
 
     }
-    const configPath = __dirname + '/.fa/config.json'
+    const configDir = getConfigDir()
+    const configPath = configDir + '/.fa/config.json'
     try {
         if (!fs.existsSync(configPath)) {
-            createConfig(__dirname + '/.fa', defaultConfig)
+            createConfig(configDir + '/.fa', defaultConfig)
         }
         const globalConfig = JSON.parse(fs.readFileSync(configPath).toString())
         // TODO: Combine this with a local-project config
@@ -309,7 +389,7 @@ export function createConfig(dir: string, configObject: ConfigObject = { id: ran
 type PropertyToAdd = {[key:string]: any}
 async function updateGlobalConfig(propertiesToAdd: PropertyToAdd | PropertyToAdd[]) {
     const config = loadConfig()
-    const configPath = __dirname + '/.fa/config.json'
+    const configPath = getConfigDir() + '/.fa/config.json'
     let newConfig: any;
     
     if (Array.isArray(propertiesToAdd)) {
@@ -330,3 +410,198 @@ async function updateGlobalConfig(propertiesToAdd: PropertyToAdd | PropertyToAdd
    
     fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2))
 } 
+
+export const exampleApplicationBody = {
+  "accessControlConfiguration": {},
+  "active": true,
+  "authenticationTokenConfiguration": {
+    "enabled": false
+  },
+  "data": {},
+  "emailConfiguration": {},
+  "externalIdentifierConfiguration": {},
+  "formConfiguration": {
+    "adminRegistrationFormId": "UUID",
+    "selfServiceFormConfiguration": {
+      "requireCurrentPasswordOnPasswordChange": false
+    }
+  },
+  "id": "UUID",
+  "insertInstant": 1234,
+  "jwtConfiguration": {
+    "accessTokenKeyId": "UUID",
+    "enabled": true,
+    "idTokenKeyId": "e73fe48a-1527-43cf-9b66-9eaa4c44d909",
+    "refreshTokenExpirationPolicy": "Fixed",
+    "refreshTokenOneTimeUseConfiguration": {
+      "gracePeriodInSeconds": 0
+    },
+    "refreshTokenSlidingWindowConfiguration": {
+      "maximumTimeToLiveInMinutes": 43200
+    },
+    "refreshTokenTimeToLiveInMinutes": 43200,
+    "refreshTokenUsagePolicy": "Reusable",
+    "timeToLiveInSeconds": 3600
+  },
+  "lambdaConfiguration": {},
+  "lastUpdateInstant": 1789396293195,
+  "loginConfiguration": {
+    "allowTokenRefresh": false,
+    "generateRefreshTokens": false,
+    "requireAuthentication": true
+  },
+  "multiFactorConfiguration": {
+    "email": {},
+    "sms": {},
+    "voice": {}
+  },
+  "name": "Name string",
+  "oauthConfiguration": {
+    "authorizedOriginURLs": [
+      "http://localhost:3000"
+    ],
+    "authorizedRedirectURLs": [
+      "http://localhost:1002"
+    ],
+    "authorizedResourceUris": [
+      "http://localhost:3000"
+    ],
+    "authorizedURLValidationPolicy": "ExactMatch",
+    "clientAuthenticationPolicy": "NotRequiredWhenUsingPKCE",
+    "clientId": "UUID",
+    "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
+    "consentMode": "AlwaysPrompt",
+    "debug": true,
+    "enabledGrants": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "generateRefreshTokens": true,
+    "logoutBehavior": "AllApplications",
+    "logoutURL": "http://localhost:3000",
+    "proofKeyForCodeExchangePolicy": "Required",
+    "providedScopePolicy": {
+      "address": {
+        "enabled": true,
+        "required": false
+      },
+      "email": {
+        "enabled": true,
+        "required": false
+      },
+      "phone": {
+        "enabled": true,
+        "required": false
+      },
+      "profile": {
+        "enabled": true,
+        "required": false
+      }
+    },
+    "relationship": "FirstParty",
+    "requireClientAuthentication": true,
+    "requireRegistration": true,
+    "scopeHandlingPolicy": "Strict",
+    "unknownScopePolicy": "Reject"
+  },
+  "passwordlessConfiguration": {
+    "emailLoginStrategy": "ClickableLink",
+    "enabled": false,
+    "phoneLoginStrategy": "FormField"
+  },
+  "phoneConfiguration": {},
+  "registrationConfiguration": {
+    "birthDate": {
+      "enabled": false,
+      "required": false
+    },
+    "completeRegistration": false,
+    "confirmPassword": false,
+    "enabled": true,
+    "firstName": {
+      "enabled": false,
+      "required": false
+    },
+    "fullName": {
+      "enabled": false,
+      "required": false
+    },
+    "lastName": {
+      "enabled": false,
+      "required": false
+    },
+    "loginIdType": "email",
+    "middleName": {
+      "enabled": false,
+      "required": false
+    },
+    "mobilePhone": {
+      "enabled": false,
+      "required": false
+    },
+    "preferredLanguages": {
+      "enabled": false,
+      "required": false
+    },
+    "type": "basic"
+  },
+  "registrationDeletePolicy": {
+    "unverified": {
+      "enabled": false,
+      "numberOfDaysToRetain": 120
+    }
+  },
+  "roles": [],
+  "samlv2Configuration": {
+    "assertionEncryptionConfiguration": {
+      "digestAlgorithm": "SHA256",
+      "enabled": false,
+      "encryptionAlgorithm": "AES256GCM",
+      "keyLocation": "Child",
+      "keyTransportAlgorithm": "RSA_OAEP",
+      "maskGenerationFunction": "MGF1_SHA1"
+    },
+    "authorizedRedirectURLs": [],
+    "debug": false,
+    "enabled": false,
+    "initiatedLogin": {
+      "enabled": false,
+      "nameIdFormat": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+    },
+    "loginHintConfiguration": {
+      "enabled": true,
+      "parameterName": "login_hint"
+    },
+    "logout": {
+      "behavior": "AllParticipants",
+      "requireSignedRequests": false,
+      "singleLogout": {
+        "enabled": false,
+        "xmlSignatureC14nMethod": "exclusive_with_comments"
+      },
+      "xmlSignatureC14nMethod": "exclusive_with_comments"
+    },
+    "requireSignedRequests": false,
+    "xmlSignatureC14nMethod": "exclusive_with_comments",
+    "xmlSignatureLocation": "Assertion"
+  },
+  "scopes": [],
+  "state": "Active",
+  "tenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+  "universalConfiguration": {
+    "universal": false
+  },
+  "unverified": {
+    "behavior": "Allow"
+  },
+  "verifyRegistration": false,
+  "webAuthnConfiguration": {
+    "bootstrapWorkflow": {
+      "enabled": false
+    },
+    "enabled": false,
+    "reauthenticationWorkflow": {
+      "enabled": false
+    }
+  }
+}

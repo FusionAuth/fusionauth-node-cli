@@ -1,96 +1,73 @@
-import { describe, test } from "node:test"
+import { describe, test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
+import path from "node:path"
 
 import { createConfig } from '../../src/utils.js'
+import { createTempDir, removeTempDir } from '../helpers/temp-dir.js'
 
-import mock from 'mock-fs'
-import fs, { readdirSync, readFileSync } from 'node:fs'
+import fs from 'node:fs'
 
 describe('postInstall runs properly', () => {
+    let tempDir
+    let configDir
+
+    beforeEach(() => {
+      tempDir = createTempDir()
+      configDir = path.join(tempDir, 'dist', '.fa')
+    })
+
+    afterEach(() => {
+      removeTempDir(tempDir)
+    })
+
     test('No config creates dir', () => {
-      mock({
-        'dist': {},
-      })
-      try {
-        const configFileExists = createConfig('dist/.fa')
-        assert.equal(configFileExists, true, 'Config not created at dist/.fa/config.json')
-      } finally {
-        mock.restore()
-      }
+      const configFileExists = createConfig(configDir)
+      assert.equal(configFileExists, true, 'Config not created at dist/.fa/config.json')
     })
+
     test('No dist directory, still create the directory and file', () => {
-      mock({
-        "./": {}
-      })
-      try {
-        const configFileExists = createConfig('dist/.fa')
-        assert.equal(configFileExists, true, 'Config not created at dist/.fa/config.json')
-      } finally {
-        mock.restore()
-      }
+      // tempDir exists but the nested dist/.fa path does not yet.
+      const configFileExists = createConfig(configDir)
+      assert.equal(configFileExists, true, 'Config not created at dist/.fa/config.json')
     })
+
     test('No config creates full config file with expected types', () => {
-      mock({
-        'dist': {},
-      })
-      try {
-        const configFileExists = createConfig('dist/.fa')
-        const configObject = JSON.parse(readFileSync('dist/.fa/config.json'))
-        assert(configObject.telemetry, true, 'Default telemetry not set to true')
-        assert(typeof configObject.id, 'string', "ID doesn't exist or isn't a string")
-      } finally {
-        mock.restore()
-      }
+      createConfig(configDir)
+      const configObject = JSON.parse(fs.readFileSync(path.join(configDir, 'config.json')))
+      assert(configObject.telemetry, true, 'Default telemetry not set to true')
+      assert(typeof configObject.id, 'string', "ID doesn't exist or isn't a string")
     })
 
     test('Complete config returns false', () => {
-      mock({
-        dist: {
-          '.fa': {
-            'config.json': JSON.stringify({id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', telemetry: true})
-          }
-        }
-      })
-      try {
-        assert.equal(createConfig('dist/.fa'), false, 'Postinstall did not return false properly')
-      } finally {
-        mock.restore()
-      }
+      fs.mkdirSync(configDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(configDir, 'config.json'),
+        JSON.stringify({ id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', telemetry: true })
+      )
+
+      assert.equal(createConfig(configDir), false, 'Postinstall did not return false properly')
     })
+
     test('No ID in config, but telemetry false', () => {
-      mock({
-        dist: {
-          '.fa': {
-            'config.json': JSON.stringify({telemetry: false})
-          }
-        }
-      })
-      try {
-        createConfig('dist/.fa')
-        const configObject = JSON.parse(fs.readFileSync('dist/.fa/config.json'))
-        assert.equal(typeof configObject.id, 'string', 'No ID after run')
-        assert.equal(configObject.telemetry, false, 'Telemetry got reset')
-      } finally {
-        mock.restore()
-      }
+      fs.mkdirSync(configDir, { recursive: true })
+      fs.writeFileSync(path.join(configDir, 'config.json'), JSON.stringify({ telemetry: false }))
+
+      createConfig(configDir)
+      const configObject = JSON.parse(fs.readFileSync(path.join(configDir, 'config.json')))
+      assert.equal(typeof configObject.id, 'string', 'No ID after run')
+      assert.equal(configObject.telemetry, false, 'Telemetry got reset')
     })
+
     test('No telemetry in config, but ID', () => {
-      mock({
-        dist: {
-          '.fa': {
-            'config.json': JSON.stringify({id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb'})
-          }
-        }
-      })
-      try {
-        createConfig('dist/.fa')
-        const configObject = JSON.parse(fs.readFileSync('dist/.fa/config.json'))
-        assert.equal(configObject.id, '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', 'ID got reset')
-        assert.equal(configObject.telemetry, true, 'Telemetry did not get set')
-      } finally {
-        mock.restore()
-      }
+      fs.mkdirSync(configDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(configDir, 'config.json'),
+        JSON.stringify({ id: '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb' })
+      )
+
+      createConfig(configDir)
+      const configObject = JSON.parse(fs.readFileSync(path.join(configDir, 'config.json')))
+      assert.equal(configObject.id, '8c0a77f2-27e4-4284-b5d3-5618ec2a56eb', 'ID got reset')
+      assert.equal(configObject.telemetry, true, 'Telemetry did not get set')
     })
-
-
 })
