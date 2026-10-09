@@ -1,7 +1,9 @@
-import { describe, test } from "node:test"
+import { describe, test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
-import mock from "mock-fs"
+import fs from "node:fs"
+import path from "node:path"
 import { KickstartValidator } from "../../../src/utilities/kickstart/validator.js"
+import { createTempDir, removeTempDir } from "../../helpers/temp-dir.js"
 
 describe('KickstartValidator', () => {
 
@@ -304,6 +306,16 @@ describe('KickstartValidator', () => {
     })
 
     describe('validateFileExists()', () => {
+      let tempDir
+
+      beforeEach(() => {
+        tempDir = createTempDir()
+      })
+
+      afterEach(() => {
+        removeTempDir(tempDir)
+      })
+
       test('should report error for missing file', () => {
         const validator = new KickstartValidator()
         const result = validator.validateFileExists('/nonexistent/file.json')
@@ -313,37 +325,36 @@ describe('KickstartValidator', () => {
       })
 
       test('should accept existing file', () => {
-        mock({
-          '/test/kickstart.json': '{"requests": []}'
-        })
-        try {
-          const validator = new KickstartValidator()
-          const result = validator.validateFileExists('/test/kickstart.json')
-          
-          assert.equal(result.valid, true)
-          assert.equal(result.errors.length, 0)
-        } finally {
-          mock.restore()
-        }
+        const filePath = path.join(tempDir, 'kickstart.json')
+        fs.writeFileSync(filePath, '{"requests": []}')
+
+        const validator = new KickstartValidator()
+        const result = validator.validateFileExists(filePath)
+
+        assert.equal(result.valid, true)
+        assert.equal(result.errors.length, 0)
       })
 
       test('should report error if path is directory', () => {
-        mock({
-          '/test/': {}
-        })
-        try {
-          const validator = new KickstartValidator()
-          const result = validator.validateFileExists('/test')
-          
-          assert.equal(result.valid, false)
-          assert(result.errors.some(e => e.message.includes('not a file')))
-        } finally {
-          mock.restore()
-        }
+        const validator = new KickstartValidator()
+        const result = validator.validateFileExists(tempDir)
+
+        assert.equal(result.valid, false)
+        assert(result.errors.some(e => e.message.includes('not a file')))
       })
     })
 
     describe('loadAndValidateJSON()', () => {
+      let tempDir
+
+      beforeEach(() => {
+        tempDir = createTempDir()
+      })
+
+      afterEach(() => {
+        removeTempDir(tempDir)
+      })
+
       test('should return error if file not found', () => {
         const validator = new KickstartValidator()
         const result = validator.loadAndValidateJSON('/nonexistent.json')
@@ -353,18 +364,14 @@ describe('KickstartValidator', () => {
       })
 
       test('should return error if JSON is invalid', () => {
-        mock({
-          '/test/bad.json': '{ invalid json }'
-        })
-        try {
-          const validator = new KickstartValidator()
-          const result = validator.loadAndValidateJSON('/test/bad.json')
-          
-          assert.equal(result.valid, false)
-          assert(result.errors.some(e => e.category === 'schema_invalid'))
-        } finally {
-          mock.restore()
-        }
+        const filePath = path.join(tempDir, 'bad.json')
+        fs.writeFileSync(filePath, '{ invalid json }')
+
+        const validator = new KickstartValidator()
+        const result = validator.loadAndValidateJSON(filePath)
+
+        assert.equal(result.valid, false)
+        assert(result.errors.some(e => e.category === 'schema_invalid'))
       })
 
       test('should load and parse valid JSON', () => {
@@ -373,19 +380,15 @@ describe('KickstartValidator', () => {
             { method: 'POST', url: '/api/app' }
           ]
         }
-        mock({
-          '/test/valid.json': JSON.stringify(config)
-        })
-        try {
-          const validator = new KickstartValidator()
-          const result = validator.loadAndValidateJSON('/test/valid.json')
-          
-          assert('config' in result)
-          assert.equal(result.config.requests.length, 1)
-          assert('lineNumbers' in result)
-        } finally {
-          mock.restore()
-        }
+        const filePath = path.join(tempDir, 'valid.json')
+        fs.writeFileSync(filePath, JSON.stringify(config))
+
+        const validator = new KickstartValidator()
+        const result = validator.loadAndValidateJSON(filePath)
+
+        assert('config' in result)
+        assert.equal(result.config.requests.length, 1)
+        assert('lineNumbers' in result)
       })
 
       test('should include line numbers in result', () => {
@@ -395,17 +398,13 @@ describe('KickstartValidator', () => {
             { method: 'POST', url: '/api/app2' }
           ]
         }
-        mock({
-          '/test/valid.json': JSON.stringify(config)
-        })
-        try {
-          const validator = new KickstartValidator()
-          const result = validator.loadAndValidateJSON('/test/valid.json')
-          
-          assert('lineNumbers' in result)
-        } finally {
-          mock.restore()
-        }
+        const filePath = path.join(tempDir, 'valid.json')
+        fs.writeFileSync(filePath, JSON.stringify(config))
+
+        const validator = new KickstartValidator()
+        const result = validator.loadAndValidateJSON(filePath)
+
+        assert('lineNumbers' in result)
       })
     })
   })
