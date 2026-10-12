@@ -137,11 +137,16 @@ const action = async (id: string, options: Record<string, any>) => {
 
 }
 
+function customArrayParser(value:string, previous:any=[]) {
+  return previous.concat(value);
+
+}
+
 export const appUpdate = new Command()
   .command('application:update')
   .argument('<id>', "The FusionAuth Application ID to update")
   .option('--data <data>', "Full application config as inline JSON or @file.json")
-  .option('-p, --prop <prop...>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ')
+  .option('-p, --prop <prop>', 'Updates a single property from the application --prop name="My New Name" or --prop oauthConfiguration.authorizedOriginURLs="http://localhost:9011" ', customArrayParser)
   .addOption(hostOption)
   .addOption(apiKeyOption)
   .description('Updates an application with data provided via a file, a property, or a command flag.')
