@@ -48,7 +48,6 @@ describe("test action function", () => {
   test("Prop option errors with improper syntax", async () => {
     const result = await executeUpdateAction(APP_ID, {...BASE_OPTIONS, prop: ["something"]})
     await assert.equal(result.success, false)
-    // await assert.rejects(() => executeUpdateAction(APP_ID, {...BASE_OPTIONS, prop: ["something"]}))
   })
 
   test("errors when response isn't 200", async () => {
