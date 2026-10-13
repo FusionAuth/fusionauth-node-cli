@@ -1,3 +1,4 @@
+import ClientResponse from '@fusionauth/typescript-client/build/src/ClientResponse.js';
 import {Errors} from '@fusionauth/typescript-client';
 import fs, { readFileSync } from 'node:fs'
 import { dirname } from 'node:path';
