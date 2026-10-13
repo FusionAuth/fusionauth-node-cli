@@ -22,6 +22,18 @@ fusionauth --help;
 ```
 
 Currently, the CLI supports the following commands:
+- Application management
+  - `fusionauth application:create --name <name> --profile <spa|native|webapp> --redirect-uri <uri...> [--authorized-origin-url <url...>]` - Create an application in one of a few pre-defined, standard security profiles (spa, native, or webapp), automatically configuring the associated OAuth/JWT settings (and CORS headers, for spa — native apps don't go through a browser's CORS enforcement, so this is skipped for native). `--authorized-origin-url` is required if the app will make cross-origin requests from the browser, since enabling CORS alone doesn't allow any origin through — the origin still needs to be added to the system's CORS allowlist.
+  - `fusionauth application:create [--name <name>] --data <json|@file.json>` - Create an application from a full custom JSON configuration, for cases the standard profiles don't cover. The JSON's own `name` field is used unless `--name` is explicitly passed, in which case it overrides the JSON.
+  - `fusionauth application:update <application-id>` - Updates an application with provided data
+    - `--host` - Required. Provide a FusionAuth host URL or add it via an environment variable (`FUSIONAUTH_HOST`)
+    - `--key` - Required. Provide an API key with permissions for updating the given application or add via an environment variable( `FUSIONAUTH_API_KEY`)
+    - `-d, --data <path-to-json-file>` - Provide a data file containing all the properties you wish to update constructed like the body of an application update
+    - `-p, --prop <property.to.change=value>` - Update a single property in the application
+  - `fusionauth application:get <application-id>` - Get a JSON representation of an application's settings
+    - `--host` - Required. Provide a FusionAuth host URL or add it via an environment variable (`FUSIONAUTH_HOST`)
+    - `--key` - Required. Provide an API key with permissions for updating the given application or add via an environment variable( `FUSIONAUTH_API_KEY`)
+    - `-o, --output` - Optional. Writes the JSON object to the indicated file
 - Common config check
   - `fusionauth check:common-config` - Checks to make sure common configuration settings are set.
 - OAuth 2.1 compliance check

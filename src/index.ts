@@ -21,6 +21,7 @@ const authString = figlet.textSync('Auth').split('\n');
 fusionString.forEach((line, i) => {
   console.log(chalk.white(line) + chalk.hex('#F58320')(authString[i]));
 });
+
 const program = new Command();
 program.name('@fusionauth/cli').description('CLI for FusionAuth');
 Object.values(commands).forEach((command) => {

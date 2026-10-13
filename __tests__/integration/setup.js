@@ -2,6 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Async version of exec used in place of execSync to avoid blocking the
@@ -16,13 +17,138 @@ const execAsync = promisify(exec)
  * Handles docker compose lifecycle and FusionAuth readiness checks
  */
 
-const FUSIONAUTH_URL = 'http://localhost:9011'
+const DEFAULT_FUSIONAUTH_URL = 'http://localhost:9011'
 const DEFAULT_API_KEY = '90dd6b25-d1ef-4175-9656-159dd994932e'
-const HEALTH_CHECK_TIMEOUT = 120000 // 2 minutes
+const HEALTH_CHECK_TIMEOUT = 240000 // 4 minutes
 const HEALTH_CHECK_INTERVAL = 5000 // 5 seconds
 const REQUEST_TIMEOUT = 10000 // 10 seconds
+// fileURLToPath() (not .pathname) is required here: .pathname leaves
+// characters like spaces percent-encoded (e.g. '%20'), which is not a
+// valid path component on disk and would break both writeFileSync(envFile)
+// and every docker compose invocation below for a checkout under a path
+// containing a space.
+const COMPOSE_DIR = fileURLToPath(new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url))
 
 let isContainerRunning = false
+let resolvedFusionAuthUrl = DEFAULT_FUSIONAUTH_URL
+
+/**
+ * Best-effort teardown used by the SIGINT/SIGTERM handlers below. Unlike
+ * stopFusionAuthContainer(), this does not check isContainerRunning — a
+ * termination signal can arrive before that flag is set (e.g. while still
+ * waiting on docker compose up -d or the health check loop), by which point
+ * containers may already exist and still need cleaning up.
+ * @param {string} reason - what triggered the teardown, for logging
+ */
+async function forceTeardown(reason) {
+  if (process.env.SKIP_TEARDOWN === 'true') {
+    console.log(`ℹ Skipping container teardown on ${reason} (SKIP_TEARDOWN=true)`)
+    return
+  }
+  try {
+    await execAsync('docker compose --env-file .env.test down -v', { cwd: COMPOSE_DIR })
+    isContainerRunning = false
+  } catch (err) {
+    console.error(`Warning: Failed to stop container during ${reason} cleanup: ${err.message}`)
+  }
+}
+
+let handlingTerminationSignal = false
+
+/**
+ * Ensures a Ctrl+C (or kill) during a test run doesn't leak the FusionAuth
+ * container — without this, after()/t.after() hooks never run on an
+ * interrupted process, leaving containers running (or stopped-but-not-
+ * removed, which can then collide with the next run's `docker compose up`).
+ * @param {string} signal
+ */
+async function handleTerminationSignal(signal) {
+  if (handlingTerminationSignal) {
+    // Second signal while teardown is still in flight (e.g. docker compose
+    // down -v hung) — the user wants out now. Exit immediately rather than
+    // silently no-op'ing: once a SIGINT/SIGTERM listener is registered,
+    // Node no longer applies its default "second Ctrl+C just kills the
+    // process" behavior on its own, so we have to implement that ourselves.
+    console.log(`\n⚠ Received ${signal} again — forcing immediate exit (teardown may be incomplete).`)
+    process.exit(signal === 'SIGINT' ? 130 : 143)
+  }
+  handlingTerminationSignal = true
+  console.log(`\n⚠ Received ${signal}, cleaning up FusionAuth container before exiting...`)
+  await forceTeardown(signal)
+  process.exit(signal === 'SIGINT' ? 130 : 143)
+}
+
+process.on('SIGINT', () => { void handleTerminationSignal('SIGINT') })
+process.on('SIGTERM', () => { void handleTerminationSignal('SIGTERM') })
+
+/**
+ * Resolves the FusionAuth service container's ID via Docker Compose,
+ * rather than assuming Compose's default generated container name
+ * ('{project}-{service}-{index}'). That default only holds when
+ * COMPOSE_PROJECT_NAME is unset; if it's set (e.g. by a contributor's
+ * shell profile or CI wrapper), the real container name differs and a
+ * hard-coded guess would silently fail to match anything.
+ * @returns {Promise<string>} The container ID, or '' if it can't be found
+ *   (e.g. the compose project doesn't exist yet) — callers should treat
+ *   that the same as a failed `docker inspect` and fall back gracefully.
+ */
+async function resolveContainerId() {
+  try {
+    const { stdout } = await execAsync('docker compose --env-file .env.test ps -q fusionauth', { cwd: COMPOSE_DIR })
+    return stdout.trim()
+  } catch (_) {
+    return ''
+  }
+}
+
+/**
+ * Resolves the FusionAuth URL. On environments where localhost port-mapping
+ * behaves differently (e.g. macOS Docker Desktop), falls back to the
+ * container's direct bridge IP to ensure authenticated requests succeed.
+ * @returns {Promise<string>}
+ */
+async function resolveFusionAuthUrl() {
+  // First try localhost — if an authenticated request succeeds, use it.
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000)
+    const response = await fetch(`${DEFAULT_FUSIONAUTH_URL}/api/tenant`, {
+      headers: { Authorization: DEFAULT_API_KEY },
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+    if (response.ok) return DEFAULT_FUSIONAUTH_URL
+  } catch (_) {}
+
+  // Fall back to the container's direct bridge IP (works on macOS Docker Desktop
+  // where localhost port-mapping doesn't forward API-key auth correctly).
+  try {
+    const containerId = await resolveContainerId()
+    if (!containerId) throw new Error('FusionAuth container not found')
+    const { stdout } = await execAsync(
+      `docker inspect ${containerId} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+    )
+    const ips = stdout.trim().split(/\s+/).filter(Boolean)
+    for (const ip of ips) {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000)
+        const response = await fetch(`http://${ip}:9011/api/tenant`, {
+          headers: { Authorization: DEFAULT_API_KEY },
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (response.ok) {
+          console.log(`ℹ Using container IP ${ip}:9011 (localhost port-mapping not compatible)`)
+          return `http://${ip}:9011`
+        }
+      } catch (_) {}
+    }
+  } catch (_) {}
+
+  // Return localhost as a last resort — health check will catch startup failures.
+  return DEFAULT_FUSIONAUTH_URL
+}
 
 /**
  * Start FusionAuth via docker compose
@@ -31,14 +157,14 @@ let isContainerRunning = false
 export async function startFusionAuthContainer() {
   if (isContainerRunning || process.env.REUSE_CONTAINER === 'true') {
     console.log('ℹ Using existing FusionAuth container')
-    return { url: FUSIONAUTH_URL, apiKey: DEFAULT_API_KEY }
+    resolvedFusionAuthUrl = await resolveFusionAuthUrl()
+    return { url: resolvedFusionAuthUrl, apiKey: DEFAULT_API_KEY }
   }
 
   console.log('↻ Starting FusionAuth container via docker compose...')
 
-  const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
-  const envFile = path.join(composeDir, '.env.test')
-  const kickstartFilePath = path.join(composeDir, 'kickstart.json')
+  const envFile = path.join(COMPOSE_DIR, '.env.test')
+  const kickstartFilePath = path.join(COMPOSE_DIR, 'kickstart.json')
 
   // Create .env.test file with test configuration
   const envContent = `
@@ -57,28 +183,44 @@ OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m
   fs.writeFileSync(envFile, envContent)
 
   try {
-    // Check for and tear down any existing containers first
+    // Check for and tear down any existing containers first. Use -a/--all —
+    // without it, docker compose ps only lists running/restarting
+    // containers, so a stopped-but-not-removed container from a prior
+    // interrupted run would be invisible here, this cleanup would be
+    // skipped entirely, and the `up -d` below would fail with
+    // "Conflict: container name already in use".
+    let psOutput = ''
     try {
-      const { stdout: psOutput } = await execAsync(`cd ${composeDir} && docker compose ps -q`)
-      if (psOutput.trim()) {
-        console.log('⚠ Found existing FusionAuth containers, tearing them down...')
-        await execAsync(`cd ${composeDir} && docker compose down -v`)
-        console.log('✓ Existing containers removed')
-      }
+      const result = await execAsync('docker compose --env-file .env.test ps -aq', { cwd: COMPOSE_DIR })
+      psOutput = result.stdout
     } catch (e) {
-      // Container may not exist, that's fine
+      // `docker compose ps` itself failing (e.g. project has never existed)
+      // is fine — there's nothing to tear down.
+    }
+
+    if (psOutput.trim()) {
+      console.log('⚠ Found existing FusionAuth containers, tearing them down...')
+      // Unlike the ps check above, a failure here means stale containers
+      // genuinely remain. Let it propagate (via the outer catch) instead of
+      // silently continuing into `up -d`, which would just hit the same
+      // naming conflict with a far more confusing error message.
+      await execAsync('docker compose --env-file .env.test down -v', { cwd: COMPOSE_DIR })
+      console.log('✓ Existing containers removed')
     }
 
     // Start containers
-    await execAsync(`cd ${composeDir} && docker compose --env-file .env.test up -d`)
+    await execAsync('docker compose --env-file .env.test up -d', { cwd: COMPOSE_DIR })
 
     // Wait for FusionAuth to be healthy
     await waitForFusionAuthReady()
 
+    // Resolve the URL that actually works for authenticated requests
+    resolvedFusionAuthUrl = await resolveFusionAuthUrl()
+
     isContainerRunning = true
     console.log('✓ FusionAuth container started and ready')
 
-    return { url: FUSIONAUTH_URL, apiKey: DEFAULT_API_KEY }
+    return { url: resolvedFusionAuthUrl, apiKey: DEFAULT_API_KEY }
   } catch (err) {
     throw new Error(`Failed to start FusionAuth container: ${err.message}`)
   }
@@ -101,10 +243,8 @@ export async function stopFusionAuthContainer() {
 
   console.log('↻ Stopping FusionAuth container...')
 
-  const composeDir = new URL('./fixtures/kickstarts/fusionauth-integration-test-base', import.meta.url).pathname
-
   try {
-    await execAsync(`cd ${composeDir} && docker compose down -v`)
+    await execAsync('docker compose --env-file .env.test down -v', { cwd: COMPOSE_DIR })
     isContainerRunning = false
     console.log('✓ FusionAuth container stopped')
   } catch (err) {
@@ -124,36 +264,61 @@ async function waitForFusionAuthReady() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000)
       
-      const response = await fetch(`${FUSIONAUTH_URL}/api/status`, {
+      const response = await fetch(`${DEFAULT_FUSIONAUTH_URL}/api/status`, {
         signal: controller.signal
       })
       clearTimeout(timeoutId)
 
       if (response.ok) {
-        // Verify authenticated API requests work by fetching tenants, there was a problem with the status returning OK but the Key did not work
+        // Verify the kickstart has run and the container is fully initialized
+        // by checking authenticated API access. Tries localhost first, then
+        // falls back to the container's direct bridge IP.
         let authReady = false
         const authStartTime = Date.now()
         
         while (Date.now() - authStartTime < 30000) { // 30 second timeout for auth readiness
+          // Try localhost first, only falling back to the container's direct
+          // bridge IP (via docker inspect) if localhost doesn't respond ok.
+          // Mirrors resolveFusionAuthUrl()'s ordering — on Docker Desktop the
+          // bridge IP generally isn't routable from the host, so localhost
+          // must be attempted first rather than being unconditionally
+          // overridden.
+          const urlsToTry = [DEFAULT_FUSIONAUTH_URL]
           try {
-            const authController = new AbortController()
-            const authTimeoutId = setTimeout(() => authController.abort(), 5000)
-            
-            const tenantsResponse = await fetch(`${FUSIONAUTH_URL}/api/tenant`, {
-              method: 'GET',
-              headers: { Authorization: DEFAULT_API_KEY },
-              signal: authController.signal
-            })
-            clearTimeout(authTimeoutId)
+            const containerId = await resolveContainerId()
+            if (!containerId) throw new Error('FusionAuth container not found')
+            const { stdout } = await execAsync(
+              `docker inspect ${containerId} --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'`
+            )
+            const ip = stdout.trim().split(/\s+/).filter(Boolean)[0]
+            if (ip) urlsToTry.push(`http://${ip}:9011`)
+          } catch (_) {}
 
-            if (tenantsResponse.ok) {
-              authReady = true
-              break
+          for (const checkUrl of urlsToTry) {
+            try {
+              const authController = new AbortController()
+              const authTimeoutId = setTimeout(() => authController.abort(), 5000)
+
+              const tenantsResponse = await fetch(`${checkUrl}/api/tenant`, {
+                method: 'GET',
+                headers: { Authorization: DEFAULT_API_KEY },
+                signal: authController.signal
+              })
+              clearTimeout(authTimeoutId)
+
+              if (tenantsResponse.ok) {
+                authReady = true
+                break
+              }
+            } catch (err) {
+              // Not reachable via this URL yet, try the next one
             }
-          } catch (err) {
-            // Auth not ready yet, retry
           }
-          
+
+          if (authReady) {
+            break
+          }
+
           await sleep(HEALTH_CHECK_INTERVAL)
         }
         
@@ -182,7 +347,7 @@ async function waitForFusionAuthReady() {
  * @returns {Promise<any>}
  */
 export async function makeApiRequest(method, path, data = null, apiKey = DEFAULT_API_KEY) {
-  const url = `${FUSIONAUTH_URL}${path}`
+  const url = `${resolvedFusionAuthUrl}${path}`
   const headers = {
     Authorization: apiKey,
     'Content-Type': 'application/json'
@@ -212,7 +377,15 @@ export async function makeApiRequest(method, path, data = null, apiKey = DEFAULT
       )
     }
 
-    return await response.json()
+    // Some successful responses (e.g. DELETE /api/application) have an
+    // empty body — calling response.json() directly throws in that case
+    // ("Unexpected end of JSON input"), so read as text first and only
+    // parse when there's actually something to parse.
+    const responseText = await response.text()
+    if (!responseText) {
+      return null
+    }
+    return JSON.parse(responseText)
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new Error(`API request timeout: ${method} ${path}`)
@@ -267,6 +440,57 @@ export async function getMessageTemplateByName(name, apiKey = DEFAULT_API_KEY) {
   const data = await makeApiRequest('GET', '/api/message/template', null, apiKey)
   const templates = data.messageTemplates || []
   return templates.find(t => t.name === name)
+}
+
+/**
+ * Get application by ID from FusionAuth
+ * @param {string} applicationId - Application ID
+ * @param {string} apiKey - API key
+ * @returns {Promise<object>}
+ */
+export async function getApplication(applicationId, apiKey = DEFAULT_API_KEY) {
+  const data = await makeApiRequest('GET', `/api/application/${applicationId}`, null, apiKey)
+  return data.application
+}
+
+/**
+ * Delete application by ID from FusionAuth
+ * @param {string} applicationId - Application ID
+ * @param {string} apiKey - API key
+ * @returns {Promise<void>}
+ */
+export async function deleteApplication(applicationId, apiKey = DEFAULT_API_KEY) {
+  // First deactivate, then hard-delete
+  await makeApiRequest('DELETE', `/api/application/${applicationId}`, null, apiKey)
+  await makeApiRequest('DELETE', `/api/application/${applicationId}?hardDelete=true`, null, apiKey)
+}
+
+let baselineSystemConfiguration = null
+
+/**
+ * Captures the current system configuration as the baseline to restore to
+ * after CORS-mutating tests. Must be called once before any test that
+ * modifies system configuration (e.g. application:create --profile spa).
+ * @param {string} apiKey - API key
+ * @returns {Promise<object>}
+ */
+export async function captureSystemConfigurationBaseline(apiKey = DEFAULT_API_KEY) {
+  const data = await makeApiRequest('GET', '/api/system-configuration', null, apiKey)
+  baselineSystemConfiguration = data.systemConfiguration
+  return baselineSystemConfiguration
+}
+
+/**
+ * Restores system configuration to the captured baseline. Uses PUT (full
+ * overwrite) rather than PATCH so the restore is exact, not merged.
+ * @param {string} apiKey - API key
+ * @returns {Promise<void>}
+ */
+export async function resetSystemConfiguration(apiKey = DEFAULT_API_KEY) {
+  if (!baselineSystemConfiguration) {
+    throw new Error('captureSystemConfigurationBaseline() must be called before resetSystemConfiguration()')
+  }
+  await makeApiRequest('PUT', '/api/system-configuration', { systemConfiguration: baselineSystemConfiguration }, apiKey)
 }
 
 /**
