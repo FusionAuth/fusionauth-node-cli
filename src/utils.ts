@@ -9,19 +9,23 @@ import { inspect } from 'node:util';
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { execSync } from 'node:child_process';
-
 import { PostHog } from 'posthog-node'
 
 import * as dotenv from 'dotenv'
 
 dotenv.config({ quiet: true });
 
+/** Shape of a FusionAuth ClientResponse — used for duck-type checking without importing internals. */
+interface ClientResponseLike {
+    wasSuccessful: () => boolean;
+    response: unknown;
+    exception?: Error;
+}
+
 export const posthogClient = new PostHog(
     'phc_nB6C2uZX2LA6ce6VAaWZxBYPtq1wYH5x8A3n36DaLzQ',
     { host: 'https://us.i.posthog.com' }
 )
-
-
 
 export const __dirname = dirname(fileURLToPath(import.meta.url));
 

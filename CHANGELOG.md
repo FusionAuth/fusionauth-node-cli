@@ -1,3 +1,18 @@
+# [1.10.0-next-setup.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next-setup.3...v1.10.0-next-setup.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **release:** adds new release workflows ([9350a16](https://github.com/FusionAuth/fusionauth-node-cli/commit/9350a169050d2385c4b4f0cfd76473894ee396d0))
+* **update:** fixes issue with ClientResponse in utils ([58760d7](https://github.com/FusionAuth/fusionauth-node-cli/commit/58760d74fd3aa9f60bfd1e5aa644516754855f79))
+* **update:** modifies path.join for testing errors ([aa6089b](https://github.com/FusionAuth/fusionauth-node-cli/commit/aa6089b9cc3b70e1a4efd325f8f5795ba99353a0))
+* **update:** tests datifying tmp file ([66b30c4](https://github.com/FusionAuth/fusionauth-node-cli/commit/66b30c46eed0ed68f99beb46982e6dc93140189a))
+
+
+### Features
+
+* **update:** adds application:update ([68e8e77](https://github.com/FusionAuth/fusionauth-node-cli/commit/68e8e77d79920231835c8a23d341ead05ea1c66d)), closes [#55](https://github.com/FusionAuth/fusionauth-node-cli/issues/55)
+
 ## [1.9.1-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.0...v1.9.1-next.1) (2026-07-09)
 
 
