@@ -51,7 +51,7 @@ describe("test action function", () => {
   })
 
   test("errors when response isn't 200", async () => {
-    const tmp = path.join(os.tmpdir() + `test--${Date.now()}.json`)
+    const tmp = path.join(os.tmpdir(), `test--${Date.now()}.json`)
     const testJSON = {
       application: {
         authenticationTokenConfiguration: {
@@ -73,7 +73,7 @@ describe("test action function", () => {
     
   })
   test("success when response is 200 for prop", async () => {
-    const tmp = path.join(os.tmpdir() + `test-${Date.now()}.json`)
+    const tmp = path.join(os.tmpdir(), `test-${Date.now()}.json`)
     const testJSON = {
       application: {
         authenticationTokenConfiguration: {
