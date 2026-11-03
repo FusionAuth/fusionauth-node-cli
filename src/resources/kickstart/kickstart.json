@@ -27,34 +27,6 @@
     },
     {
       "method": "POST",
-      "url": "/api/application/#{applicationId}",
-      "tenantId": "#{defaultTenantId}",
-      "body": {
-        "application": {
-          "name": "#{applicationName}",
-          "oauthConfiguration": {
-            "authorizedRedirectURLs": [
-              "https://fusionauth.io"
-            ],
-            "logoutURL": "https://fusionauth.io",
-            "clientSecret": "#{clientSecret}",
-            "enabledGrants": [
-              "authorization_code",
-              "refresh_token"
-            ],
-            "generateRefreshTokens": true,
-            "requireRegistration": true
-          },
-          "jwtConfiguration": {
-            "enabled": true,
-            "accessTokenKeyId": "#{asymmetricKeyId}",
-            "idTokenKeyId": "#{asymmetricKeyId}"
-          }
-        }
-      }
-    },
-    {
-      "method": "POST",
       "url": "/api/user/import",
       "body": {
         "users": [

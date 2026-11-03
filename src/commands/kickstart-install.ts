@@ -14,6 +14,37 @@ import { betaWarning, errorAndExit, isDirEmpty, isDockerInstalled, logEvent } fr
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+
+const BASIC_APP_KICKSTART_OBJ = {
+      "method": "POST",
+      "url": "/api/application/#{applicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "#{applicationName}",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "https://fusionauth.io"
+            ],
+            "logoutURL": "https://fusionauth.io",
+            "clientSecret": "#{clientSecret}",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          }
+        }
+      }
+    }
+
+
 /**
  * Resolves the directory containing the kickstart resource files
  * (fusionauth-config files, kickstart.json, etc.), supporting both layouts
@@ -80,12 +111,14 @@ export interface InstallOptions {
   adminEmail?: string;
   adminPasswordEnv?: string;
   applicationName?: string;
+  barebones?: boolean
 }
 
 export interface InstallAnswers {
   email: string;
   password: string;
-  appName: string;
+  appName?: string;
+  barebones?: boolean
 }
 
 /**
@@ -136,7 +169,7 @@ export async function resolveInstallAnswers(
 
   // --- Resolve appName ---
   let appName: string | undefined = options.applicationName;
-
+  let barebones: boolean | undefined = options.barebones || false;
   // --- Prompt for any fields not yet resolved ---
   const questions: import('inquirer').DistinctQuestion[] = [];
 
@@ -160,7 +193,7 @@ export async function resolveInstallAnswers(
     });
   }
 
-  if (appName === undefined) {
+  if (barebones == false && appName === undefined) {
     questions.push({
       type: 'input',
       name: 'appName',
@@ -173,10 +206,10 @@ export async function resolveInstallAnswers(
     const prompted = await promptFn(questions);
     if (email === undefined)    email    = prompted.email as string;
     if (password === undefined) password = prompted.password as string;
-    if (appName === undefined)  appName  = prompted.appName as string;
+    if (appName === undefined)  appName  = prompted.appName as string || undefined;
   }
 
-  return { email: email!, password: password!, appName: appName! };
+  return { email: email!, password: password!, appName: appName!, barebones: barebones! };
 }
 
 // ---------------------------------------------------------------------------
@@ -189,12 +222,16 @@ async function createKickstart(kickstartPath: string, answers: InstallAnswers, n
   const fullHash = bcrypt.hashSync(answers.password, salt)
   const hashedPassword = fullHash.split(salt)[1]
   const kickstartContent = fs.readFileSync(kickstartPath)
-  var kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
+  let kickstartObject = JSON.parse(kickstartContent.toString('utf-8'))
 
   kickstartObject.variables.adminEmail = answers.email;
   kickstartObject.variables.adminPassword = hashedPassword;
   kickstartObject.variables.applicationName = answers.appName;
   kickstartObject.variables.saltPassword = saltBase
+
+  if (!answers.barebones) {
+    kickstartObject.requests.push(BASIC_APP_KICKSTART_OBJ)
+  }
 
   fs.mkdirSync(`${newDir}/kickstart`)
   fs.writeFileSync(`${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
@@ -205,6 +242,7 @@ async function createKickstart(kickstartPath: string, answers: InstallAnswers, n
 // ---------------------------------------------------------------------------
 
 const action = async function (dir: string, options: InstallOptions) {
+  console.log(options)
   const dockerInstalled = isDockerInstalled();
   const directory = path.resolve(dir)
   logEvent('cli command kickstart:install')
@@ -282,4 +320,5 @@ export const kickstartInstall = new Command()
   .option('--admin-email <email>', 'Admin user email address (skips prompt)')
   .option('--admin-password-env <ENV_VAR>', 'Name of environment variable containing the admin password (skips prompt)')
   .option('--application-name <name>', 'Application name (skips prompt)')
+  .option('--barebones', 'Skips the creation of an application in the FusionAuth instance')
   .action((dir, options) => action(dir, options))
