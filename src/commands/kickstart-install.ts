@@ -228,11 +228,11 @@ async function createKickstart(kickstartPath: string, answers: InstallAnswers, n
   kickstartObject.variables.adminPassword = hashedPassword;
   kickstartObject.variables.applicationName = answers.appName;
   kickstartObject.variables.saltPassword = saltBase
-
   if (!answers.barebones) {
-    kickstartObject.requests.push(BASIC_APP_KICKSTART_OBJ)
-  }
+    kickstartObject.requests[1].body.users[0].registrations.push({"applicationId": "#{applicationId}"})
+    kickstartObject.requests.splice(1, 0, BASIC_APP_KICKSTART_OBJ)
 
+  }
   fs.mkdirSync(`${newDir}/kickstart`)
   fs.writeFileSync(`${newDir}/kickstart/kickstart.json`, JSON.stringify(kickstartObject, null, 2))
 }
@@ -242,7 +242,6 @@ async function createKickstart(kickstartPath: string, answers: InstallAnswers, n
 // ---------------------------------------------------------------------------
 
 const action = async function (dir: string, options: InstallOptions) {
-  console.log(options)
   const dockerInstalled = isDockerInstalled();
   const directory = path.resolve(dir)
   logEvent('cli command kickstart:install')

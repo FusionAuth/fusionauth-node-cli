@@ -44,9 +44,6 @@
             ],
             "registrations": [
               {
-                "applicationId": "#{applicationId}"
-              },
-              {
                 "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
                 "roles": [
                   "admin"
