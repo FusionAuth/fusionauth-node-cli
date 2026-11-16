@@ -1,3 +1,10 @@
+# [1.10.0-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next.1...v1.10.0-next.1) (2026-11-16)
+
+
+### Features
+
+* **noapp:** creates --barebones flag for kickstart:install ([#61](https://github.com/FusionAuth/fusionauth-node-cli/issues/61)) ([3d0e1e3](https://github.com/FusionAuth/fusionauth-node-cli/commit/3d0e1e35650125e4fe334c286baa46dfd95cc270))
+
 # [1.10.0-next-setup.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next-setup.3...v1.10.0-next-setup.1) (2026-10-14)
 
 
