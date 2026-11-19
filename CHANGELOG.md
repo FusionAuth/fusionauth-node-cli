@@ -1,3 +1,11 @@
+# [1.10.0-next.2](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0-next.1...v1.10.0-next.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* **application:** removes extraneous testing file ([825e1a1](https://github.com/FusionAuth/fusionauth-node-cli/commit/825e1a16734757e2bd64b69bece1a5dad9a5b41e))
+* **application:** removes merge issue on testing workflow ([39c99db](https://github.com/FusionAuth/fusionauth-node-cli/commit/39c99dbafa0ec4c05f58292dcd9712628ae4ddff))
+
 # [1.10.0-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.1-next.1...v1.10.0-next.1) (2026-11-16)
 
 
