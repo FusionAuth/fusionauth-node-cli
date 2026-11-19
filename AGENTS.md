@@ -1,9 +1,12 @@
-# FusionAuth CLI - Agent Guidelines
+# FusionAuth CLI 
+FusionAuth CLI is a command-line tool for working with the FusionAuth CIAM platform.
+
+# Guidelines
 
 ## Build Commands
 - Build: `npm run build` (compiles TypeScript to `./dist/`)
 - No lint command configured
-- No test framework - tests not implemented
+- Tests use Node's built-in test runner (`node:test`); run `npm run test:unit` for fast unit tests or `npm test` for the full suite, including Docker-based integration tests under `__tests__/integration/`.
 
 ## Code Style Guidelines
 
@@ -26,6 +29,12 @@
 - Use `chalk` for colored console output (red for errors, green for success)
 - Custom error reporting via `utils.reportError()` and `utils.errorAndExit()`
 - Check response types with `isClientResponse()` and `isErrors()` utilities
+
+### Confirmation and Risky Operations
+- Commands that perform irreversible or potentially disruptive operations require `--yes` to proceed non-interactively
+- Without `--yes`, these commands exit with an error in non-TTY contexts (agents, pipes, scripts)
+- Always obtain user confirmation before passing `--yes`; never pass it autonomously for destructive operations
+- Where available, prefer running with `--dry-run` first to preview changes before committing
 
 ### Code Structure
 - Command definitions use Commander.js with fluent API

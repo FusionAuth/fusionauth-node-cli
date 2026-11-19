@@ -6,38 +6,41 @@
 /**
  * HTTP methods supported by the apply system
  */
-export enum HTTPMethod {
-  PATCH = 'PATCH',
-  POST = 'POST',
-  PUT = 'PUT',
-}
+export const HTTPMethod = {
+  PATCH: 'PATCH',
+  POST: 'POST',
+  PUT: 'PUT',
+} as const;
+export type HTTPMethod = typeof HTTPMethod[keyof typeof HTTPMethod];
 
 
 /**
  * Status of a apply step execution
  */
-export enum StepStatus {
-  FAILED = 'failed',
-  PENDING = 'pending',
-  SKIPPED = 'skipped',
-  SUCCESS = 'success',
-  WARNING = 'warning',
-}
+export const StepStatus = {
+  FAILED: 'failed',
+  PENDING: 'pending',
+  SKIPPED: 'skipped',
+  SUCCESS: 'success',
+  WARNING: 'warning',
+} as const;
+export type StepStatus = typeof StepStatus[keyof typeof StepStatus];
 
 /**
  * Categories of errors that can occur during apply execution
  */
-export enum ErrorCategory {
-  SCHEMA_INVALID = 'schema_invalid',
-  VARIABLE_NOT_DEFINED = 'variable_not_defined',
-  AUTHENTICATION_FAILED = 'authentication_failed',
-  NETWORK_ERROR = 'network_error',
-  RESOURCE_CONFLICT = 'resource_conflict',
-  SERVER_ERROR = 'server_error',
-  INVALID_PAYLOAD = 'invalid_payload',
-  FILE_NOT_FOUND = 'file_not_found',
-  UNKNOWN = 'unknown',
-}
+export const ErrorCategory = {
+  SCHEMA_INVALID: 'schema_invalid',
+  VARIABLE_NOT_DEFINED: 'variable_not_defined',
+  AUTHENTICATION_FAILED: 'authentication_failed',
+  NETWORK_ERROR: 'network_error',
+  RESOURCE_CONFLICT: 'resource_conflict',
+  SERVER_ERROR: 'server_error',
+  INVALID_PAYLOAD: 'invalid_payload',
+  FILE_NOT_FOUND: 'file_not_found',
+  UNKNOWN: 'unknown',
+} as const;
+export type ErrorCategory = typeof ErrorCategory[keyof typeof ErrorCategory];
 
 /**
  * Variable definitions that can be referenced in kickstart requests

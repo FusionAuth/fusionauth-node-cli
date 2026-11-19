@@ -12,7 +12,6 @@ services:
       retries: 5
     networks:
       - db_net
-    restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -29,7 +28,6 @@ services:
       interval: 10s
       retries: 80
       test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:9200/
-    restart: unless-stopped
     ulimits:
       memlock:
         soft: -1
@@ -46,7 +44,7 @@ services:
       - search_net
 
   fusionauth:
-    image: fusionauth/fusionauth-app:latest
+    image: fusionauth/fusionauth-app:1.69.2
     depends_on:
       db:
         condition: service_healthy
@@ -68,7 +66,6 @@ services:
     networks:
       - db_net
       - search_net
-    restart: unless-stopped
     ports:
       - 9011:9011
     volumes:
