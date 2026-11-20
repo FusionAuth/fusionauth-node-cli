@@ -1,3 +1,12 @@
+## [1.10.1-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0...v1.10.1-next.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* merges main back in ([e132236](https://github.com/FusionAuth/fusionauth-node-cli/commit/e1322367b7ad99a64b07d7fc05ef6f2641d4c2cd))
+* **pipeline:** adds PR closed for main branch to run release workflow ([08e4402](https://github.com/FusionAuth/fusionauth-node-cli/commit/08e4402e8b6af790a9cd2e819b41bc1adc020cb0))
+* **workflow:** adds workflow_dispatch case for release workflow ([809d9dd](https://github.com/FusionAuth/fusionauth-node-cli/commit/809d9dd2c14a7dda9a6aed83cf6ad1b26b17c9c3))
+
 # [1.10.0-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.9.0...v1.10.0-next.1) (2026-11-20)
 
 
