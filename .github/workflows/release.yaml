@@ -1,8 +1,11 @@
 name: Release
 
 on:
+  pull_request:
+    types: [closed]
+    branches: [main]
   push:
-    branches: [main, next, next-setup]
+    branches: [next, next-setup]
 permissions:
   id-token: write
   contents: write
