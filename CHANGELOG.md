@@ -4,10 +4,7 @@
 ### Bug Fixes
 
 * **pipeline:** adds PR closed for main branch to run release workflow ([08e4402](https://github.com/FusionAuth/fusionauth-node-cli/commit/08e4402e8b6af790a9cd2e819b41bc1adc020cb0))
-<<<<<<< HEAD
 * **workflow:** adds workflow_dispatch case for release workflow ([809d9dd](https://github.com/FusionAuth/fusionauth-node-cli/commit/809d9dd2c14a7dda9a6aed83cf6ad1b26b17c9c3))
-=======
->>>>>>> main
 
 
 ### Features
