@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [release, next, next-setup]
+    branches: [release, next, alpha/*]
   workflow_dispatch:
 
 permissions:
