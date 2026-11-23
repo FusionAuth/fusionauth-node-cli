@@ -1,12 +1,10 @@
 module.exports = {
   branches: [
-    'main',
     {
-      name: 'next',
-      prerelease: true
+      name: 'releases'
     },
     {
-      name: 'next-setup',
+      name: 'next',
       prerelease: true
     }
   ],

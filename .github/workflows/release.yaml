@@ -1,11 +1,8 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
   push:
-    branches: [next, next-setup]
+    branches: [releases, next]
   workflow_dispatch:
 
 permissions:
