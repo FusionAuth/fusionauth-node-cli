@@ -1,3 +1,10 @@
+## [1.10.1-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0...v1.10.1-next.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* adds workflow_dispatch to oldschool deploy ([7ef9499](https://github.com/FusionAuth/fusionauth-node-cli/commit/7ef94990f6a7253749397f5638b63ff64ef37ae4))
+
 ## [1.10.1-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0...v1.10.1-next.1) (2026-11-20)
 
 
