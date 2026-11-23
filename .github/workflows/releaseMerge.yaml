@@ -1,0 +1,23 @@
+name: Release Merge
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-branch:
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: write
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Merge main -> release
+        uses: devmasx/merge-branch@1.4.0
+        with:
+          type: now
+          from_branch: main
+          target_branch: release
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
