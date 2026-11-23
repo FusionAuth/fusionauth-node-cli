@@ -6,7 +6,7 @@ module.exports = {
       prerelease: true
     },
     {
-      name: 'next-setup',
+      name: 'alpha/**',
       prerelease: true
     }
   ],
