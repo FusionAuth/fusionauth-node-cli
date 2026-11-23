@@ -4,6 +4,18 @@
 ### Bug Fixes
 
 * adds workflow_dispatch to oldschool deploy ([7ef9499](https://github.com/FusionAuth/fusionauth-node-cli/commit/7ef94990f6a7253749397f5638b63ff64ef37ae4))
+* **deploys:** adds explicit name for modern semantic version package ([#69](https://github.com/FusionAuth/fusionauth-node-cli/issues/69)) ([dee9fdf](https://github.com/FusionAuth/fusionauth-node-cli/commit/dee9fdf6a1a8b703979ab161efeab0e1efb81678))
+* **deploys:** converts release merge to vanilla git ([#68](https://github.com/FusionAuth/fusionauth-node-cli/issues/68)) ([3f61415](https://github.com/FusionAuth/fusionauth-node-cli/commit/3f61415ff21720c63a0c14605fe99d6e3969c576))
+* **deploys:** modifies release branch to releases to match GitHub ([647820f](https://github.com/FusionAuth/fusionauth-node-cli/commit/647820fd117d8bccf36b9b50616a47d9c6fab5ce))
+* **deploys:** removes alpha branch from workflow yaml ([a919b9d](https://github.com/FusionAuth/fusionauth-node-cli/commit/a919b9da0e03a6146de0e6d437b6d156127a7769))
+* **deploys:** removes wildcard release to fix workflow errors ([3caf2af](https://github.com/FusionAuth/fusionauth-node-cli/commit/3caf2aff3e5df74ee7f1e35ff356bd489c0c0d14))
+
+## [1.10.1-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0...v1.10.1-next.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* adds workflow_dispatch to oldschool deploy ([7ef9499](https://github.com/FusionAuth/fusionauth-node-cli/commit/7ef94990f6a7253749397f5638b63ff64ef37ae4))
 
 ## [1.10.1-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0...v1.10.1-next.1) (2026-11-20)
 
