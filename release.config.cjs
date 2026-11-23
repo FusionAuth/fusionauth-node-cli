@@ -6,10 +6,6 @@ module.exports = {
     {
       name: 'next',
       prerelease: true
-    },
-    {
-      name: 'alpha/**',
-      prerelease: true
     }
   ],
   plugins: [
