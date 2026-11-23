@@ -3,6 +3,9 @@ name: Release Merge
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'package.json'
+      - 'CHANGELOG.md'
   workflow_dispatch:
 
 jobs:
