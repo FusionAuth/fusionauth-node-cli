@@ -1,3 +1,10 @@
+# [1.11.0-next.2](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.11.0-next.1...v1.11.0-next.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deploys:** ignores package and changelog for releaseMerge flow ([8073f65](https://github.com/FusionAuth/fusionauth-node-cli/commit/8073f654eb50341a26359634ed93881edc45b30a))
+
 # [1.11.0-next.1](https://github.com/FusionAuth/fusionauth-node-cli/compare/v1.10.0...v1.11.0-next.1) (2026-11-23)
 
 
